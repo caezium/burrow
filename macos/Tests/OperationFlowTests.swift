@@ -38,10 +38,21 @@ final class OperationFlowTests: XCTestCase {
     }
 
     /// Canned dry-run output in mo's report shape (parseTaskReport-compatible).
+    // The human-text output the `cleanOp()` fixture's `parseTaskReport` reducer consumes.
     static let cannedClean: [ProcessEvent] = [
         .line("➤ Developer tools"),
         .line("  → npm cache, 191.8MB"),
         .line("Potential space: 383.8MB | Items: 372 | Categories: 20"),
+        .exited(0),
+    ]
+
+    // The engine's `clean --stream` NDJSON preview, which the `moleStream(...)` op's
+    // BurrowStreamReport reducer consumes. A dry-run done carries `would_free_human` →
+    // summary.space (no freeChange), so the completion line reads "Cleaned 383.8MB · 372 items"
+    // — same summary the old human-text "Potential space" preview produced.
+    static let cannedCleanStream: [ProcessEvent] = [
+        .line(#"{"event":"would_remove","path":"/Users/x/Library/Caches/npm cache","bytes":201129000}"#),
+        .line(#"{"event":"done","dry_run":true,"would_free_bytes":402438000,"would_free_human":"383.8MB","count":372}"#),
         .exited(0),
     ]
 
@@ -166,7 +177,7 @@ final class OperationFlowTests: XCTestCase {
     // and the parsed summary replaces the last streamed line as the final
     // detail — that's the body a completion notification carries.
     func testNotifyOnEnd_andFinalDetail_reachOperationCenter() async throws {
-        let port = FakeProcessPort(script: Self.cannedClean)
+        let port = FakeProcessPort(script: Self.cannedCleanStream)
         let center = OperationCenter()
         let flow = OperationFlow<TaskRunReport>(process: port, hasFullDiskAccess: { true },
                                                 resolveMo: { _ in "/usr/local/bin/mo" }, center: center)

@@ -129,43 +129,28 @@ targets:
       - name: Bundle burrow-engine (MIT)
         basedOnDependencyAnalysis: false
         script: |
-          # Stage the MIT engine into the app's Resources so users run our engine with zero
-          # install (never upstream GPL mo). Activates when the engine source is present —
-          # a release/CI vendors it (vendor/burrow-engine) or sets BURROW_ENGINE_SRC; dev
-          # builds without it fall back to a system-installed engine.
+          # Build the ONE MIT `burrow-engine` binary and stage it as Resources/burrow — it does all
+          # the work natively AND emits the stable Burrow envelope + NDJSON streaming, so it replaces
+          # both the old burrow-cli conductor and the burrow-digger engine (a single binary, no
+          # separate engine dir). Activates when a burrow-engine checkout is present — a release/CI
+          # vendors it (vendor/burrow-engine) or sets BURROW_ENGINE_SRC; dev builds without it fall
+          # back to a system-installed engine.
           #
-          # NOTE: Xcode's CodeSign phase runs AFTER all build phases, so it re-signs the app
-          # over the freshly-added engine and the resource seal ends up stale. The final seal
-          # therefore happens POST-build: use scripts/build.sh locally, and the release
-          # pipeline's inside-out re-sign (#178) seals it for distribution.
+          # NOTE: Xcode's CodeSign phase runs AFTER all build phases, so it re-signs the app over the
+          # freshly-added binary and the resource seal ends up stale. The final seal therefore
+          # happens POST-build: use scripts/build.sh locally, and the release pipeline's inside-out
+          # re-sign (#178) seals it for distribution.
           ENGINE_SRC="${BURROW_ENGINE_SRC:-$SRCROOT/vendor/burrow-engine}"
-          # Require a real engine checkout, not just the directory: a plain
-          # (no-submodule) checkout — e.g. the PR `ci` job — leaves an EMPTY
-          # vendor/burrow-engine dir for the gitlink, so `[ -d ]` alone would be
-          # true and bundle-engine.sh would then fail building from missing
-          # source. Gate on mole + cmd/ so we bundle only a populated checkout
-          # and otherwise fall through to the system engine (build still green).
-          if [ -f "$ENGINE_SRC/mole" ] && [ -d "$ENGINE_SRC/cmd" ]; then
-            "$SRCROOT/scripts/bundle-engine.sh" "$ENGINE_SRC" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+          # Require a real engine checkout, not just the gitlink dir: a plain (no-submodule)
+          # checkout — e.g. the PR `ci` job — leaves an EMPTY vendor/burrow-engine dir, so `[ -d ]`
+          # alone would be true and the cargo build would fail from missing source. Gate on
+          # Cargo.toml + src/ + cargo so we bundle only a populated checkout, and otherwise fall
+          # through to the system engine (build still green).
+          if [ -f "$ENGINE_SRC/Cargo.toml" ] && [ -d "$ENGINE_SRC/src" ] && command -v cargo >/dev/null 2>&1; then
+            "$SRCROOT/scripts/bundle-burrow.sh" "$ENGINE_SRC" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH" \
+              || echo "warning: burrow-engine build failed — Burrow falls back to a system engine."
           else
-            echo "warning: burrow-engine source not present at $ENGINE_SRC — Burrow falls back to a system engine. Set BURROW_ENGINE_SRC or init the vendor/burrow-engine submodule."
-          fi
-      - name: Bundle burrow (conductor)
-        basedOnDependencyAnalysis: false
-        script: |
-          # Stage the FSL `burrow` conductor beside the MIT engine so the GUI can shell out to
-          # `burrow <cmd> --json` (stable envelope + NDJSON streaming) instead of the engine
-          # directly. Gated on a POPULATED vendor/burrow-cli checkout: a plain (no-submodule)
-          # checkout — e.g. the PR `ci` job — leaves an EMPTY gitlink dir, so we bundle only when
-          # Cargo.toml is really present and otherwise fall through to the direct engine (build
-          # still green, exactly like the engine phase above). Final resource seal happens
-          # POST-build (scripts/build.sh locally; the release pipeline's inside-out re-sign).
-          BURROW_CLI_SRC="${BURROW_CLI_SRC:-$SRCROOT/vendor/burrow-cli}"
-          if [ -f "$BURROW_CLI_SRC/Cargo.toml" ] && [ -d "$BURROW_CLI_SRC/src" ] && command -v cargo >/dev/null 2>&1; then
-            "$SRCROOT/scripts/bundle-burrow.sh" "$BURROW_CLI_SRC" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH" \
-              || echo "warning: burrow conductor build failed — Burrow falls back to the direct engine."
-          else
-            echo "warning: burrow-cli source or cargo not present at $BURROW_CLI_SRC — Burrow falls back to the direct engine. Set BURROW_CLI_SRC or init the vendor/burrow-cli submodule."
+            echo "warning: burrow-engine source or cargo not present at $ENGINE_SRC — Burrow falls back to a system engine. Set BURROW_ENGINE_SRC or init the vendor/burrow-engine submodule."
           fi
       - name: Bundle fclones (MIT sidecar)
         basedOnDependencyAnalysis: false

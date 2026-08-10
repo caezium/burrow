@@ -87,8 +87,10 @@ enum MoleCLI {
     /// over any system `mo`: users run our engine with zero install and never touch upstream
     /// (GPL-relicensed) mo. It's part of the signed app bundle, so it's a trusted location.
     static func bundledExecutable() -> String? {
-        guard let url = Bundle.main.url(forResource: "mole", withExtension: nil,
-                                        subdirectory: "engine") else { return nil }
+        // The single bundled `burrow-engine` binary, staged as Resources/burrow (bundle-burrow.sh).
+        // It replaced the old Resources/engine/mole digger — one binary that does the work AND
+        // speaks the envelope. Same file BurrowConductor.executableURL resolves.
+        guard let url = Bundle.main.url(forResource: "burrow", withExtension: nil) else { return nil }
         return FileManager.default.isExecutableFile(atPath: url.path) ? url.path : nil
     }
 

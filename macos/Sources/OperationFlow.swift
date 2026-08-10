@@ -395,9 +395,11 @@ extension ToolOperation where Report == TaskRunReport {
     static func moleStream(_ args: [String], gate: Gate = .none,
                            elevated: Bool = false, label: String?,
                            notifyOnEnd: Bool = false) -> ToolOperation {
+        // The bundled engine streams NDJSON (clean/optimize --stream); reduce those events into the
+        // same (groups, summary) shape the human-text parser produced. See BurrowStreamReport.
         ToolOperation(label: label, arguments: args, gate: gate, elevated: elevated,
-                      reduce: { parseTaskReport($0) },
-                      hudLine: { TaskReportText.line($0) },
+                      reduce: { BurrowStreamReport.reduce($0) },
+                      hudLine: { BurrowStreamReport.hudLine($0) },
                       notifyOnEnd: notifyOnEnd,
                       finalDetail: { $0.summary?.completionLine ?? "" })
     }
