@@ -190,6 +190,16 @@ This is the part people rightly scrutinize in cleaners. Burrow's model:
   historical event at a time with bounded backoff, discards permanent HTTP
   rejections, and runs only while telemetry is enabled; an opted-out launch
   does not read it or contact PostHog.
+- **Feature flags are allowlisted, cached, and UI-only.** The only remote
+  flags Burrow ever evaluates are fixed, typed keys in
+  [`macos/Sources/RemoteFeatureFlags.swift`](macos/Sources/RemoteFeatureFlags.swift),
+  restricted to harmless UI/rollout choices — never cleaning/deletion,
+  permissions, security, signing, Sparkle, launch recovery, or telemetry
+  consent. Accepted values are cached locally (bounded size and age) and every
+  missing/stale/malformed value falls back to a conservative baked-in default;
+  evaluation never blocks on the network, and an opted-out launch reads no flag
+  cache and contacts PostHog for none. See
+  **[TELEMETRY.md](TELEMETRY.md)**.
 - **Local launch recovery journal.** Burrow atomically stores a coarse launch
   phase plus app/OS versions under Application Support so it can avoid a
   status-item path that failed on the same macOS build. This local safety file

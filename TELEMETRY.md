@@ -88,8 +88,9 @@ own project instead.
 
 Burrow's first-party client attaches no hidden SDK context. It additionally
 sends fixed PostHog protocol fields: `$ip: "0"`, `$lib: "burrow-macos"`,
-`$lib_version`, and `$process_person_profile: false`. A later feature-flag
-rollout will be separately reviewed and will use cached, conservative defaults.
+`$lib_version`, and `$process_person_profile: false`. Feature flags are cached,
+telemetry-gated, and restricted to non-safety-critical UI/rollout choices — see
+[Feature flags](#feature-flags).
 
 **IP address:** as with any HTTPS request, the TCP connection still exposes
 your IP to the receiving service at the network layer, but neither pipeline
@@ -97,6 +98,45 @@ stores it as event data. PostHog events carry `$ip = "0"`, so PostHog records
 no IP and derives no GeoIP; the project additionally has **"Discard client IP
 data"** enabled (defence in depth). Sentry runs with `sendDefaultPii = false`,
 so no IP is attached to events either.
+
+## Feature flags
+
+Burrow evaluates a **fixed allowlist** of PostHog feature flags for gradual
+rollout and product/UI experiments. Flags are deliberately restricted to
+harmless, non-safety-critical choices; they are **never** used for
+cleaning/deletion behavior, permissions, security controls, signing/notarization,
+Sparkle verification, launch recovery, or telemetry consent.
+
+- **Allowlisted and typed.** The only keys Burrow accepts are listed in
+  `RemoteFeatureFlags.Key` (client code:
+  [`macos/Sources/RemoteFeatureFlags.swift`](macos/Sources/RemoteFeatureFlags.swift)).
+  Anything PostHog returns that is not in the allowlist — or that decodes to the
+  wrong type — is ignored. Accepted value shapes are `bool`, `string`, and `int`
+  only.
+- **Cached and startup-independent.** The last accepted values are cached at
+  `~/Library/Application Support/Burrow/feature-flags.json` (bounded to 8 KB and
+  a 24-hour trust window). Evaluation reads only that in-memory cache and never
+  blocks on the network; every missing, stale, malformed, or future-dated value
+  falls back to a baked-in conservative default. An opted-out launch does not
+  read the cache or contact PostHog.
+- **Fetched on the background queue.** Flags are fetched from PostHog's
+  `POST {host}/decide/?v=3` on the private background telemetry queue — never on
+  a main-run-loop timer. The JSON request body contains exactly two fields:
+  `token` (the release-injected project key) and `distinct_id` (the random
+  anonymous id described above). No additional PostHog payload properties are
+  sent. Retries are serialized with the same bounded backoff as event delivery
+  and are re-driven by later product events; permanent rejections re-check no
+  sooner than the cache trust window.
+- **Exposure events.** When a flag actually gates behavior, Burrow records one
+  PostHog `$feature_flag_called` event per flag per launch with
+  `$feature_flag` (the allowlisted key) and `$feature_flag_response` (the typed
+  value). No user content or arbitrary properties are attached.
+
+### Flag keys
+
+| Key | Type | Conservative default | Purpose |
+|---|---|---|---|
+| `tune_up_badge` | `bool` | `false` | A cosmetic badge on the Tune-Up section (UI-only; the rollout validation target) |
 
 ## Events
 
@@ -109,6 +149,7 @@ so no IP is attached to events either.
 | `engine_missing`, `install_window_ready`, `onboarding_completed` | none |
 | `telemetry_opt_in_changed` | enabled boolean |
 | PostHog `$screen` | fixed name: `home`, `settings`, or `tool.<known tool>` |
+| PostHog `$feature_flag_called` | `$feature_flag` (allowlisted key) and `$feature_flag_response` (typed value); once per flag per launch |
 | `feature_operation_started`, `feature_operation_completed` | `clean`/`optimize`, dry-run/elevated booleans, fixed result, bucketed duration |
 | `previous_launch_incomplete` | previous phase, app version/build, OS build, bucketed elapsed time |
 | `compatibility_fallback_activated`, `compatibility_fallback_reaffirmed` | fixed reason, OS build, menu-bar mode |
@@ -185,9 +226,7 @@ All of that disk work runs on the background telemetry queue.
 ### Deliberately deferred
 
 `fda_state`, uninstall/purge detail, and MCP subprocess events are not wired.
-PostHog feature flags are also deferred to a separate change so flags can be
-cached, telemetry-gated, and restricted to non-safety-critical UI/rollout
-choices. Burrow will not build a custom pixel recorder for macOS.
+Burrow will not build a custom pixel recorder for macOS.
 
 ## Turning it off
 

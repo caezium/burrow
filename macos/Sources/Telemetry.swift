@@ -9,6 +9,7 @@
 //
 
 import Foundation
+import Combine
 
 enum Telemetry {
 
@@ -63,6 +64,16 @@ enum Telemetry {
     private static var nextOutboxRetryAt = Date.distantPast
     private static let outboxLimit = 64
 
+    /// In-memory accepted flag values; the source of truth for evaluation.
+    /// Written on `workQueue`, read anywhere under `stateLock`.
+    private static var flagSnapshot = RemoteFeatureFlags.Snapshot.empty
+    /// Accessed only on `workQueue`.
+    private static var flagFetchInFlight = false
+    private static var flagFetchFailures = 0
+    private static var nextFlagFetchAt = Date.distantPast
+    /// Flag keys already exposed this launch. Guarded by `stateLock`.
+    private static var exposedFlagKeys: Set<String> = []
+
     /// The single persisted gate shared with Sentry.
     static var isEnabled: Bool {
         get { Store.telemetryEnabled }
@@ -99,6 +110,8 @@ enum Telemetry {
         guard let delivery, isEnabled else { return }
         CrashReporter.breadcrumb("app_opened", category: "lifecycle")
         enqueue(.event("app_opened", ["cold_start": true]), using: delivery)
+        reloadFeatureFlagCache()
+        refreshFeatureFlags(using: delivery)
     }
 
     /// Best-effort termination flush. Every event has already started its own
@@ -161,12 +174,202 @@ enum Telemetry {
 
         if enabled {
             capture("telemetry_opt_in_changed", ["enabled": true])
+            reloadFeatureFlagCache()
+            refreshFeatureFlags(using: delivery)
         } else {
             workQueue.async {
                 cancelInFlightDeliveries()
+                clearFeatureFlagState()
                 sendNow(.event("telemetry_opt_in_changed", ["enabled": false]), using: delivery)
             }
         }
+    }
+
+    // MARK: - Feature flags (cached, conservative, UI-only)
+
+    /// Current effective value for an allowlisted flag: the fresh cached value
+    /// or the baked-in conservative default. Synchronous and pure — it never
+    /// touches the network or disk. With telemetry off the snapshot is empty,
+    /// so callers always get the default and no exposure is recorded.
+    static func featureFlagValue(for key: RemoteFeatureFlags.Key) -> RemoteFeatureFlags.Value {
+        let snapshot = currentFlagSnapshot()
+        let value = RemoteFeatureFlags.evaluate(key, snapshot: snapshot, now: Date())
+        reportFeatureFlagExposure(key, value: value)
+        return value
+    }
+
+    static func featureFlagBool(_ key: RemoteFeatureFlags.Key) -> Bool {
+        switch featureFlagValue(for: key) {
+        case .bool(let value): return value
+        default: return false
+        }
+    }
+
+    /// Reads the on-disk flag cache into memory once per launch, only while
+    /// telemetry is enabled. An opted-out launch never reaches here.
+    private static func reloadFeatureFlagCache() {
+        workQueue.async {
+            guard isEnabled, currentFlagSnapshot().isEmpty else { return }
+            guard let url = featureFlagCacheURL(),
+                  let data = try? Data(contentsOf: url),
+                  let snapshot = RemoteFeatureFlags.decodeSnapshot(data) else { return }
+            setFlagSnapshot(snapshot)
+        }
+    }
+
+    /// Work-queue entry point: fetch flags once with serialized/backed-off
+    /// retries driven by later product events — never a run-loop timer.
+    private static func refreshFeatureFlags(using delivery: DeliveryConfiguration) {
+        workQueue.async { refreshFeatureFlagsIfDue(using: delivery) }
+    }
+
+    private static func refreshFeatureFlagsIfDue(using delivery: DeliveryConfiguration) {
+        guard isEnabled, !flagFetchInFlight, Date() >= nextFlagFetchAt else { return }
+        guard let request = featureFlagRequest(using: delivery) else { return }
+        flagFetchInFlight = true
+
+        let requestID = UUID()
+        deliveries.enter()
+        let task = session.dataTask(with: request) { data, response, error in
+            let status = (response as? HTTPURLResponse)?.statusCode
+            let disposition = deliveryDisposition(statusCode: status, hasTransportError: error != nil)
+            workQueue.async {
+                inFlightTasks.removeValue(forKey: requestID)
+                flagFetchInFlight = false
+                defer { deliveries.leave() }
+
+                // A mid-session opt-out must not be overwritten by a request
+                // that was already in flight when the user flipped the switch.
+                guard isEnabled else { return }
+
+                switch disposition {
+                case .delivered:
+                    flagFetchFailures = 0
+                    nextFlagFetchAt = .distantPast
+                    guard let data,
+                          let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+                    else { return }
+                    let snapshot = RemoteFeatureFlags.snapshot(from: object, now: Date())
+                    persistFeatureFlagSnapshot(snapshot)
+                    setFlagSnapshot(snapshot)
+                case .retry:
+                    flagFetchFailures += 1
+                    nextFlagFetchAt = Date().addingTimeInterval(
+                        retryDelay(afterFailure: flagFetchFailures)
+                    )
+                case .discard:
+                    // A permanent rejection cannot be usefully retried; re-check
+                    // no sooner than the cache's own trust window.
+                    flagFetchFailures = 0
+                    nextFlagFetchAt = Date().addingTimeInterval(RemoteFeatureFlags.maxCacheAge)
+                }
+            }
+        }
+        inFlightTasks[requestID] = task
+        task.resume()
+    }
+
+    private static func featureFlagRequest(using delivery: DeliveryConfiguration) -> URLRequest? {
+        guard let endpoint = decideEndpoint(from: delivery.endpoint) else { return nil }
+        // The only fields ever sent: the release-injected project key and the
+        // random anonymous distinct id. No user content, no arbitrary properties.
+        let payload: [String: Any] = [
+            "token": delivery.projectKey,
+            "distinct_id": resolveDistinctID(projectKey: delivery.projectKey),
+        ]
+        guard JSONSerialization.isValidJSONObject(payload),
+              let body = try? JSONSerialization.data(withJSONObject: payload) else { return nil }
+
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 10
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.setValue("Burrow/\(RuntimeEnvironment.current.appVersion)", forHTTPHeaderField: "User-Agent")
+        request.httpBody = body
+        return request
+    }
+
+    /// `/decide/` lives beside `/batch/` under the same host root.
+    static func decideEndpoint(from batchEndpoint: URL) -> URL? {
+        let base = batchEndpoint.deletingLastPathComponent()
+        guard var components = URLComponents(url: base, resolvingAgainstBaseURL: false) else { return nil }
+        let basePath = components.path.hasSuffix("/") ? components.path : components.path + "/"
+        components.path = basePath + "decide"
+        components.queryItems = [URLQueryItem(name: "v", value: "3")]
+        return components.url
+    }
+
+    private static func persistFeatureFlagSnapshot(_ snapshot: RemoteFeatureFlags.Snapshot) {
+        guard let url = featureFlagCacheURL(),
+              let data = RemoteFeatureFlags.encodedSnapshot(snapshot) else { return }
+        try? FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try? data.write(to: url, options: .atomic)
+    }
+
+    private static func featureFlagCacheURL() -> URL? {
+        applicationSupportDirectory()?.appendingPathComponent("feature-flags.json")
+    }
+
+    /// Records a PostHog `$feature_flag_called` exposure once per flag per
+    /// launch, only while telemetry is enabled. The response is the typed,
+    /// allowlisted value — never user content.
+    private static func reportFeatureFlagExposure(
+        _ key: RemoteFeatureFlags.Key,
+        value: RemoteFeatureFlags.Value
+    ) {
+        stateLock.lock()
+        let isNew = !exposedFlagKeys.contains(key.rawValue)
+        if isNew { exposedFlagKeys.insert(key.rawValue) }
+        let delivery = deliveryConfiguration
+        let enabled = started && isEnabled
+        stateLock.unlock()
+
+        guard isNew, enabled, let delivery else { return }
+
+        let response: Any
+        switch value {
+        case .bool(let v): response = v
+        case .int(let v): response = v
+        case .string(let v): response = DiagnosticPrivacy.redact(v)
+        }
+        enqueue(.event("$feature_flag_called", [
+            "$feature_flag": key.rawValue,
+            "$feature_flag_response": response,
+        ]), using: delivery)
+    }
+
+    private static func currentFlagSnapshot() -> RemoteFeatureFlags.Snapshot {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return flagSnapshot
+    }
+
+    private static func setFlagSnapshot(_ snapshot: RemoteFeatureFlags.Snapshot) {
+        stateLock.lock()
+        flagSnapshot = snapshot
+        stateLock.unlock()
+        publishFlagSnapshot(snapshot)
+    }
+
+    private static func clearFeatureFlagState() {
+        stateLock.lock()
+        flagSnapshot = .empty
+        exposedFlagKeys.removeAll()
+        stateLock.unlock()
+        flagFetchInFlight = false
+        flagFetchFailures = 0
+        nextFlagFetchAt = .distantPast
+        publishFlagSnapshot(.empty)
+    }
+
+    /// Mirrors the evaluation snapshot to the SwiftUI-observable holder on the
+    /// main thread so views re-render when a background refresh lands.
+    private static func publishFlagSnapshot(_ snapshot: RemoteFeatureFlags.Snapshot) {
+        DispatchQueue.main.async { FeatureFlags.shared.update(snapshot) }
     }
 
     // MARK: - Bucketing (never send raw sizes/counts/durations)
@@ -225,6 +428,7 @@ enum Telemetry {
             // the user flips the switch off.
             guard isEnabled else { return }
             drainOutbox(using: delivery)
+            refreshFeatureFlagsIfDue(using: delivery)
             sendNow(signal, using: delivery)
         }
     }
@@ -539,5 +743,26 @@ enum Telemetry {
             for: .applicationSupportDirectory,
             in: .userDomainMask
         ).first
+    }
+}
+
+/// SwiftUI-observable holder for the accepted flag snapshot. Telemetry mirrors
+/// every snapshot change here on the main thread (see `publishFlagSnapshot`);
+/// views observe the shared instance so a background refresh re-renders them
+/// instead of leaving a static flag read stale.
+final class FeatureFlags: ObservableObject {
+    static let shared = FeatureFlags()
+
+    @Published private(set) var snapshot: RemoteFeatureFlags.Snapshot = .empty
+
+    func update(_ snapshot: RemoteFeatureFlags.Snapshot) {
+        self.snapshot = snapshot
+    }
+
+    /// Evaluates `key` and records its exposure via `Telemetry`, while reading
+    /// `snapshot` so the calling view also re-renders when the cache refreshes.
+    func boolValue(_ key: RemoteFeatureFlags.Key) -> Bool {
+        _ = snapshot
+        return Telemetry.featureFlagBool(key)
     }
 }
