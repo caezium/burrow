@@ -1,0 +1,869 @@
+/* Tools */
+"clean" = "クリーン";
+"apps" = "ソフトウェア";
+"optimize" = "最適化";
+"analyze" = "分析";
+"status" = "ステータス";
+"Clean" = "クリーン";
+"Software" = "ソフトウェア";
+"Optimize" = "最適化";
+"Analyze" = "分析";
+"Status" = "ステータス";
+"Settings" = "設定";
+"History" = "履歴";
+"Fresh air through old tunnels." = "古い坑道に、新しい風を。";
+"Shed what you've outgrown." = "使わなくなったものを、脱ぎ捨てる。";
+"Small turns, a smoother run." = "小さな調整で、動きは滑らかに。";
+"Map every chamber below." = "地下のすべての部屋を見取り図に。";
+"Every pulse of the den." = "巣穴の鼓動を、ひとつ残らず。";
+
+/* Shared */
+"Burrow" = "Burrow";
+"Couldn't open Burrow's history database" = "Burrow の履歴データベースを開けませんでした";
+"%@\n\nThe app will quit." = "%@\n\nアプリを終了します。";
+"Mole CLI (`mo`) not found on PATH." = "Mole CLI（`mo`）が PATH 上に見つかりません。";
+"mo analyze exited %d: %@" = "mo analyze が終了コード %d で終了しました: %@";
+"Couldn't parse mo analyze output: %@" = "mo analyze の出力を解析できませんでした: %@";
+"CPU" = "CPU";
+"GPU" = "GPU";
+"Memory" = "メモリ";
+"Network" = "ネットワーク";
+"Disk" = "ディスク";
+"Battery" = "バッテリー";
+"Power" = "電源";
+"Health" = "状態";
+"Activity" = "アクティビティ";
+"Top processes" = "上位プロセス";
+"Open Burrow" = "Burrow を開く";
+"Preview" = "プレビュー";
+"Cancel" = "キャンセル";
+"Failed: %@" = "失敗: %@";
+"%d items · %@" = "%d 項目 · %@";
+"%@ in %d items" = "%2$d 項目で %1$@";
+"Scanning…" = "スキャン中…";
+"Home" = "ホーム";
+"Homebrew (`brew`) not found on this Mac." = "この Mac に Homebrew（`brew`）が見つかりません。";
+"formula" = "formula";
+"cask" = "cask";
+
+/* Status and HUD */
+"Waiting for the first sample…" = "最初のサンプルを待っています…";
+"Burrow runs `mo status --json` on a timer; the first row lands within a tick." = "Burrow は `mo status --json` を一定間隔で実行します。最初の行は次の周期で届きます。";
+"%d cores" = "%d コア";
+"load %.2f · %.2f · %.2f" = "負荷 %.2f · %.2f · %.2f";
+"%.1f / %.1f GB · swap %.1f GB" = "%.1f / %.1f GB · スワップ %.1f GB";
+"normal" = "正常";
+"warning" = "警告";
+"Good" = "良好";
+"Excellent" = "非常に良好";
+"Fair" = "まずまず";
+"Poor" = "不良";
+"Critical" = "危険";
+"All checks passed" = "すべてのチェックに合格しました";
+"up %@ · since %@" = "稼働 %@ · %@ から";
+"%@ · %@ · up %@" = "%@ · %@ · 稼働 %@";
+"GB free" = "GB 空き";
+"%.0f%% used · R %.0f · W %.0f MB/s" = "%.0f%% 使用中 · 読み込み %.0f · 書き込み %.0f MB/s";
+"AC Power" = "電源アダプタ";
+"charging" = "充電中";
+"%@ left" = "残り %@";
+"%@ left · %d cyc · %d%% cap" = "残り %@ · %d 回 · 容量 %d%%";
+"NAME (%d)" = "名前 (%d)";
+"PID" = "PID";
+"MEM" = "メモリ";
+"↓ %d ↑ %d KB/s" = "↓ %d ↑ %d KB/s";
+"%.0f%% used" = "%.0f%% 使用中";
+"%ds ago" = "%d 秒前";
+"no samples yet" = "サンプルはまだありません";
+
+/* Clean */
+"Clean Now" = "今すぐクリーン";
+"Cleaned" = "クリーン済み";
+"Freed up to %@ · %@ items" = "最大 %@ を解放 · %@ 項目";
+"Re-scan" = "再スキャン";
+"Clean for real" = "実際にクリーンする";
+"to free" = "解放可能";
+"· %@ items · %@ categories" = "· %@ 項目 · %@ カテゴリ";
+"Scanning your Mac…" = "Mac をスキャンしています…";
+"Cleaning… don't quit." = "クリーン中です。終了しないでください。";
+"Preview — review, then clean for real." = "プレビューです。確認してから実際にクリーンしてください。";
+"Done — caches cleared." = "完了しました。キャッシュを削除しました。";
+"Scanning caches" = "キャッシュをスキャン中";
+"Cleaning caches" = "キャッシュをクリーン中";
+"Clean caches for real?" = "キャッシュを実際にクリーンしますか？";
+"Burrow will run `mo clean` with administrator rights. Cache files are removed permanently; Mole's whitelist and safety rules still apply." = "Burrow は管理者権限で `mo clean` を実行します。キャッシュファイルは完全に削除されますが、Mole のホワイトリストと安全ルールは引き続き適用されます。";
+
+/* Optimize */
+"Run again" = "もう一度実行";
+"Maintenance complete" = "メンテナンス完了";
+"%d areas refreshed" = "更新した領域: %d";
+"Optimizing" = "最適化中";
+"Optimize preview" = "最適化のプレビュー";
+"Previewing maintenance…" = "メンテナンスをプレビュー中…";
+"Running maintenance…" = "メンテナンスを実行中…";
+"Maintenance complete." = "メンテナンスが完了しました。";
+"Preview complete." = "プレビューが完了しました。";
+
+/* Task reports from mo */
+"Summary" = "概要";
+"Performance Diagnosis" = "パフォーマンス診断";
+"DNS & Spotlight Check" = "DNS と Spotlight の点検";
+"Finder Cache Refresh" = "Finder キャッシュの更新";
+"App State Cleanup" = "App の保存状態の整理";
+"Broken Config Repair" = "壊れた設定ファイルの修復";
+"Network Cache Refresh" = "ネットワークキャッシュの更新";
+"Database Optimization" = "データベースの最適化";
+"LaunchServices Repair" = "LaunchServices の修復";
+"Dock Refresh" = "Dock の更新";
+"Prevent Finder .DS_Store" = ".DS_Store の作成を抑止";
+"Memory Optimization" = "メモリの最適化";
+"Network Stack Refresh" = "ネットワークスタックの更新";
+"Permission Repair" = "アクセス権の修復";
+"Spotlight Optimization" = "Spotlight の最適化";
+"Spotlight Orphan Rules" = "Spotlight の孤立ルール";
+"Periodic Maintenance" = "定期メンテナンス";
+"Shared File Lists" = "共有ファイルリスト";
+"Disk Health" = "ディスクの状態";
+"Login Items" = "ログイン項目";
+"Quarantine Database Cleanup" = "検疫データベースの整理";
+"Launch Agents Cleanup" = "起動エージェントの整理";
+"Notifications" = "通知";
+"Usage Data" = "使用状況データ";
+"User Essentials" = "ユーザーの基本項目";
+"App Caches" = "App キャッシュ";
+"System Caches" = "システムキャッシュ";
+"Developer Caches" = "開発者キャッシュ";
+"Browser Caches" = "ブラウザキャッシュ";
+"Logs" = "ログ";
+"DRY RUN MODE, No files will be modified" = "ドライランモード。ファイルは変更されません";
+"Likely bottleneck: %@" = "ボトルネックの可能性: %@";
+"Gatekeeper and code-signature assessment activity is elevated." = "Gatekeeper とコード署名の評価処理が増えています。";
+"Gatekeeper status: assessments enabled" = "Gatekeeper の状態: 評価は有効";
+"Only system-managed CoreSimulator images are mounted, informational only, not a detach target" = "マウントされているのはシステム管理の CoreSimulator イメージのみです。参考情報であり、取り外し対象ではありません";
+"DNS cache flushed" = "DNS キャッシュを消去しました";
+"Spotlight index verified" = "Spotlight インデックスを検証しました";
+"QuickLook thumbnails refreshed" = "QuickLook のサムネールを更新しました";
+"Icon services cache rebuilt" = "アイコンサービスのキャッシュを再構築しました";
+"App saved states optimized" = "App の保存状態を最適化しました";
+"All preference files valid" = "すべての環境設定ファイルは正常です";
+"DNS cache already refreshed" = "DNS キャッシュはすでに更新済みです";
+"mDNSResponder already restarted" = "mDNSResponder はすでに再起動済みです";
+"All databases already optimized" = "すべてのデータベースはすでに最適化済みです";
+"LaunchServices repaired" = "LaunchServices を修復しました";
+"File associations refreshed" = "ファイルの関連付けを更新しました";
+"Dock refreshed" = "Dock を更新しました";
+".DS_Store prevention enabled on network & USB volumes" = "ネットワークと USB ボリュームで .DS_Store の作成を抑止しました";
+"Inactive memory released" = "非アクティブメモリを解放しました";
+"System responsiveness improved" = "システムの応答性が向上しました";
+"Network routing table refreshed" = "ネットワークのルーティングテーブルを更新しました";
+"ARP cache cleared" = "ARP キャッシュを消去しました";
+"User directory permissions repaired" = "ユーザーディレクトリのアクセス権を修復しました";
+"User directory permissions already optimal" = "ユーザーディレクトリのアクセス権はすでに最適です";
+"File access issues resolved" = "ファイルアクセスの問題を解決しました";
+"Spotlight index already optimal" = "Spotlight インデックスはすでに最適です";
+"Spotlight search rules already clean" = "Spotlight の検索ルールはすでに整理済みです";
+"Periodic maintenance skipped (not available on this macOS version)" = "定期メンテナンスをスキップしました（この macOS バージョンでは利用できません）";
+"Shared file lists all healthy" = "共有ファイルリストはすべて正常です";
+"Disk verify skipped (set MOLE_ENABLE_DISK_VERIFY=1 to enable)" = "ディスク検証をスキップしました（有効にするには MOLE_ENABLE_DISK_VERIFY=1 を設定）";
+"Login items all healthy (%@ checked)" = "ログイン項目はすべて正常です（確認: %@）";
+"Quarantine database already clean" = "検疫データベースはすでに整理済みです";
+"Launch Agents all healthy" = "起動エージェントはすべて正常です";
+"Notification Center database not found" = "通知センターのデータベースが見つかりません";
+"Knowledge database is healthy (%@)" = "Knowledge データベースは正常です（%@）";
+"%@ %@ items, %@ dry" = "%@ %@ 項目、%@ 削除可能";
+"%@ %@ old items, %@ dry" = "%@ 古い項目 %@ 件、%@ 削除可能";
+"%@, %@ dry" = "%@、%@ 削除可能";
+"User app cache" = "ユーザー App キャッシュ";
+"User app logs" = "ユーザー App ログ";
+"Darwin user cache files" = "Darwin ユーザーキャッシュファイル";
+"Media analysis cache" = "メディア解析キャッシュ";
+"Media analysis temp files" = "メディア解析の一時ファイル";
+"Wallpaper agent cache" = "壁紙エージェントのキャッシュ";
+"Trash · already empty" = "ゴミ箱 · すでに空です";
+"System caches need sudo, run sudo -v && mo clean --dry-run for full preview" = "システムキャッシュには sudo が必要です。完全なプレビューには sudo -v && mo clean --dry-run を実行してください";
+"Dry Run Mode, Preview only, no deletions" = "ドライランモード。プレビューのみで、削除は行いません";
+
+/* Analyze */
+"Reveal in Finder" = "Finder に表示";
+"Open here" = "ここで開く";
+"Analyzing %@" = "%@ を分析中";
+"scan failed" = "スキャンに失敗しました";
+
+/* Software */
+"Size" = "サイズ";
+"Name" = "名前";
+"Recent" = "最近";
+"Source" = "入手先";
+"Uninstall" = "削除";
+"Updates" = "アップデート";
+"Search apps" = "App を検索";
+"Reading installed apps…" = "インストール済みの App を読み込み中…";
+"%d apps" = "%d 個の App";
+"%d selected · %@" = "%d 個選択中 · %@";
+"Uninstall (%d)" = "削除 (%d)";
+"Uninstall %d app?" = "%d 個の App を削除しますか？";
+"Uninstall %d apps?" = "%d 個の App を削除しますか？";
+"Move to Trash" = "ゴミ箱に入れる";
+"Checking Homebrew…" = "Homebrew を確認中…";
+"Everything's up to date" = "すべて最新です";
+"Homebrew formulae & casks" = "Homebrew の formula と cask";
+"%d update" = "%d 件のアップデート";
+"%d updates" = "%d 件のアップデート";
+"Update all" = "すべてアップデート";
+"Updating…" = "アップデート中…";
+"Update" = "アップデート";
+
+/* Settings */
+"Storage" = "ストレージ";
+"Currently using" = "現在の使用量";
+"Last maintenance" = "前回のメンテナンス";
+"Run maintenance now" = "今すぐメンテナンスを実行";
+"History lives at ~/Library/Application Support/Burrow/burrow.db. Rows past the retention window are pruned hourly." = "履歴は ~/Library/Application Support/Burrow/burrow.db に保存されます。保持期間を過ぎた行は 1 時間ごとに削除されます。";
+"History retention" = "履歴の保持";
+"Keep history for" = "履歴を保持する期間";
+"1 day" = "1 日";
+"7 days" = "7 日";
+"14 days" = "14 日";
+"30 days" = "30 日";
+"90 days" = "90 日";
+"180 days" = "180 日";
+"1 year" = "1 年";
+"Vacuum DB after large prunes" = "大量削除の後にデータベースを最適化";
+"Sampling" = "サンプリング";
+"Sample every" = "サンプリング間隔";
+"5 sec" = "5 秒";
+"15 sec" = "15 秒";
+"30 sec" = "30 秒";
+"60 sec" = "60 秒";
+"2 min" = "2 分";
+"5 min" = "5 分";
+"Burrow runs `mo status --json` at this cadence. 60 s is plenty for charts; tighter intervals give finer detail at the cost of more subprocess churn." = "Burrow はこの間隔で `mo status --json` を実行します。グラフには 60 秒で十分です。間隔を短くすると細かく記録できますが、サブプロセスの起動が増えます。";
+"MCP query server" = "MCP クエリサーバ";
+"Enable MCP query server" = "MCP クエリサーバを有効にする";
+"Endpoint" = "エンドポイント";
+"Toggle + port changes take effect after a relaunch. Exposes /health, /info, /snapshot, /metrics over localhost, plus the `Burrow --mcp` stdio server for Claude Code." = "オン・オフとポートの変更は再起動後に反映されます。localhost で /health、/info、/snapshot、/metrics を公開し、Claude Code 向けに `Burrow --mcp` の stdio サーバも提供します。";
+"%ds ago · pruned %d rows" = "%d 秒前 · 削除した行: %d";
+"not yet run" = "未実行";
+
+/* History */
+"CPU usage" = "CPU 使用率";
+"usage" = "使用率";
+"CPU load" = "CPU 負荷";
+"1m avg" = "1 分平均";
+"load1" = "load1";
+"% used" = "% 使用中";
+"used" = "使用中";
+"Disk I/O" = "ディスク I/O";
+"MB/s" = "MB/s";
+"read" = "読み込み";
+"write" = "書き込み";
+"rx" = "受信";
+"tx" = "送信";
+"Thermal" = "温度";
+"cpu" = "cpu";
+"gpu" = "gpu";
+"Health score" = "状態スコア";
+"0–100" = "0–100";
+"No samples in this window" = "この期間のサンプルはありません";
+"peak across window" = "期間中のピーク";
+"No processes recorded" = "記録されたプロセスはありません";
+"%d samples" = "%d 件のサンプル";
+"· latest %ds ago" = "· 最新は %d 秒前";
+
+/* Menus and alerts */
+"About Burrow" = "Burrow について";
+"Settings…" = "設定…";
+"Hide Burrow" = "Burrow を隠す";
+"Quit Burrow" = "Burrow を終了";
+"Edit" = "編集";
+"Undo" = "取り消す";
+"Redo" = "やり直す";
+"Cut" = "カット";
+"Copy" = "コピー";
+"Paste" = "ペースト";
+"Select All" = "すべてを選択";
+"Window" = "ウインドウ";
+"Minimize" = "しまう";
+"Close" = "閉じる";
+"Mole CLI not found" = "Mole CLI が見つかりません";
+
+/* Home (Overview / History / Activity / Report) + Explain */
+"Overview" = "概要";
+"Report" = "レポート";
+"Doctor" = "診断";
+"Diagnostics" = "診断情報";
+"Dev hygiene" = "開発環境の整理";
+"No developer caches found." = "開発者キャッシュは見つかりませんでした。";
+"Clear" = "消去";
+"Move this cache to the Trash?" = "このキャッシュをゴミ箱に入れますか？";
+"ports" = "ポート";
+"Ports" = "ポート";
+"Listening ports" = "待ち受けポート";
+"See who's listening." = "何が待ち受けているかを確認。";
+"Quit this process?" = "このプロセスを終了しますか？";
+"tuneup" = "チューンアップ";
+"Tune-Up" = "チューンアップ";
+"One pass, a tidier den." = "ひと通りで、巣穴はすっきり。";
+"Safe to run" = "安全に実行できます";
+"Needs review" = "要確認";
+"Run safe set" = "安全な項目を実行";
+"Clear %@ cache" = "%@ のキャッシュを消去";
+"Review startup item: %@" = "起動項目を確認: %@";
+"Nothing to tune up — you're clean." = "チューンアップする項目はありません。きれいな状態です。";
+"restore" = "復元";
+"Restore" = "復元";
+"Put back what the last clean moved." = "前回のクリーンで移動したものを元に戻す。";
+"Restore last cleanup" = "前回のクリーンを元に戻す";
+"Only Trash-based removals can be restored — cache deletions are permanent." = "元に戻せるのはゴミ箱に移動したものだけです。キャッシュの削除は取り消せません。";
+"No restorable items found." = "復元できる項目はありません。";
+"Top processes in selection" = "選択範囲の上位プロセス";
+"No process samples in that window." = "この期間のプロセスサンプルはありません。";
+"Full in ~%@" = "約 %@ で満杯";
+"%d days" = "%d 日";
+"%d weeks" = "%d 週間";
+"%d months" = "%d か月";
+"Uncommitted or unpushed git changes in this repo" = "このリポジトリにコミットまたはプッシュしていない変更があります";
+"A new startup item appeared" = "新しい起動項目が追加されました";
+"“%@” now launches automatically. If you didn't add it, review it." = "「%@」が自動的に起動するようになりました。心当たりがない場合は確認してください。";
+"CPU usage is high" = "CPU 使用率が高くなっています";
+"CPU has been pegged at %.0f%%." = "CPU が %.0f%% に張りついています。";
+"Memory pressure is high" = "メモリ負荷が高くなっています";
+"Memory is at %.0f%%." = "メモリ使用率は %.0f%% です。";
+"Explain" = "解説";
+
+/* Language switch */
+"Language" = "言語";
+"App language" = "App の言語";
+"System" = "システムに合わせる";
+"Relaunch to change language?" = "言語を変更するために再起動しますか？";
+"Burrow needs to relaunch to apply the new language." = "新しい言語を適用するには Burrow を再起動する必要があります。";
+"Relaunch Now" = "今すぐ再起動";
+"Later" = "あとで";
+"A language change takes effect after a relaunch." = "言語の変更は再起動後に反映されます。";
+
+/* Analyze — move to Trash */
+"Move “%@” to Trash?" = "「%@」をゴミ箱に入れますか？";
+"This moves %@ (%@) to the Trash, where you can restore it." = "%@（%@）をゴミ箱に移動します。あとで元に戻せます。";
+"this folder" = "このフォルダ";
+"this file" = "このファイル";
+"Couldn't move to Trash" = "ゴミ箱に移動できませんでした";
+
+/* Settings sections */
+"Engine" = "エンジン";
+"Menu bar" = "メニューバー";
+"Show menu bar icon" = "メニューバーアイコンを表示";
+
+/* Tools — purge / installer labels + taglines */
+"purge" = "ディープクリーン";
+"installer" = "インストーラ";
+"Purge" = "ディープクリーン";
+"Installers" = "インストーラ";
+"Clear the diggings dev work leaves behind." = "開発作業が残した掘りくずを片づける。";
+"Sweep out the crates you unpacked." = "開けたあとの木箱を運び出す。";
+
+/* Common actions / labels */
+"Scan" = "スキャン";
+"Rescan" = "再スキャン";
+"Back" = "戻る";
+"Stop" = "停止";
+"Stopped." = "停止しました。";
+"Go up" = "上の階層へ";
+"Fans" = "ファン";
+"Bluetooth" = "Bluetooth";
+"GPU usage" = "GPU 使用率";
+"RAM" = "RAM";
+"Version" = "バージョン";
+"incomplete" = "未完了";
+"Reading your Mac…" = "Mac を読み込み中…";
+
+/* Activity (cleanup history) */
+"Recent Mole cleanup sessions" = "最近の Mole クリーン履歴";
+"No cleanup history yet" = "クリーンの履歴はまだありません";
+"Run a Clean or Optimize and it'll show up here." = "クリーンまたは最適化を実行すると、ここに表示されます。";
+
+/* Settings — AI / MCP / server */
+"Burrow engine missing" = "Burrow エンジンが見つかりません";
+"Touch ID for sudo" = "sudo で Touch ID を使う";
+"Explain (AI) — experimental" = "解説（AI）— 実験的機能";
+"Ask your AI about your Mac (MCP)" = "AI に Mac のことを尋ねる（MCP）";
+"Local HTTP query server" = "ローカル HTTP クエリサーバ";
+"Enable the Explain lens" = "解説機能を有効にする";
+"Enable HTTP query server" = "HTTP クエリサーバを有効にする";
+"Let agents run cleanups for real" = "エージェントに実際のクリーンを許可する";
+"Backend" = "バックエンド";
+"Base URL" = "ベース URL";
+"Model" = "モデル";
+"API key (optional)" = "API キー（任意）";
+"Ollama model" = "Ollama モデル";
+"Local · Ollama" = "ローカル · Ollama";
+"LM Studio / API" = "LM Studio / API";
+"Read tools" = "読み取りツール";
+"Cleanup tools" = "クリーンツール";
+"Try asking" = "こう聞いてみてください";
+"Copy prompt" = "プロンプトをコピー";
+"Preview what a cleanup would free, then clean it up." = "クリーンでどれだけ空くかをプレビューして、そのまま実行して。";
+"Uninstall Slack and remove its leftovers." = "Slack を削除して、残ったファイルも片づけて。";
+"What's my Mac's CPU and memory usage right now?" = "いまの Mac の CPU とメモリの使用率は？";
+"What's taking up space in my home folder?" = "ホームフォルダの容量を使っているのは何？";
+"AI read of one snapshot — it can be wrong, and never acts on its own." = "スナップショット 1 件を AI が読んだ結果です。誤ることもあり、AI が勝手に操作することはありません。";
+"Adds an “Explain” button to Status that reads your latest snapshot and explains it in plain English, optionally suggesting Clean/Purge/Installers." = "ステータスに「解説」ボタンを追加します。最新のスナップショットを読んでわかりやすく説明し、必要に応じてクリーン／ディープクリーン／インストーラを提案します。";
+"Burrow exposes your Mac's recorded history to coding agents — Claude Code, Cursor, Codex, Cline — over MCP. Add the config below, then ask in plain language. The server starts on demand over stdio; there's no port and no always-on listener." = "Burrow は記録した Mac の履歴を、MCP 経由でコーディングエージェント（Claude Code、Cursor、Codex、Cline）に公開します。以下の設定を追加すれば、普通の言葉で質問できます。サーバは stdio で必要なときだけ起動し、ポートも常駐リスナーもありません。";
+"OFF by default. Agents can always read metrics and run dry-run previews. With this on, an agent can run a real `mo clean` / `optimize` / `uninstall` — but ONLY when it also passes an explicit confirm flag, so a deletion is never one stray sentence away. Turn it off and agents are read-only again. Data stays on this Mac." = "初期状態はオフです。エージェントはいつでも指標の読み取りとドライランのプレビューを実行できます。オンにすると、実際の `mo clean` / `optimize` / `uninstall` を実行できますが、明示的な確認フラグを併せて渡した場合に限ります。ひとことの行き違いで削除が起きることはありません。オフにすれば、エージェントは再び読み取り専用になります。データはこの Mac から出ません。";
+"Runs against a local Ollama model — nothing leaves this Mac. Start it with `ollama run <model>`." = "ローカルの Ollama モデルを使うため、この Mac から何も送信されません。`ollama run <model>` で起動してください。";
+"Any OpenAI-compatible server. For LM Studio: load a model, open Developer ▸ Start Server, and leave the key blank — the default URL is already LM Studio's. A hosted endpoint (e.g. OpenAI) needs a key and sends the metrics summary off-device (never file contents)." = "OpenAI 互換のサーバであれば利用できます。LM Studio の場合は、モデルを読み込み、Developer ▸ Start Server を開き、キーは空のままにしてください。既定の URL はすでに LM Studio 用です。ホスト型のエンドポイント（OpenAI など）はキーが必要で、指標の要約が外部に送信されます（ファイルの内容は送信されません）。";
+"Sparkle checks Burrow's signed update feed after startup settles and about once a day. It asks before downloading or installing anything." = "Sparkle は起動が落ち着いたあとと、およそ 1 日に 1 回、Burrow の署名付きアップデートフィードを確認します。ダウンロードやインストールの前には必ず確認します。";
+"Check for updates automatically" = "自動的にアップデートを確認";
+"Check for Updates" = "アップデートを確認";
+"About Burrow" = "Burrow について";
+"Update didn't complete" = "アップデートが完了しませんでした";
+"Update external engine" = "外部エンジンをアップデート";
+"This source build is using an engine outside Burrow.app, so its own updater remains available." = "このソースビルドは Burrow.app の外にあるエンジンを使っているため、エンジン自身のアップデート機能を利用できます。";
+"Included with Burrow. Engine updates arrive through signed Burrow releases so the app's Developer ID seal stays valid." = "Burrow に同梱されています。エンジンのアップデートは署名付きの Burrow リリースとして配布されるため、App の Developer ID 署名は有効なままです。";
+"The bundled engine is missing. Reinstall Burrow to restore the signed app bundle." = "同梱エンジンが見つかりません。署名済みの App バンドルを復元するには Burrow を再インストールしてください。";
+"External engine is up to date" = "外部エンジンは最新です";
+"Now on %@." = "現在のバージョンは %@ です。";
+"The external engine updater exited non-zero. Try running `mo update` in a terminal." = "外部エンジンのアップデータが異常終了しました。ターミナルで `mo update` を実行してみてください。";
+"Disk analysis needs Mole %@ or newer (you have %@). %@" = "ディスク分析には Mole %@ 以降が必要です（現在は %@）。%@";
+"Update Burrow to get the current bundled engine." = "同梱エンジンを最新にするには Burrow をアップデートしてください。";
+"Use Settings › Engine › Update external engine, then try again." = "設定 › エンジン › 外部エンジンをアップデート を実行してから、もう一度お試しください。";
+"Reinstall Burrow to restore the bundled engine." = "同梱エンジンを復元するには Burrow を再インストールしてください。";
+"Lets `sudo` and admin prompts accept your fingerprint instead of a password, where macOS supports it. Configured via `mo touchid`; turning it on or off needs your password once." = "macOS が対応している場合に、`sudo` や管理者の確認でパスワードの代わりに指紋を使えるようにします。設定は `mo touchid` で行い、オン・オフの切り替えには一度だけパスワードが必要です。";
+"Authentication" = "認証";
+"Bearer token required" = "Bearer トークンが必要です";
+"Optional REST surface for dashboards or curl: /health, /info, /snapshot, /metrics over localhost. Every request needs the per-install token; retrieve it locally with `defaults read dev.caezium.Burrow query_auth_token`. Separate from the MCP stdio server above; toggle + port changes take effect after a relaunch." = "ダッシュボードや curl 向けの任意の REST インターフェイスです。localhost で /health、/info、/snapshot、/metrics を提供します。すべてのリクエストにインストールごとのトークンが必要で、`defaults read dev.caezium.Burrow query_auth_token` でローカルに取得できます。上記の MCP stdio サーバとは別のもので、オン・オフとポートの変更は再起動後に反映されます。";
+"Applies immediately. When off, Burrow shows a Dock icon instead so it stays reachable — a Dock click reopens the window." = "すぐに反映されます。オフのときは代わりに Dock アイコンを表示するので、Dock をクリックすればウインドウを開けます。";
+
+/* Onboarding / Full Disk Access */
+"Official builds include the engine inside the signed app. Reinstall Burrow to restore it; source builds can also provide an external `mo` on PATH." = "公式ビルドは署名済み App の中にエンジンを同梱しています。復元するには Burrow を再インストールしてください。ソースからのビルドでは、PATH 上の外部 `mo` も利用できます。";
+"REINSTALL SIGNED APP" = "署名済み APP を再インストール";
+"View the bundled engine source →" = "同梱エンジンのソースを見る →";
+"The engine is still missing. Finish reinstalling Burrow, then recheck or relaunch the app." = "エンジンがまだ見つかりません。Burrow の再インストールを完了してから、再確認するか App を再起動してください。";
+"Grant Full Disk Access to scan" = "スキャンするにはフルディスクアクセスを許可してください";
+"Skip the macOS permission prompts" = "macOS の許可ダイアログを省く";
+"Open Full Disk Access settings" = "フルディスクアクセスの設定を開く";
+"Don't ask again" = "今後は確認しない";
+"Scan anyway" = "このままスキャン";
+"Scanning system & app caches makes macOS ask once per protected folder. Grant Burrow Full Disk Access to scan smoothly — it only reads sizes through Mole and never opens that data itself." = "システムと App のキャッシュをスキャンすると、macOS は保護されたフォルダごとに確認を求めます。Burrow にフルディスクアクセスを許可すると、確認なしでスキャンできます。Burrow は Mole を通じてサイズを読み取るだけで、データそのものを開くことはありません。";
+"Still blocked? macOS only applies Full Disk Access the next time Burrow launches. Quit and reopen, then scan." = "まだ許可されませんか？ macOS がフルディスクアクセスを反映するのは、Burrow の次回起動時です。終了して開き直してから、もう一度スキャンしてください。";
+"Quit" = "終了";
+
+/* ===== Anonymous usage (telemetry) — Settings section + first-launch consent ===== */
+"Anonymous usage" = "匿名の使用状況";
+"Share anonymous usage & crash reports" = "匿名の使用状況とクラッシュレポートを送信";
+"Share anonymous usage & diagnostics" = "匿名の使用状況と診断情報を送信";
+"Sends anonymous product analytics (PostHog) and crash reports (Sentry): a random install id (not tied to you or your hardware), the app + macOS version, CPU type, and which features you use — with sizes and counts bucketed. Never file names, contents, paths, or your metrics. It helps gauge retention and catch crashes. On by default; turn it off and both stop. Full list in TELEMETRY.md." = "匿名のプロダクト分析（PostHog）とクラッシュレポート（Sentry）を送信します。内容は、ランダムなインストール ID（あなたやハードウェアとは結びつきません）、App と macOS のバージョン、CPU の種類、使用した機能で、サイズや件数は区間にまとめられます。ファイル名、内容、パス、あなたの指標は一切送信しません。継続利用の把握とクラッシュの検知に役立ちます。初期状態はオンで、オフにすると両方とも停止します。詳細は TELEMETRY.md をご覧ください。";
+"Sends anonymous product analytics (PostHog) plus crash, hang, startup, update, and sampled performance diagnostics (Sentry): random install IDs, app and exact macOS build, CPU type, screens and features used, and fixed-name diagnostic milestones. Never screenshots, screen recordings, your file names, contents, user paths, URLs, or metrics. On by default; turn it off and both stop. Full list in TELEMETRY.md." = "匿名のプロダクト分析（PostHog）に加えて、クラッシュ・ハング・起動・アップデート・抽出されたパフォーマンスの診断情報（Sentry）を送信します。内容は、ランダムなインストール ID、App と macOS の正確なビルド、CPU の種類、表示した画面と使用した機能、固定名の診断マイルストーンです。スクリーンショット、画面収録、ファイル名、内容、ユーザーのパス、URL、指標は一切送信しません。初期状態はオンで、オフにすると両方とも停止します。詳細は TELEMETRY.md をご覧ください。";
+"Burrow started in compatibility mode" = "Burrow は互換モードで起動しました";
+"Burrow detected that creating its menu bar item could freeze this macOS build. The menu bar item is disabled on this build, and Burrow will stay available in the Dock. Updating macOS will automatically retry the normal menu bar mode." = "Burrow は、メニューバー項目の作成がこの macOS ビルドをフリーズさせる可能性を検出しました。このビルドではメニューバー項目を無効にし、Burrow は Dock から利用できます。macOS をアップデートすると、通常のメニューバーモードが自動的に再試行されます。";
+"Burrow detected that creating its menu bar item could freeze this macOS build. The menu bar item and automatic update checks are paused on this build, and Burrow will stay available in the Dock. Manual update checks remain available. Updating macOS will automatically retry the normal mode." = "Burrow は、メニューバー項目の作成がこの macOS ビルドをフリーズさせる可能性を検出しました。このビルドではメニューバー項目と自動アップデート確認を一時停止し、Burrow は Dock から利用できます。手動でのアップデート確認は引き続き行えます。macOS をアップデートすると、通常のモードが自動的に再試行されます。";
+"Burrow paused automatic update checks" = "Burrow は自動アップデート確認を一時停止しました";
+"Burrow detected that its automatic updater did not reach a stable state on the previous launch. Automatic checks are paused for this app and macOS build so the same startup problem cannot repeat. You can still check manually; updating Burrow or macOS will retry automatic checks." = "Burrow は、前回の起動時に自動アップデータが安定した状態に達しなかったことを検出しました。同じ起動時の問題が繰り返されないよう、この App と macOS ビルドでは自動確認を一時停止しています。手動での確認は引き続き行えます。Burrow または macOS をアップデートすると、自動確認が再試行されます。";
+"Menu bar item paused on this macOS build" = "この macOS ビルドではメニューバー項目を一時停止しています";
+"Creating it could freeze system input on this build, so Burrow runs from the Dock instead. It returns automatically once you update macOS." = "このビルドでは、作成するとシステムの入力がフリーズする可能性があるため、Burrow は代わりに Dock から動作します。macOS をアップデートすると自動的に元に戻ります。";
+"Paused on this macOS build. The setting is kept and applies again as soon as Burrow can create the menu bar item safely." = "この macOS ビルドでは一時停止しています。設定は保持され、Burrow が安全にメニューバー項目を作成できるようになり次第、再び適用されます。";
+"Copy Diagnostics" = "診断情報をコピー";
+"Share anonymous usage & crash reports?" = "匿名の使用状況とクラッシュレポートを送信しますか？";
+"Helps prioritize fixes: app/OS version, coarse bucketed feature counts, and crash traces. Never files, paths, file contents, or your metrics — the exact list is in TELEMETRY.md. You can change this anytime in Settings → Anonymous usage." = "修正の優先順位づけに役立ちます。送信するのは App と OS のバージョン、おおまかに区間化した機能の利用回数、クラッシュのトレースです。ファイル、パス、ファイルの内容、あなたの指標は一切送信しません。正確な一覧は TELEMETRY.md にあります。設定 → 匿名の使用状況 でいつでも変更できます。";
+"Share" = "送信する";
+"Don't Share" = "送信しない";
+
+/* ===== Agent (MCP) gates ===== */
+"OFF by default. Agents can always read metrics and run dry-run previews. With this on, an agent can run a real `mo clean` / `optimize` — but ONLY when it also passes an explicit confirm flag, so a deletion is never one stray sentence away. Turn it off and agents are read-only again. Data stays on this Mac." = "初期状態はオフです。エージェントはいつでも指標の読み取りとドライランのプレビューを実行できます。オンにすると、実際の `mo clean` / `optimize` を実行できますが、明示的な確認フラグを併せて渡した場合に限ります。ひとことの行き違いで削除が起きることはありません。オフにすれば、エージェントは再び読み取り専用になります。データはこの Mac から出ません。";
+"Also allow uninstalls & permanent deletes" = "App の削除と完全削除も許可する";
+"A second key for what the Trash can't undo: real `mo uninstall`, and `permanent:true` deletes. Needs the cleanup switch above too; an uninstall also aborts unless mo matches exactly the requested apps." = "ゴミ箱では取り消せない操作のための 2 つめの鍵です。実際の `mo uninstall` と `permanent:true` の削除が対象になります。上のクリーンのスイッチも必要で、さらに mo が要求どおりの App に正確に一致しない限り、削除は中止されます。";
+
+/* ===== Uninstall pre-flight verification ===== */
+"Uninstall aborted" = "削除を中止しました";
+"%1$@ would also remove: %2$@" = "%1$@ は次も削除します: %2$@";
+"%1$@ did not match: %2$@" = "%1$@ は一致しませんでした: %2$@";
+"The engine" = "エンジン";
+"mo" = "mo";
+"The dry run's output wasn't in a format Burrow can confirm a matched set from, so nothing was removed." = "ドライランの出力が、Burrow が対象の一致を確認できる形式ではなかったため、何も削除していません。";
+"The engine refused the dry run, so nothing was removed: %@" = "エンジンがドライランを拒否したため、何も削除していません: %@";
+"The engine matched no installed app for: %@" = "次に一致するインストール済みの App がありませんでした: %@";
+"“%1$@” resolves to %2$d applications (%3$@), so the engine refuses to act on it. Remove them one at a time." = "「%1$@」は %2$d 個の App（%3$@）に一致するため、エンジンは処理を拒否します。1 つずつ削除してください。";
+"The engine resolved %1$d applications for %2$d selected, so the sets don't line up." = "選択した %2$d 個に対してエンジンは %1$d 個の App を解決したため、対象が一致しません。";
+"The engine won't remove %1$@: %2$@" = "エンジンは %1$@ を削除しません: %2$@";
+"Needs an administrator: %@. Burrow doesn't elevate this run, so it may fail on the app itself." = "管理者権限が必要です: %@。Burrow はこの実行で権限を昇格しないため、App 本体の削除は失敗する可能性があります。";
+"one of these apps" = "これらの App のいずれか";
+"Homebrew removes %1$@: `%2$@`. `--zap` also deletes configuration and data the cask declares, which the preview can't list." = "%1$@ は Homebrew が削除します: `%2$@`。`--zap` は cask が宣言した設定やデータも削除しますが、それらはプレビューに表示できません。";
+"aborted — nothing removed" = "中止しました — 何も削除していません";
+"The engine reported: %@" = "エンジンの報告: %@";
+"uninstall failed" = "削除に失敗しました";
+"Uninstall failed" = "削除に失敗しました";
+"The engine reported a failure with no error output. Nothing was removed." = "エンジンはエラー出力なしで失敗を報告しました。何も削除していません。";
+"OK" = "OK";
+
+/* ===== Uninstall outcomes (per app: removed / partial / refused) ===== */
+"Uninstall didn't finish" = "削除が完了しませんでした";
+"Uninstall finished partly" = "削除は一部だけ完了しました";
+"Uninstall finished" = "削除が完了しました";
+"%@ — the engine refused to remove the application." = "%@ — エンジンがこの App の削除を拒否しました。";
+"%@ — the application could not be removed." = "%@ — この App を削除できませんでした。";
+"%@ — the application was removed, but some of its support files were not." = "%@ — App は削除しましたが、関連ファイルの一部は残っています。";
+"%@ — the removal finished partly." = "%@ — 削除は一部だけ完了しました。";
+"Its support files were left alone, so the app is still installed rather than half-removed." = "関連ファイルはそのまま残したため、この App は中途半端に削除された状態ではなく、インストールされたままです。";
+"Next: %@" = "次: %@";
+
+/* ===== i18n backfill (2026-06): legacy hardcoded strings ===== */
+/* Installer/purge chooser — clean (non-plural) labels */
+"done" = "完了";
+"failed" = "失敗";
+"select none" = "選択を解除";
+"select all" = "すべて選択";
+"Remove" = "削除";
+"Remove (%lld)" = "削除 (%lld)";
+"Show all %lld" = "%lld 件すべてを表示";
+"Showing the %lld biggest of %lld." = "%2$lld 件のうち、大きい順に %1$lld 件を表示しています。";
+"Loading all %lld… (%lld so far)" = "%lld 件すべてを読み込み中…（現在 %lld 件）";
+/* Elevated-run cancellation (OperationFlow) */
+"authorization cancelled" = "認証をキャンセルしました";
+/* Touch ID for sudo (Settings) */
+"Couldn't update Touch ID for sudo" = "sudo の Touch ID 設定を更新できませんでした";
+"`mo touchid %@` didn't complete (the password prompt may have been cancelled). You can also run it in a terminal." = "`mo touchid %@` が完了しませんでした（パスワードの入力がキャンセルされた可能性があります）。ターミナルから実行することもできます。";
+/* AI "Explain" lens errors (AIConfig) */
+"No Ollama model is set — pick one in Settings." = "Ollama のモデルが設定されていません。設定で選択してください。";
+"No model name is set for the OpenAI-compatible API — set one in Settings." = "OpenAI 互換 API のモデル名が設定されていません。設定で指定してください。";
+"The API base URL isn't a valid http(s) URL — check it in Settings." = "API のベース URL が有効な http(s) URL ではありません。設定で確認してください。";
+
+/* i18n backfill (cont.) — running count + AI settings field labels */
+"%lld running" = "%lld 件が実行中";
+"blank for LM Studio" = "LM Studio では空欄";
+
+/* ============================================================
+   2026-06 UI/UX redesign (plans/ui-ux-review-2026-06-10.md)
+   Onboarding · access banner · Clean review · result hero ·
+   task ticker · Software (uninstall/updates/startup) · Settings
+   tabs · menu-bar tools · Status/popover · Analyze progress
+   ============================================================ */
+
+/* Onboarding */
+"Step %d of %d" = "ステップ %1$d / %2$d";
+"Grant access to get started." = "始めるにはアクセスを許可してください。";
+"Optional — the safe scan works without it." = "任意です。安全なスキャンは許可がなくても動作します。";
+"Full Disk Access" = "フルディスクアクセス";
+"Unlocks the caches and leftovers Burrow needs to reach." = "Burrow が扱う必要のあるキャッシュや残存ファイルにアクセスできるようになります。";
+"Granted in Settings but still gray? macOS applies it at the next launch." = "設定で許可したのにグレーのままですか？ macOS は次回の起動時に反映します。";
+"Relaunch to apply" = "再起動して適用";
+"Continue" = "続ける";
+"Burrow is free." = "Burrow は無料です。";
+"Open source, local-first. No license, no trial, no upsell." = "オープンソースで、ローカル優先。ライセンスも試用期間も追加販売もありません。";
+"forever" = "ずっと";
+"Every tool unlocked — Clean, Purge, Installers, Software, Optimize, Analyze" = "すべての機能が使えます — クリーン、ディープクリーン、インストーラ、ソフトウェア、最適化、分析";
+"Watches your Mac over weeks, not seconds — 30–90 day history" = "数秒ではなく数週間の視点で Mac を見守ります — 30〜90 日分の履歴";
+"Agent-ready — MCP tools for Claude, Cursor, Codex (off until you opt in)" = "エージェント対応 — Claude、Cursor、Codex 向けの MCP ツール（オンにするまで無効）";
+"Open source — read every line" = "オープンソース — すべての行を読めます";
+"Open the Burrow repository on GitHub" = "GitHub で Burrow のリポジトリを開く";
+"Start using Burrow" = "Burrow を使いはじめる";
+"Open Settings" = "設定を開く";
+"Check" = "確認";
+"Granted" = "許可済み";
+"Not granted" = "未許可";
+
+/* Access banner */
+"Full Disk Access is off" = "フルディスクアクセスがオフです";
+"Without it, Burrow can't reach most system caches." = "許可がないと、Burrow はほとんどのシステムキャッシュにアクセスできません。";
+"Use Touch ID for admin operations" = "管理者操作で Touch ID を使う";
+"Install the signed helper and scan, clean, and optimize authenticate with a fingerprint instead of a password." = "署名済みヘルパーをインストールすると、スキャン・クリーン・最適化の認証をパスワードではなく指紋で行えます。";
+"Set up" = "設定する";
+"Dismiss" = "閉じる";
+
+/* Clean — result hero & run */
+"Scan your Mac" = "Mac をスキャン";
+"%@ found" = "%@ を検出";
+"Scanning, %@ found so far" = "スキャン中、現在までに %@ を検出";
+"Stopped before the end — results are partial." = "途中で停止したため、結果は一部のみです。";
+"Review results" = "結果を確認";
+"Limited scan active · App Support and container caches are skipped" = "制限付きスキャン中 · App Support とコンテナのキャッシュはスキップされます";
+"Limited scan active. App Support and container caches are skipped. Open for options." = "制限付きスキャン中です。App Support とコンテナのキャッシュはスキップされます。開くと選択肢を確認できます。";
+"Why limited?" = "なぜ制限されるの？";
+"Without Full Disk Access, macOS hides most app and container caches from Burrow. Grant it once for full scans — or rerun this scan with administrator rights (one password)." = "フルディスクアクセスがないと、macOS はほとんどの App とコンテナのキャッシュを Burrow から隠します。一度許可すれば完全なスキャンができます。または、管理者権限（パスワード 1 回）でこのスキャンをやり直すこともできます。";
+"Scan with admin" = "管理者権限でスキャン";
+"This preview is stale" = "このプレビューは古くなっています";
+"The scan is more than a few minutes old — caches that appeared since wouldn't have been reviewed. Rescan to get current numbers, then clean." = "スキャンから数分以上が経過しています。その後に増えたキャッシュは確認されていません。再スキャンして最新の数値を確認してからクリーンしてください。";
+"Couldn't protect deselected items" = "選択を外した項目を保護できませんでした";
+"Writing the whitelist failed (%@), so the engine would clean everything it found. Nothing was cleaned." = "ホワイトリストの書き込みに失敗したため（%@）、エンジンは見つけたものをすべてクリーンしてしまいます。何もクリーンしていません。";
+"Move %d items (%@) to the Trash?" = "%1$d 項目（%2$@）をゴミ箱に入れますか？";
+"They stay recoverable until you empty the Trash. Space frees when it empties; this run won't appear in `mo history`." = "ゴミ箱を空にするまでは元に戻せます。容量が空くのはゴミ箱を空にしたときで、この実行は `mo history` には表示されません。";
+"Moving caches to Trash" = "キャッシュをゴミ箱に移動中";
+"%d moved · %d failed" = "移動: %1$d · 失敗: %2$d";
+"Moved %d items (%@) to the Trash." = "%1$d 項目（%2$@）をゴミ箱に移動しました。";
+"Moved %d items; %d were locked or already gone." = "%1$d 項目を移動しました。%2$d 項目はロックされているか、すでに存在しませんでした。";
+"Moved to Trash" = "ゴミ箱に移動しました";
+"Freed %@" = "%@ を解放";
+"Cleaned %@" = "%@ をクリーン";
+"%@ free now" = "現在 %@ が空き";
+"%@ items" = "%@ 項目";
+"Done" = "完了";
+
+/* Clean — review screen */
+"Ready to clean" = "クリーンの準備ができました";
+"Close %@ to clean another %@ · %d items" = "%1$@ を終了すると、さらに %2$@ をクリーンできます · %3$d 項目";
+"Everything below came from the scan — untick anything you'd rather keep." = "以下はすべてスキャンの結果です。残しておきたいものはチェックを外してください。";
+"Back to results" = "結果に戻る";
+"Select all" = "すべて選択";
+"Deselect all" = "すべて選択解除";
+"%@, %d of %d selected, %@ of %@" = "%1$@、%3$d 項目中 %2$d 項目を選択、%5$@ 中 %4$@";
+"Toggle category" = "カテゴリを切り替え";
+"%d items" = "%d 項目";
+"Safe" = "安全";
+"App open" = "App が起動中";
+"System busy" = "システムが使用中";
+"The scan already excluded unsafe paths — everything here is removable cache data." = "スキャンの時点で安全でないパスは除外済みです。ここにあるのはすべて削除できるキャッシュデータです。";
+"This app is running; its cache is locked. Quit the app and rescan to clean it." = "この App は実行中で、キャッシュがロックされています。App を終了して再スキャンするとクリーンできます。";
+"A system service is using this path right now." = "システムサービスが現在このパスを使用しています。";
+"Always skip this" = "常にスキップする";
+"Permanently clean · %@" = "完全にクリーン · %@";
+"Move to Trash · %@" = "ゴミ箱に入れる · %@";
+"selected" = "選択中";
+"not selected" = "未選択";
+"User essentials" = "ユーザーの基本項目";
+"App caches" = "App キャッシュ";
+"Browsers" = "ブラウザ";
+"Cloud & Office" = "クラウドとオフィス";
+"Developer tools" = "開発ツール";
+"AI Tools" = "AI ツール";
+"Communication" = "コミュニケーション";
+"Applications" = "アプリケーション";
+"Virtualization" = "仮想化";
+"Application Support" = "Application Support";
+"App leftovers" = "App の残存ファイル";
+"System-managed caches and logs. Regenerated as macOS needs them." = "システムが管理するキャッシュとログです。macOS が必要に応じて作り直します。";
+"App temporary files. Regenerated next launch." = "App の一時ファイルです。次回の起動時に作り直されます。";
+"Page caches — sites load a touch slower on first visit." = "ページキャッシュです。次回の初回アクセスだけ、わずかに読み込みが遅くなります。";
+"Build and package caches. First build will be slower." = "ビルドとパッケージのキャッシュです。最初のビルドは遅くなります。";
+"Model and tool caches. Re-downloaded on next use." = "モデルとツールのキャッシュです。次に使うときに再ダウンロードされます。";
+"Message media caches. Re-fetched when you scroll back." = "メッセージのメディアキャッシュです。さかのぼって表示すると再取得されます。";
+"VM and container caches. Images re-pull on next run." = "仮想マシンとコンテナのキャッシュです。次の実行時にイメージを取得し直します。";
+"Sync caches. Files re-sync from the cloud." = "同期キャッシュです。ファイルはクラウドから同期し直されます。";
+"Files from apps that are no longer installed." = "すでにインストールされていない App のファイルです。";
+"Cache files. Regenerated as needed." = "キャッシュファイルです。必要に応じて作り直されます。";
+
+/* Optimize — live ticker */
+"Refreshing…" = "更新中…";
+"Previewing…" = "プレビュー中…";
+"Working…" = "処理中…";
+"Working on %@, %d tasks done" = "%1$@ を処理中、完了したタスク: %2$d";
+
+/* Software — uninstall review */
+"Startup" = "起動項目";
+"Last Used" = "最終使用日";
+"Refresh" = "更新";
+"Sort by %@" = "%@ で並べ替え";
+"ascending" = "昇順";
+"descending" = "降順";
+"%d files · %@" = "%1$d 個のファイル · %2$@";
+"Select %@" = "%@ を選択";
+"Enumerating files…" = "ファイルを列挙中…";
+"Auto selected" = "自動選択済み";
+"Needs review" = "要確認";
+"Not selected by default. Review these before removing." = "初期状態では選択されていません。削除する前に確認してください。";
+"Toggle %@ group" = "%@ グループを切り替え";
+"Couldn't enumerate this app's files — there's nothing to review here." = "この App のファイルを列挙できませんでした。確認できる項目はありません。";
+"Application" = "アプリケーション";
+"App Support" = "App Support";
+"Preferences" = "環境設定";
+"Container" = "コンテナ";
+"Group Container" = "グループコンテナ";
+"Helper" = "ヘルパー";
+"Login Item" = "ログイン項目";
+"Temporary Cache" = "一時キャッシュ";
+"Other" = "その他";
+"%@ · 1 app · %@" = "%1$@ · 1 個の App · %2$@";
+"%d apps · %@" = "%1$d 個の App · %2$@";
+"Remove %d" = "%d 件を削除";
+"Remove %d app?" = "%d 個の App を削除しますか？";
+"Remove %d apps?" = "%d 個の App を削除しますか？";
+"These move to the Trash — the app itself and the support files it keeps in your Library (containers, caches, preferences, saved state). You can put them back:\n\n%@" = "次の項目がゴミ箱に移動します。App 本体と、ライブラリ内の関連ファイル（コンテナ、キャッシュ、環境設定、保存された状態）です。あとで元に戻せます:\n\n%@";
+"Homebrew removes these by running `brew uninstall --cask --zap`. That doesn't use the Trash, and `--zap` also deletes configuration and data the cask declares — more than the file list can show:\n\n%@" = "次の項目は Homebrew が `brew uninstall --cask --zap` を実行して削除します。ゴミ箱は使われず、`--zap` は cask が宣言した設定やデータも削除するため、ファイル一覧に表示される範囲を超えます:\n\n%@";
+"If an app can't be removed, Burrow leaves its support files alone too, rather than half-removing it." = "App を削除できない場合、Burrow は関連ファイルもそのまま残し、中途半端な削除は行いません。";
+"Skipped — these have no bundle identifier, so Burrow can't tell the engine which app it means:\n\n%@" = "スキップしました。次の項目にはバンドル識別子がないため、Burrow はどの App を指すのかエンジンに伝えられません:\n\n%@";
+"Nothing Burrow can remove" = "Burrow が削除できる項目はありません";
+"These have no bundle identifier, so Burrow can't tell the engine which app it means:\n\n%@" = "次の項目にはバンドル識別子がないため、Burrow はどの App を指すのかエンジンに伝えられません:\n\n%@";
+"%d reviewed files" = "確認済みのファイル: %d";
+"Reviewed subsets are trashed by Burrow directly and appear in Burrow's Activity log, not `mo history`." = "確認して選んだ分は Burrow が直接ゴミ箱に移動し、`mo history` ではなく Burrow のアクティビティログに表示されます。";
+"Removing reviewed files" = "確認済みのファイルを削除中";
+
+/* Software — startup segment */
+"Launch agent" = "起動エージェント";
+"Launch daemon" = "起動デーモン";
+"Unreadable configuration" = "読み取れない設定";
+"Program is missing" = "プログラムが見つかりません";
+"Bundled inside an app; review only" = "App に同梱されています。確認のみ";
+"System-wide; review only" = "システム全体の項目です。確認のみ";
+"Yours; remove the file to disable" = "あなたの項目です。ファイルを削除すると無効になります";
+"Your launch agents" = "あなたの起動エージェント";
+"System launch agents" = "システムの起動エージェント";
+"System launch daemons" = "システムの起動デーモン";
+"Reading startup items…" = "起動項目を読み込み中…";
+"Search items" = "項目を検索";
+"Error" = "エラー";
+"Review only — managed by its app or the system." = "確認のみ。App またはシステムが管理しています。";
+"Review only" = "確認のみ";
+"All" = "すべて";
+"Launch agents" = "起動エージェント";
+"Launch daemons" = "起動デーモン";
+"Problems" = "問題";
+
+/* Software — updates */
+"App Store" = "App Store";
+"Sparkle" = "Sparkle";
+"Electron" = "Electron";
+"Homebrew" = "Homebrew";
+"Checking update sources…" = "アップデート元を確認中…";
+"Sources detected locally — checking versions contacts Apple and vendor servers." = "アップデート元はローカルで検出しました。バージョンの確認では Apple や各提供元のサーバに接続します。";
+"Check for updates" = "アップデートを確認";
+"Check again" = "もう一度確認";
+"Update all brews" = "Homebrew をすべてアップデート";
+"Updates available" = "アップデートがあります";
+"Up to date" = "最新です";
+"Not checkable" = "確認できません";
+"No App Store receipt, Sparkle feed, or known updater inside these bundles." = "これらのバンドルには App Store のレシート、Sparkle のフィード、既知のアップデータのいずれもありません。";
+"Apps with an update mechanism" = "アップデート機能のある App";
+"active now" = "現在使用中";
+"opened %@" = "%@ に起動";
+"never opened" = "未起動";
+
+/* Settings — tabs & general */
+"General" = "一般";
+"Maintenance" = "メンテナンス";
+"Menu Bar" = "メニューバー";
+"Advanced" = "詳細";
+"Close settings" = "設定を閉じる";
+"Permissions" = "アクセス権";
+"On. Burrow can reach system and app caches." = "オンです。Burrow はシステムと App のキャッシュにアクセスできます。";
+"Off. Safe scan in use — most system caches stay out of reach." = "オフです。安全なスキャンを使用中で、ほとんどのシステムキャッシュにはアクセスできません。";
+"Startup & window" = "起動とウインドウ";
+"Launch at Login" = "ログイン時に起動";
+"Starts Burrow quietly at login so sampling and the menu-bar monitor are always on." = "ログイン時に Burrow を静かに起動し、サンプリングとメニューバーの監視を常に有効にします。";
+"Hide Dock Icon when window closes" = "ウインドウを閉じたら Dock アイコンを隠す";
+"On: Burrow retreats to the menu bar when you close the window. Off: it stays in the Dock. With the menu-bar icon hidden, the Dock icon always stays — otherwise the app would be unreachable." = "オン: ウインドウを閉じると Burrow はメニューバーに退避します。オフ: Dock に残ります。メニューバーアイコンを非表示にしている場合、Dock アイコンは常に残ります。そうしないと App を開けなくなるためです。";
+"Skip Intro Screens" = "紹介画面をスキップ";
+"Jumps past the tools' idle screens where a read-only preview can start right away (Clean starts its scan when you open the tab)." = "読み取り専用のプレビューをすぐ開始できるツールで、待機画面を飛ばします（クリーンはタブを開いた時点でスキャンを始めます）。";
+"About" = "情報";
+"Source on GitHub" = "GitHub のソース";
+
+/* Settings — maintenance */
+"Protected Items" = "保護する項目";
+"Paths and glob patterns Mole never cleans — `mo clean` and `mo optimize` skip anything matching them. “Always skip this” in the Clean review writes here too." = "Mole が決してクリーンしないパストと glob パターンです。`mo clean` と `mo optimize` は一致するものをスキップします。クリーンの確認画面にある「常にスキップする」も、ここに書き込みます。";
+"No protected items yet." = "保護する項目はまだありません。";
+"Add a path or glob pattern" = "パスまたは glob パターンを追加";
+"Add" = "追加";
+"Remove %@ from protected items" = "%@ を保護する項目から削除";
+"Cache removal" = "キャッシュの削除";
+"Removal mode" = "削除の方法";
+"Permanent" = "完全に削除";
+"Trash" = "ゴミ箱";
+"Permanent (default): the engine removes caches outright — freed space is real, immediately. Trash: reviewed, ticked paths go to the Trash instead — recoverable, but space frees only when Trash empties, and the run won't appear in `mo history`." = "完全に削除（初期設定）: エンジンがキャッシュをそのまま削除します。容量はすぐに実際に空きます。ゴミ箱: 確認してチェックしたパスをゴミ箱に移動します。元に戻せますが、容量が空くのはゴミ箱を空にしたときで、この実行は `mo history` には表示されません。";
+
+/* Settings — menu bar */
+"Display" = "表示";
+"Icon" = "アイコン";
+"Metrics" = "指標";
+"Metrics shows live CPU and memory next to the mark, refreshed with the sampler." = "指標を選ぶと、マークの横に CPU とメモリの現在値を表示し、サンプリングに合わせて更新します。";
+"Keyboard shortcuts" = "キーボードショートカット";
+"Keep Screen On" = "画面をつけたままにする";
+"Clean Screen" = "画面の掃除";
+"System-wide. Click a chip, press a combination with ⌃, ⌥ or ⌘; Esc cancels, × clears." = "システム全体で有効です。チップをクリックし、⌃、⌥、⌘ を含む組み合わせを押してください。Esc でキャンセル、× で消去します。";
+"Block keys while wiping" = "拭いている間はキー入力を無効にする";
+"Accessibility" = "アクセシビリティ";
+"Needed to swallow key presses while you wipe. Esc always exits." = "拭いている間のキー入力を無視するために必要です。Esc はいつでも終了します。";
+"Off: Clean Screen still works, keys just aren't blocked. Esc always exits either way." = "オフ: 画面の掃除は使えますが、キー入力は無効になりません。どちらの場合も Esc で終了します。";
+"Press keys…" = "キーを押してください…";
+"Record" = "記録";
+"Record shortcut" = "ショートカットを記録";
+"Clear shortcut" = "ショートカットを消去";
+"None" = "なし";
+
+/* Menu-bar tools */
+"15 minutes" = "15 分";
+"30 minutes" = "30 分";
+"1 hour" = "1 時間";
+"2 hours" = "2 時間";
+"Until turned off" = "オフにするまで";
+"Turn Off" = "オフにする";
+"Check for Updates…" = "アップデートを確認…";
+"Couldn't check for updates" = "アップデートを確認できませんでした";
+"GitHub didn't answer. Try again later, or open the releases page." = "GitHub から応答がありませんでした。しばらくしてからもう一度試すか、リリースページを開いてください。";
+"Update available" = "アップデートがあります";
+"Burrow %@ is available (you have %@). Update with `brew upgrade --cask burrow`, or open the release page." = "Burrow %1$@ が公開されています（現在は %2$@）。`brew upgrade --cask burrow` でアップデートするか、リリースページを開いてください。";
+"Burrow %@ is available (you have %@). Download it from the release page." = "Burrow %1$@ が公開されています（現在は %2$@）。リリースページからダウンロードしてください。";
+"You're up to date" = "最新の状態です";
+"Burrow %@ is the latest release." = "Burrow %@ が最新のリリースです。";
+"Open Release Page" = "リリースページを開く";
+"Engine: %@" = "エンジン: %@";
+"not found" = "見つかりません";
+"Releases" = "リリース";
+"What telemetry is collected" = "収集する情報について";
+"Licenses" = "ライセンス";
+"Wipe away — press Esc when you're done." = "画面を拭いてください。終わったら Esc を押します。";
+
+/* Status dashboard */
+"%d fans" = "%d 基のファン";
+"macOS manages speed" = "回転数は macOS が管理します";
+"No fan data on this Mac" = "この Mac にはファンのデータがありません";
+"Fan" = "ファン";
+"%d%% Health" = "状態 %d%%";
+"%d cyc" = "%d 回";
+"Mac" = "Mac";
+"%d percent" = "%d パーセント";
+"PWR" = "電力";
+"Energy billed since launch (mWh)" = "起動後の積算消費電力（mWh）";
+"Actions for %@" = "%@ の操作";
+"Pin" = "固定";
+"Unpin" = "固定を解除";
+"Copy name" = "名前をコピー";
+"Copy PID" = "PID をコピー";
+"Quit…" = "終了…";
+"Force Kill…" = "強制終了…";
+"Force kill %@?" = "%@ を強制終了しますか？";
+"Quit %@?" = "%@ を終了しますか？";
+"SIGKILL ends it immediately — unsaved work in this process is lost." = "SIGKILL は直ちに終了させます。このプロセスの保存していない作業は失われます。";
+"Sends a polite quit (SIGTERM). The process may save and exit, or ignore it." = "穏やかな終了要求（SIGTERM）を送ります。プロセスは保存して終了することも、無視することもあります。";
+"Force Kill" = "強制終了";
+"Quit Process" = "プロセスを終了";
+
+/* Menu-bar popover */
+"%@ free" = "%@ 空き";
+"Health %d. Open Burrow." = "状態 %d。Burrow を開きます。";
+"up %@" = "稼働 %@";
+"%@ used · %.0f%%" = "%@ 使用中 · %.0f%%";
+"No fan data" = "ファンのデータなし";
+"Top drain — %@ · avg %.0f%% CPU over the last hour" = "消費が最大 — %@ · 直近 1 時間の平均 CPU %.0f%%";
+"Stay Awake" = "スリープさせない";
+"Wipe" = "拭く";
+"Eject" = "取り出す";
+"on" = "オン";
+"Ejecting external volumes" = "外部ボリュームを取り出し中";
+"%d ejected · %d busy" = "取り出し: %1$d · 使用中: %2$d";
+"%@ cleaned · %d uninstalled · %d optimized" = "クリーン %1$@ · 削除 %2$d 件 · 最適化 %3$d 件";
+"Clean Watch" = "クリーンの見守り";
+
+/* Analyze progress */
+"Mapping your folders" = "フォルダの構成を調べています";
+"Measuring…" = "計測中…";
+"Scanning %@, %d of %d" = "%1$@ をスキャン中、%3$d 件中 %2$d 件";
+"Scanning" = "スキャン中";
+
+/* ===== Uninstall pre-flight: identity of the resolved app ===== */
+"“%@” isn't an identifier that names one app — it resolves to whichever app the engine happens to match first, so nothing was removed. Use the app's bundle id or its exact name." = "「%@」は 1 つの App を特定する識別子ではありません。エンジンが最初に一致した App が対象になってしまうため、何も削除していません。App のバンドル ID か正確な名前を指定してください。";
+"The engine didn't say which application “%@” resolves to, so Burrow can't confirm it's the right one and nothing was removed." = "エンジンは「%@」がどの App に対応するかを示さなかったため、Burrow は対象が正しいことを確認できず、何も削除していません。";
+"The engine resolved %@ twice, so the run wouldn't act on the set it reported." = "エンジンは %@ を 2 回解決したため、この実行は報告された対象どおりには動作しません。";
+"“%1$@” isn't %2$@'s name or bundle id — the engine matched it by substring, so it may not be the app you meant. Nothing was removed; ask for it by name: %3$@." = "「%1$@」は %2$@ の名前でもバンドル ID でもありません。エンジンは部分一致で見つけたため、意図した App ではない可能性があります。何も削除していません。名前で指定してください: %3$@。";
+"The engine resolved an argument Burrow didn't send (“%@”), so nothing was removed." = "エンジンは Burrow が送っていない引数（「%@」）を解決したため、何も削除していません。";
+"“%1$@” resolves to %2$@ (%3$@), not the %4$@ you picked (%5$@), so nothing was removed." = "「%1$@」が対応するのは %2$@（%3$@）で、選択した %4$@（%5$@）ではないため、何も削除していません。";
+"“%1$@” resolves to an app whose bundle id is %2$@, not the %3$@ you picked, so nothing was removed." = "「%1$@」が対応する App のバンドル ID は %2$@ で、選択した %3$@ ではないため、何も削除していません。";
+
+/* ===== Uninstall: the plan disagrees with the confirm sheet ===== */
+"This isn't quite what Burrow just told you" = "Burrow の説明と少し違う結果になりました";
+"Remove anyway" = "このまま削除";
+"cancelled — nothing removed" = "キャンセルしました — 何も削除していません";
+"Homebrew removes these after all, with `brew uninstall --cask --zap` — that doesn't use the Trash, so you can't put them back: %@" = "次の項目は結局 Homebrew が `brew uninstall --cask --zap` で削除します。ゴミ箱は使われないため、元に戻せません: %@";
+"These aren't Homebrew's after all — Burrow moves them to the Trash itself: %@" = "次の項目は結局 Homebrew の管理ではありません。Burrow が自分でゴミ箱に移動します: %@";
+
+/* ===== Uninstall review: what Burrow may not remove by hand ===== */
+"Homebrew installed %1$@ — it has to be removed with `brew uninstall --cask --zap %2$@`. Trashing the app on its own would leave Homebrew still believing it's installed." = "%1$@ は Homebrew でインストールされているため、`brew uninstall --cask --zap %2$@` で削除する必要があります。App だけをゴミ箱に入れると、Homebrew はまだインストール済みだと認識したままになります。";
+"Burrow won't remove these itself" = "Burrow はこれらを自分では削除しません";
+"These stay installed — only the reviewed support files move to the Trash, and you can put them back:\n\n%@" = "次の App はインストールされたままです。確認した関連ファイルだけがゴミ箱に移動し、あとで元に戻せます:\n\n%@";
+"Remove data from %d app?" = "%d 個の App のデータを削除しますか？";
+"Remove data from %d apps?" = "%d 個の App のデータを削除しますか？";

@@ -339,7 +339,7 @@
 "Burrow needs to relaunch to apply the new language." = "Burrow 需要重新啟動才能套用新語言。";
 "Relaunch Now" = "立即重新啟動";
 "Later" = "稍後";
-"Burrow ships English, 简体中文, 繁體中文, and Русский. A language change takes effect after a relaunch." = "Burrow 提供英文、簡體中文、繁體中文與俄文。語言變更會在重新啟動後生效。";
+"A language change takes effect after a relaunch." = "語言變更會在重新啟動後生效。";
 
 /* Analyze — move to Trash */
 "Move “%@” to Trash?" = "要將「%@」移到垃圾桶嗎？";

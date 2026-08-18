@@ -1,0 +1,869 @@
+/* Tools */
+"clean" = "Limpieza";
+"apps" = "Software";
+"optimize" = "Optimización";
+"analyze" = "Análisis";
+"status" = "Estado";
+"Clean" = "Limpieza";
+"Software" = "Software";
+"Optimize" = "Optimización";
+"Analyze" = "Análisis";
+"Status" = "Estado";
+"Settings" = "Ajustes";
+"History" = "Historial";
+"Fresh air through old tunnels." = "Aire fresco en los túneles viejos.";
+"Shed what you've outgrown." = "Suelta lo que ya no necesitas.";
+"Small turns, a smoother run." = "Pequeños ajustes, marcha más suave.";
+"Map every chamber below." = "Cartografía cada cámara de ahí abajo.";
+"Every pulse of the den." = "Cada latido de la madriguera.";
+
+/* Shared */
+"Burrow" = "Burrow";
+"Couldn't open Burrow's history database" = "No se pudo abrir la base de datos de historial de Burrow";
+"%@\n\nThe app will quit." = "%@\n\nLa app se cerrará.";
+"Mole CLI (`mo`) not found on PATH." = "No se encontró Mole CLI (`mo`) en el PATH.";
+"mo analyze exited %d: %@" = "mo analyze terminó con el código %d: %@";
+"Couldn't parse mo analyze output: %@" = "No se pudo interpretar la salida de mo analyze: %@";
+"CPU" = "CPU";
+"GPU" = "GPU";
+"Memory" = "Memoria";
+"Network" = "Red";
+"Disk" = "Disco";
+"Battery" = "Batería";
+"Power" = "Energía";
+"Health" = "Estado";
+"Activity" = "Actividad";
+"Top processes" = "Procesos principales";
+"Open Burrow" = "Abrir Burrow";
+"Preview" = "Vista previa";
+"Cancel" = "Cancelar";
+"Failed: %@" = "Error: %@";
+"%d items · %@" = "%d elementos · %@";
+"%@ in %d items" = "%1$@ en %2$d elementos";
+"Scanning…" = "Analizando…";
+"Home" = "Inicio";
+"Homebrew (`brew`) not found on this Mac." = "No se encontró Homebrew (`brew`) en este Mac.";
+"formula" = "formula";
+"cask" = "cask";
+
+/* Status and HUD */
+"Waiting for the first sample…" = "Esperando la primera muestra…";
+"Burrow runs `mo status --json` on a timer; the first row lands within a tick." = "Burrow ejecuta `mo status --json` a intervalos regulares; la primera fila llega en el siguiente ciclo.";
+"%d cores" = "%d núcleos";
+"load %.2f · %.2f · %.2f" = "carga %.2f · %.2f · %.2f";
+"%.1f / %.1f GB · swap %.1f GB" = "%.1f / %.1f GB · swap %.1f GB";
+"normal" = "normal";
+"warning" = "aviso";
+"Good" = "Bueno";
+"Excellent" = "Excelente";
+"Fair" = "Aceptable";
+"Poor" = "Deficiente";
+"Critical" = "Crítico";
+"All checks passed" = "Todas las comprobaciones se superaron";
+"up %@ · since %@" = "activo %@ · desde %@";
+"%@ · %@ · up %@" = "%@ · %@ · activo %@";
+"GB free" = "GB libres";
+"%.0f%% used · R %.0f · W %.0f MB/s" = "%.0f%% usado · L %.0f · E %.0f MB/s";
+"AC Power" = "Corriente";
+"charging" = "cargando";
+"%@ left" = "%@ restante";
+"%@ left · %d cyc · %d%% cap" = "%@ restante · %d ciclos · %d%% de capacidad";
+"NAME (%d)" = "NOMBRE (%d)";
+"PID" = "PID";
+"MEM" = "MEM";
+"↓ %d ↑ %d KB/s" = "↓ %d ↑ %d KB/s";
+"%.0f%% used" = "%.0f%% usado";
+"%ds ago" = "hace %d s";
+"no samples yet" = "aún no hay muestras";
+
+/* Clean */
+"Clean Now" = "Limpiar ahora";
+"Cleaned" = "Limpiado";
+"Freed up to %@ · %@ items" = "Hasta %@ liberados · %@ elementos";
+"Re-scan" = "Volver a analizar";
+"Clean for real" = "Limpiar de verdad";
+"to free" = "por liberar";
+"· %@ items · %@ categories" = "· %@ elementos · %@ categorías";
+"Scanning your Mac…" = "Analizando tu Mac…";
+"Cleaning… don't quit." = "Limpiando… no cierres la app.";
+"Preview — review, then clean for real." = "Vista previa: revisa y luego limpia de verdad.";
+"Done — caches cleared." = "Listo: cachés vaciadas.";
+"Scanning caches" = "Analizando cachés";
+"Cleaning caches" = "Limpiando cachés";
+"Clean caches for real?" = "¿Limpiar las cachés de verdad?";
+"Burrow will run `mo clean` with administrator rights. Cache files are removed permanently; Mole's whitelist and safety rules still apply." = "Burrow ejecutará `mo clean` con permisos de administrador. Los archivos de caché se eliminan de forma permanente; la lista blanca y las reglas de seguridad de Mole se siguen aplicando.";
+
+/* Optimize */
+"Run again" = "Ejecutar de nuevo";
+"Maintenance complete" = "Mantenimiento completado";
+"%d areas refreshed" = "Áreas actualizadas: %d";
+"Optimizing" = "Optimizando";
+"Optimize preview" = "Vista previa de la optimización";
+"Previewing maintenance…" = "Vista previa del mantenimiento…";
+"Running maintenance…" = "Ejecutando el mantenimiento…";
+"Maintenance complete." = "Mantenimiento completado.";
+"Preview complete." = "Vista previa completada.";
+
+/* Task reports from mo */
+"Summary" = "Resumen";
+"Performance Diagnosis" = "Diagnóstico de rendimiento";
+"DNS & Spotlight Check" = "Comprobación de DNS y Spotlight";
+"Finder Cache Refresh" = "Actualización de la caché del Finder";
+"App State Cleanup" = "Limpieza de estados guardados";
+"Broken Config Repair" = "Reparación de configuraciones dañadas";
+"Network Cache Refresh" = "Actualización de la caché de red";
+"Database Optimization" = "Optimización de bases de datos";
+"LaunchServices Repair" = "Reparación de LaunchServices";
+"Dock Refresh" = "Actualización del Dock";
+"Prevent Finder .DS_Store" = "Evitar archivos .DS_Store";
+"Memory Optimization" = "Optimización de memoria";
+"Network Stack Refresh" = "Actualización de la pila de red";
+"Permission Repair" = "Reparación de permisos";
+"Spotlight Optimization" = "Optimización de Spotlight";
+"Spotlight Orphan Rules" = "Reglas huérfanas de Spotlight";
+"Periodic Maintenance" = "Mantenimiento periódico";
+"Shared File Lists" = "Listas de archivos compartidas";
+"Disk Health" = "Salud del disco";
+"Login Items" = "Ítems de inicio";
+"Quarantine Database Cleanup" = "Limpieza de la base de datos de cuarentena";
+"Launch Agents Cleanup" = "Limpieza de agentes de inicio";
+"Notifications" = "Notificaciones";
+"Usage Data" = "Datos de uso";
+"User Essentials" = "Datos del usuario";
+"App Caches" = "Cachés de apps";
+"System Caches" = "Cachés del sistema";
+"Developer Caches" = "Cachés de desarrollo";
+"Browser Caches" = "Cachés de navegadores";
+"Logs" = "Registros";
+"DRY RUN MODE, No files will be modified" = "MODO SIMULACIÓN: no se modificará ningún archivo";
+"Likely bottleneck: %@" = "Cuello de botella probable: %@";
+"Gatekeeper and code-signature assessment activity is elevated." = "Gatekeeper está evaluando un número inusual de firmas de código.";
+"Gatekeeper status: assessments enabled" = "Estado de Gatekeeper: evaluaciones activadas";
+"Only system-managed CoreSimulator images are mounted, informational only, not a detach target" = "Solo hay montadas imágenes de CoreSimulator gestionadas por el sistema; es información, no algo que expulsar";
+"DNS cache flushed" = "Caché de DNS vaciada";
+"Spotlight index verified" = "Índice de Spotlight verificado";
+"QuickLook thumbnails refreshed" = "Miniaturas de QuickLook actualizadas";
+"Icon services cache rebuilt" = "Caché de servicios de iconos reconstruida";
+"App saved states optimized" = "Estados guardados de las apps optimizados";
+"All preference files valid" = "Todos los archivos de preferencias son válidos";
+"DNS cache already refreshed" = "La caché de DNS ya estaba actualizada";
+"mDNSResponder already restarted" = "mDNSResponder ya se había reiniciado";
+"All databases already optimized" = "Todas las bases de datos ya estaban optimizadas";
+"LaunchServices repaired" = "LaunchServices reparado";
+"File associations refreshed" = "Asociaciones de archivos actualizadas";
+"Dock refreshed" = "Dock actualizado";
+".DS_Store prevention enabled on network & USB volumes" = "Creación de .DS_Store desactivada en volúmenes de red y USB";
+"Inactive memory released" = "Memoria inactiva liberada";
+"System responsiveness improved" = "Capacidad de respuesta del sistema mejorada";
+"Network routing table refreshed" = "Tabla de enrutamiento de red actualizada";
+"ARP cache cleared" = "Caché ARP vaciada";
+"User directory permissions repaired" = "Permisos de la carpeta de usuario reparados";
+"User directory permissions already optimal" = "Los permisos de la carpeta de usuario ya eran óptimos";
+"File access issues resolved" = "Problemas de acceso a archivos resueltos";
+"Spotlight index already optimal" = "El índice de Spotlight ya era óptimo";
+"Spotlight search rules already clean" = "Las reglas de búsqueda de Spotlight ya estaban limpias";
+"Periodic maintenance skipped (not available on this macOS version)" = "Mantenimiento periódico omitido (no disponible en esta versión de macOS)";
+"Shared file lists all healthy" = "Todas las listas de archivos compartidas están en orden";
+"Disk verify skipped (set MOLE_ENABLE_DISK_VERIFY=1 to enable)" = "Verificación del disco omitida (define MOLE_ENABLE_DISK_VERIFY=1 para activarla)";
+"Login items all healthy (%@ checked)" = "Todos los ítems de inicio están en orden (%@ comprobados)";
+"Quarantine database already clean" = "La base de datos de cuarentena ya estaba limpia";
+"Launch Agents all healthy" = "Todos los agentes de inicio están en orden";
+"Notification Center database not found" = "No se encontró la base de datos del centro de notificaciones";
+"Knowledge database is healthy (%@)" = "La base de datos Knowledge está en orden (%@)";
+"%@ %@ items, %@ dry" = "%@ %@ elementos, %@ por limpiar";
+"%@ %@ old items, %@ dry" = "%@ %@ elementos antiguos, %@ por limpiar";
+"%@, %@ dry" = "%@, %@ por limpiar";
+"User app cache" = "Caché de apps del usuario";
+"User app logs" = "Registros de apps del usuario";
+"Darwin user cache files" = "Archivos de caché de usuario de Darwin";
+"Media analysis cache" = "Caché de análisis multimedia";
+"Media analysis temp files" = "Archivos temporales del análisis multimedia";
+"Wallpaper agent cache" = "Caché del agente de fondo de pantalla";
+"Trash · already empty" = "Papelera · ya está vacía";
+"System caches need sudo, run sudo -v && mo clean --dry-run for full preview" = "Las cachés del sistema requieren sudo; ejecuta sudo -v && mo clean --dry-run para una vista previa completa";
+"Dry Run Mode, Preview only, no deletions" = "Modo simulación: solo vista previa, sin eliminaciones";
+
+/* Analyze */
+"Reveal in Finder" = "Mostrar en el Finder";
+"Open here" = "Abrir aquí";
+"Analyzing %@" = "Analizando %@";
+"scan failed" = "el análisis falló";
+
+/* Software */
+"Size" = "Tamaño";
+"Name" = "Nombre";
+"Recent" = "Reciente";
+"Source" = "Origen";
+"Uninstall" = "Desinstalación";
+"Updates" = "Actualizaciones";
+"Search apps" = "Buscar apps";
+"Reading installed apps…" = "Leyendo las apps instaladas…";
+"%d apps" = "%d apps";
+"%d selected · %@" = "%d seleccionadas · %@";
+"Uninstall (%d)" = "Desinstalar (%d)";
+"Uninstall %d app?" = "¿Desinstalar %d app?";
+"Uninstall %d apps?" = "¿Desinstalar %d apps?";
+"Move to Trash" = "Mover a la papelera";
+"Checking Homebrew…" = "Comprobando Homebrew…";
+"Everything's up to date" = "Todo está actualizado";
+"Homebrew formulae & casks" = "Formulae y casks de Homebrew";
+"%d update" = "%d actualización";
+"%d updates" = "%d actualizaciones";
+"Update all" = "Actualizar todo";
+"Updating…" = "Actualizando…";
+"Update" = "Actualizar";
+
+/* Settings */
+"Storage" = "Almacenamiento";
+"Currently using" = "En uso actualmente";
+"Last maintenance" = "Último mantenimiento";
+"Run maintenance now" = "Ejecutar el mantenimiento ahora";
+"History lives at ~/Library/Application Support/Burrow/burrow.db. Rows past the retention window are pruned hourly." = "El historial está en ~/Library/Application Support/Burrow/burrow.db. Las filas fuera del periodo de conservación se eliminan cada hora.";
+"History retention" = "Conservación del historial";
+"Keep history for" = "Conservar el historial durante";
+"1 day" = "1 día";
+"7 days" = "7 días";
+"14 days" = "14 días";
+"30 days" = "30 días";
+"90 days" = "90 días";
+"180 days" = "180 días";
+"1 year" = "1 año";
+"Vacuum DB after large prunes" = "Compactar la base de datos tras grandes eliminaciones";
+"Sampling" = "Muestreo";
+"Sample every" = "Medir cada";
+"5 sec" = "5 s";
+"15 sec" = "15 s";
+"30 sec" = "30 s";
+"60 sec" = "60 s";
+"2 min" = "2 min";
+"5 min" = "5 min";
+"Burrow runs `mo status --json` at this cadence. 60 s is plenty for charts; tighter intervals give finer detail at the cost of more subprocess churn." = "Burrow ejecuta `mo status --json` con esta frecuencia. Para las gráficas, 60 s sobran; los intervalos más cortos dan más detalle a costa de lanzar más subprocesos.";
+"MCP query server" = "Servidor de consultas MCP";
+"Enable MCP query server" = "Activar el servidor de consultas MCP";
+"Endpoint" = "Endpoint";
+"Toggle + port changes take effect after a relaunch. Exposes /health, /info, /snapshot, /metrics over localhost, plus the `Burrow --mcp` stdio server for Claude Code." = "El interruptor y los cambios de puerto se aplican tras reiniciar. Expone /health, /info, /snapshot y /metrics en localhost, además del servidor stdio `Burrow --mcp` para Claude Code.";
+"%ds ago · pruned %d rows" = "hace %1$d s · %2$d filas eliminadas";
+"not yet run" = "aún no se ha ejecutado";
+
+/* History */
+"CPU usage" = "Uso de CPU";
+"usage" = "uso";
+"CPU load" = "Carga de CPU";
+"1m avg" = "media de 1 min";
+"load1" = "load1";
+"% used" = "% usado";
+"used" = "usado";
+"Disk I/O" = "E/S de disco";
+"MB/s" = "MB/s";
+"read" = "lectura";
+"write" = "escritura";
+"rx" = "rx";
+"tx" = "tx";
+"Thermal" = "Temperatura";
+"cpu" = "cpu";
+"gpu" = "gpu";
+"Health score" = "Puntuación de salud";
+"0–100" = "0–100";
+"No samples in this window" = "No hay muestras en este periodo";
+"peak across window" = "pico del periodo";
+"No processes recorded" = "No se registraron procesos";
+"%d samples" = "%d muestras";
+"· latest %ds ago" = "· la última hace %d s";
+
+/* Menus and alerts */
+"About Burrow" = "Acerca de Burrow";
+"Settings…" = "Ajustes…";
+"Hide Burrow" = "Ocultar Burrow";
+"Quit Burrow" = "Salir de Burrow";
+"Edit" = "Edición";
+"Undo" = "Deshacer";
+"Redo" = "Rehacer";
+"Cut" = "Cortar";
+"Copy" = "Copiar";
+"Paste" = "Pegar";
+"Select All" = "Seleccionar todo";
+"Window" = "Ventana";
+"Minimize" = "Minimizar";
+"Close" = "Cerrar";
+"Mole CLI not found" = "No se encontró Mole CLI";
+
+/* Home (Overview / History / Activity / Report) + Explain */
+"Overview" = "Resumen";
+"Report" = "Informe";
+"Doctor" = "Diagnóstico";
+"Diagnostics" = "Datos de diagnóstico";
+"Dev hygiene" = "Higiene de desarrollo";
+"No developer caches found." = "No se encontraron cachés de desarrollo.";
+"Clear" = "Vaciar";
+"Move this cache to the Trash?" = "¿Mover esta caché a la papelera?";
+"ports" = "puertos";
+"Ports" = "Puertos";
+"Listening ports" = "Puertos a la escucha";
+"See who's listening." = "Mira quién está escuchando.";
+"Quit this process?" = "¿Cerrar este proceso?";
+"tuneup" = "Puesta a punto";
+"Tune-Up" = "Puesta a punto";
+"One pass, a tidier den." = "Una pasada y la madriguera queda ordenada.";
+"Safe to run" = "Seguro de ejecutar";
+"Needs review" = "Requiere revisión";
+"Run safe set" = "Ejecutar las acciones seguras";
+"Clear %@ cache" = "Vaciar la caché de %@";
+"Review startup item: %@" = "Revisar el ítem de inicio: %@";
+"Nothing to tune up — you're clean." = "No hay nada que ajustar: está todo limpio.";
+"restore" = "Restaurar";
+"Restore" = "Restaurar";
+"Put back what the last clean moved." = "Devuelve a su sitio lo que movió la última limpieza.";
+"Restore last cleanup" = "Restaurar la última limpieza";
+"Only Trash-based removals can be restored — cache deletions are permanent." = "Solo se puede restaurar lo que pasó por la papelera; las cachés eliminadas no se recuperan.";
+"No restorable items found." = "No se encontraron elementos restaurables.";
+"Top processes in selection" = "Procesos principales de la selección";
+"No process samples in that window." = "No hay muestras de procesos en ese periodo.";
+"Full in ~%@" = "Lleno en ~%@";
+"%d days" = "%d días";
+"%d weeks" = "%d semanas";
+"%d months" = "%d meses";
+"Uncommitted or unpushed git changes in this repo" = "Cambios de git sin confirmar o sin enviar en este repositorio";
+"A new startup item appeared" = "Ha aparecido un nuevo ítem de inicio";
+"“%@” now launches automatically. If you didn't add it, review it." = "«%@» ahora se abre automáticamente. Si no lo añadiste tú, revísalo.";
+"CPU usage is high" = "El uso de CPU es alto";
+"CPU has been pegged at %.0f%%." = "La CPU lleva clavada en el %.0f%%.";
+"Memory pressure is high" = "La presión de memoria es alta";
+"Memory is at %.0f%%." = "La memoria está al %.0f%%.";
+"Explain" = "Explicar";
+
+/* Language switch */
+"Language" = "Idioma";
+"App language" = "Idioma de la app";
+"System" = "Sistema";
+"Relaunch to change language?" = "¿Reiniciar para cambiar de idioma?";
+"Burrow needs to relaunch to apply the new language." = "Burrow necesita reiniciarse para aplicar el nuevo idioma.";
+"Relaunch Now" = "Reiniciar ahora";
+"Later" = "Más tarde";
+"A language change takes effect after a relaunch." = "El cambio de idioma se aplica tras reiniciar.";
+
+/* Analyze — move to Trash */
+"Move “%@” to Trash?" = "¿Mover «%@» a la papelera?";
+"This moves %@ (%@) to the Trash, where you can restore it." = "Esto mueve %@ (%@) a la papelera, desde donde puedes restaurarlo.";
+"this folder" = "esta carpeta";
+"this file" = "este archivo";
+"Couldn't move to Trash" = "No se pudo mover a la papelera";
+
+/* Settings sections */
+"Engine" = "Motor";
+"Menu bar" = "Barra de menús";
+"Show menu bar icon" = "Mostrar el icono en la barra de menús";
+
+/* Tools — purge / installer labels + taglines */
+"purge" = "Limpieza profunda";
+"installer" = "Instaladores";
+"Purge" = "Limpieza profunda";
+"Installers" = "Instaladores";
+"Clear the diggings dev work leaves behind." = "Retira los escombros que deja el trabajo de desarrollo.";
+"Sweep out the crates you unpacked." = "Barre las cajas que ya desempaquetaste.";
+
+/* Common actions / labels */
+"Scan" = "Analizar";
+"Rescan" = "Volver a analizar";
+"Back" = "Atrás";
+"Stop" = "Detener";
+"Stopped." = "Detenido.";
+"Go up" = "Subir un nivel";
+"Fans" = "Ventiladores";
+"Bluetooth" = "Bluetooth";
+"GPU usage" = "Uso de GPU";
+"RAM" = "RAM";
+"Version" = "Versión";
+"incomplete" = "incompleto";
+"Reading your Mac…" = "Leyendo tu Mac…";
+
+/* Activity (cleanup history) */
+"Recent Mole cleanup sessions" = "Últimas limpiezas de Mole";
+"No cleanup history yet" = "Todavía no hay historial de limpiezas";
+"Run a Clean or Optimize and it'll show up here." = "Ejecuta una limpieza o una optimización y aparecerá aquí.";
+
+/* Settings — AI / MCP / server */
+"Burrow engine missing" = "Falta el motor de Burrow";
+"Touch ID for sudo" = "Touch ID para sudo";
+"Explain (AI) — experimental" = "Explicar (IA): experimental";
+"Ask your AI about your Mac (MCP)" = "Pregúntale a tu IA sobre tu Mac (MCP)";
+"Local HTTP query server" = "Servidor de consultas HTTP local";
+"Enable the Explain lens" = "Activar la función Explicar";
+"Enable HTTP query server" = "Activar el servidor de consultas HTTP";
+"Let agents run cleanups for real" = "Permitir que los agentes limpien de verdad";
+"Backend" = "Backend";
+"Base URL" = "URL base";
+"Model" = "Modelo";
+"API key (optional)" = "Clave de API (opcional)";
+"Ollama model" = "Modelo de Ollama";
+"Local · Ollama" = "Local · Ollama";
+"LM Studio / API" = "LM Studio / API";
+"Read tools" = "Herramientas de lectura";
+"Cleanup tools" = "Herramientas de limpieza";
+"Try asking" = "Prueba a preguntar";
+"Copy prompt" = "Copiar la petición";
+"Preview what a cleanup would free, then clean it up." = "Muéstrame cuánto liberaría una limpieza y luego hazla.";
+"Uninstall Slack and remove its leftovers." = "Desinstala Slack y elimina lo que deje atrás.";
+"What's my Mac's CPU and memory usage right now?" = "¿Cuánta CPU y memoria está usando mi Mac ahora mismo?";
+"What's taking up space in my home folder?" = "¿Qué ocupa espacio en mi carpeta de inicio?";
+"AI read of one snapshot — it can be wrong, and never acts on its own." = "Lectura de una sola instantánea hecha por una IA: puede equivocarse y nunca actúa por su cuenta.";
+"Adds an “Explain” button to Status that reads your latest snapshot and explains it in plain English, optionally suggesting Clean/Purge/Installers." = "Añade un botón «Explicar» a Estado: lee tu última instantánea, la explica en lenguaje sencillo y, si procede, sugiere Limpieza, Limpieza profunda o Instaladores.";
+"Burrow exposes your Mac's recorded history to coding agents — Claude Code, Cursor, Codex, Cline — over MCP. Add the config below, then ask in plain language. The server starts on demand over stdio; there's no port and no always-on listener." = "Burrow expone el historial registrado de tu Mac a los agentes de programación (Claude Code, Cursor, Codex, Cline) mediante MCP. Añade la configuración de abajo y pregunta en lenguaje natural. El servidor se inicia bajo demanda por stdio; no hay ningún puerto ni ningún servicio a la escucha permanente.";
+"OFF by default. Agents can always read metrics and run dry-run previews. With this on, an agent can run a real `mo clean` / `optimize` / `uninstall` — but ONLY when it also passes an explicit confirm flag, so a deletion is never one stray sentence away. Turn it off and agents are read-only again. Data stays on this Mac." = "Desactivado por omisión. Los agentes siempre pueden leer métricas y hacer vistas previas en simulación. Con esto activado, un agente puede ejecutar un `mo clean` / `optimize` / `uninstall` real, pero SOLO si además envía un indicador de confirmación explícito, de modo que una eliminación nunca dependa de una frase suelta. Desactívalo y los agentes vuelven a ser de solo lectura. Los datos se quedan en este Mac.";
+"Runs against a local Ollama model — nothing leaves this Mac. Start it with `ollama run <model>`." = "Funciona con un modelo local de Ollama: nada sale de este Mac. Inícialo con `ollama run <model>`.";
+"Any OpenAI-compatible server. For LM Studio: load a model, open Developer ▸ Start Server, and leave the key blank — the default URL is already LM Studio's. A hosted endpoint (e.g. OpenAI) needs a key and sends the metrics summary off-device (never file contents)." = "Cualquier servidor compatible con OpenAI. Para LM Studio: carga un modelo, abre Developer ▸ Start Server y deja la clave en blanco; la URL por omisión ya es la de LM Studio. Un endpoint alojado (OpenAI, por ejemplo) necesita una clave y envía fuera del dispositivo el resumen de métricas (nunca el contenido de los archivos).";
+"Sparkle checks Burrow's signed update feed after startup settles and about once a day. It asks before downloading or installing anything." = "Sparkle consulta el canal de actualizaciones firmado de Burrow cuando el arranque se estabiliza y después una vez al día aproximadamente. Pide confirmación antes de descargar o instalar nada.";
+"Check for updates automatically" = "Buscar actualizaciones automáticamente";
+"Check for Updates" = "Buscar actualizaciones";
+"About Burrow" = "Acerca de Burrow";
+"Update didn't complete" = "La actualización no se completó";
+"Update external engine" = "Actualizar el motor externo";
+"This source build is using an engine outside Burrow.app, so its own updater remains available." = "Esta compilación desde el código fuente usa un motor fuera de Burrow.app, así que su propio actualizador sigue disponible.";
+"Included with Burrow. Engine updates arrive through signed Burrow releases so the app's Developer ID seal stays valid." = "Incluido con Burrow. Las actualizaciones del motor llegan en versiones firmadas de Burrow para que el sello Developer ID de la app siga siendo válido.";
+"The bundled engine is missing. Reinstall Burrow to restore the signed app bundle." = "Falta el motor incluido. Reinstala Burrow para restaurar el paquete firmado de la app.";
+"External engine is up to date" = "El motor externo está actualizado";
+"Now on %@." = "Ahora en %@.";
+"The external engine updater exited non-zero. Try running `mo update` in a terminal." = "El actualizador del motor externo terminó con error. Prueba a ejecutar `mo update` en un terminal.";
+"Disk analysis needs Mole %@ or newer (you have %@). %@" = "El análisis de disco necesita Mole %@ o posterior (tienes %@). %@";
+"Update Burrow to get the current bundled engine." = "Actualiza Burrow para obtener el motor incluido actual.";
+"Use Settings › Engine › Update external engine, then try again." = "Ve a Ajustes › Motor › Actualizar el motor externo y vuelve a intentarlo.";
+"Reinstall Burrow to restore the bundled engine." = "Reinstala Burrow para restaurar el motor incluido.";
+"Lets `sudo` and admin prompts accept your fingerprint instead of a password, where macOS supports it. Configured via `mo touchid`; turning it on or off needs your password once." = "Permite que `sudo` y las peticiones de administrador acepten tu huella en lugar de una contraseña, donde macOS lo admita. Se configura con `mo touchid`; activarlo o desactivarlo pide tu contraseña una vez.";
+"Authentication" = "Autenticación";
+"Bearer token required" = "Se requiere un token Bearer";
+"Optional REST surface for dashboards or curl: /health, /info, /snapshot, /metrics over localhost. Every request needs the per-install token; retrieve it locally with `defaults read dev.caezium.Burrow query_auth_token`. Separate from the MCP stdio server above; toggle + port changes take effect after a relaunch." = "Interfaz REST opcional para paneles o curl: /health, /info, /snapshot y /metrics en localhost. Cada petición necesita el token propio de esta instalación; obtenlo en local con `defaults read dev.caezium.Burrow query_auth_token`. Es independiente del servidor stdio de MCP de arriba; el interruptor y los cambios de puerto se aplican tras reiniciar.";
+"Applies immediately. When off, Burrow shows a Dock icon instead so it stays reachable — a Dock click reopens the window." = "Se aplica al instante. Si está desactivado, Burrow muestra un icono en el Dock para seguir siendo accesible: un clic en el Dock vuelve a abrir la ventana.";
+
+/* Onboarding / Full Disk Access */
+"Official builds include the engine inside the signed app. Reinstall Burrow to restore it; source builds can also provide an external `mo` on PATH." = "Las versiones oficiales incluyen el motor dentro de la app firmada. Reinstala Burrow para restaurarlo; las compilaciones desde el código fuente también pueden usar un `mo` externo en el PATH.";
+"REINSTALL SIGNED APP" = "REINSTALAR LA APP FIRMADA";
+"View the bundled engine source →" = "Ver el código del motor incluido →";
+"The engine is still missing. Finish reinstalling Burrow, then recheck or relaunch the app." = "El motor sigue sin aparecer. Termina de reinstalar Burrow y después vuelve a comprobarlo o reinicia la app.";
+"Grant Full Disk Access to scan" = "Concede acceso total al disco para analizar";
+"Skip the macOS permission prompts" = "Evita las peticiones de permiso de macOS";
+"Open Full Disk Access settings" = "Abrir los ajustes de acceso total al disco";
+"Don't ask again" = "No volver a preguntar";
+"Scan anyway" = "Analizar de todos modos";
+"Scanning system & app caches makes macOS ask once per protected folder. Grant Burrow Full Disk Access to scan smoothly — it only reads sizes through Mole and never opens that data itself." = "Al analizar las cachés del sistema y de las apps, macOS pregunta una vez por cada carpeta protegida. Concede a Burrow acceso total al disco para que el análisis fluya: solo lee tamaños a través de Mole y nunca abre esos datos por su cuenta.";
+"Still blocked? macOS only applies Full Disk Access the next time Burrow launches. Quit and reopen, then scan." = "¿Sigue bloqueado? macOS solo aplica el acceso total al disco la próxima vez que se abre Burrow. Cierra la app, vuelve a abrirla y analiza.";
+"Quit" = "Salir";
+
+/* ===== Anonymous usage (telemetry) — Settings section + first-launch consent ===== */
+"Anonymous usage" = "Datos de uso anónimos";
+"Share anonymous usage & crash reports" = "Enviar datos de uso e informes de fallos anónimos";
+"Share anonymous usage & diagnostics" = "Enviar datos de uso y diagnóstico anónimos";
+"Sends anonymous product analytics (PostHog) and crash reports (Sentry): a random install id (not tied to you or your hardware), the app + macOS version, CPU type, and which features you use — with sizes and counts bucketed. Never file names, contents, paths, or your metrics. It helps gauge retention and catch crashes. On by default; turn it off and both stop. Full list in TELEMETRY.md." = "Envía analíticas de producto anónimas (PostHog) e informes de fallos (Sentry): un identificador de instalación aleatorio (sin relación contigo ni con tu hardware), la versión de la app y de macOS, el tipo de CPU y qué funciones usas, con tamaños y recuentos agrupados por tramos. Nunca nombres de archivo, contenidos, rutas ni tus métricas. Sirve para medir la retención y detectar fallos. Activado por omisión; si lo desactivas, ambos se detienen. Lista completa en TELEMETRY.md.";
+"Sends anonymous product analytics (PostHog) plus crash, hang, startup, update, and sampled performance diagnostics (Sentry): random install IDs, app and exact macOS build, CPU type, screens and features used, and fixed-name diagnostic milestones. Never screenshots, screen recordings, your file names, contents, user paths, URLs, or metrics. On by default; turn it off and both stop. Full list in TELEMETRY.md." = "Envía analíticas de producto anónimas (PostHog) y diagnósticos de fallos, bloqueos, arranque, actualizaciones y rendimiento muestreado (Sentry): identificadores de instalación aleatorios, la app y la compilación exacta de macOS, el tipo de CPU, las pantallas y funciones usadas, y hitos de diagnóstico con nombres fijos. Nunca capturas de pantalla, grabaciones, nombres de archivo, contenidos, rutas de usuario, URL ni métricas. Activado por omisión; si lo desactivas, ambos se detienen. Lista completa en TELEMETRY.md.";
+"Burrow started in compatibility mode" = "Burrow se inició en modo de compatibilidad";
+"Burrow detected that creating its menu bar item could freeze this macOS build. The menu bar item is disabled on this build, and Burrow will stay available in the Dock. Updating macOS will automatically retry the normal menu bar mode." = "Burrow ha detectado que crear su ítem en la barra de menús podría bloquear esta compilación de macOS. En esta compilación el ítem está desactivado y Burrow seguirá disponible en el Dock. Al actualizar macOS se volverá a intentar el modo normal automáticamente.";
+"Burrow detected that creating its menu bar item could freeze this macOS build. The menu bar item and automatic update checks are paused on this build, and Burrow will stay available in the Dock. Manual update checks remain available. Updating macOS will automatically retry the normal mode." = "Burrow ha detectado que crear su ítem en la barra de menús podría bloquear esta compilación de macOS. En esta compilación el ítem y la búsqueda automática de actualizaciones están en pausa, y Burrow seguirá disponible en el Dock. La búsqueda manual sigue funcionando. Al actualizar macOS se volverá a intentar el modo normal automáticamente.";
+"Burrow paused automatic update checks" = "Burrow ha puesto en pausa la búsqueda automática de actualizaciones";
+"Burrow detected that its automatic updater did not reach a stable state on the previous launch. Automatic checks are paused for this app and macOS build so the same startup problem cannot repeat. You can still check manually; updating Burrow or macOS will retry automatic checks." = "Burrow ha detectado que su actualizador automático no alcanzó un estado estable en el arranque anterior. La búsqueda automática está en pausa para esta app y esta compilación de macOS para que no se repita el mismo problema de inicio. Puedes seguir buscando manualmente; al actualizar Burrow o macOS se reintentará la búsqueda automática.";
+"Menu bar item paused on this macOS build" = "Ítem de la barra de menús en pausa en esta compilación de macOS";
+"Creating it could freeze system input on this build, so Burrow runs from the Dock instead. It returns automatically once you update macOS." = "Crearlo podría bloquear la entrada del sistema en esta compilación, así que Burrow funciona desde el Dock. Vuelve automáticamente en cuanto actualices macOS.";
+"Paused on this macOS build. The setting is kept and applies again as soon as Burrow can create the menu bar item safely." = "En pausa en esta compilación de macOS. El ajuste se conserva y volverá a aplicarse en cuanto Burrow pueda crear el ítem de la barra de menús sin riesgo.";
+"Copy Diagnostics" = "Copiar los datos de diagnóstico";
+"Share anonymous usage & crash reports?" = "¿Enviar datos de uso e informes de fallos anónimos?";
+"Helps prioritize fixes: app/OS version, coarse bucketed feature counts, and crash traces. Never files, paths, file contents, or your metrics — the exact list is in TELEMETRY.md. You can change this anytime in Settings → Anonymous usage." = "Ayuda a priorizar las correcciones: versión de la app y del sistema, recuentos de uso agrupados por tramos y trazas de fallos. Nunca archivos, rutas, contenidos ni tus métricas; la lista exacta está en TELEMETRY.md. Puedes cambiarlo cuando quieras en Ajustes → Datos de uso anónimos.";
+"Share" = "Enviar";
+"Don't Share" = "No enviar";
+
+/* ===== Agent (MCP) gates ===== */
+"OFF by default. Agents can always read metrics and run dry-run previews. With this on, an agent can run a real `mo clean` / `optimize` — but ONLY when it also passes an explicit confirm flag, so a deletion is never one stray sentence away. Turn it off and agents are read-only again. Data stays on this Mac." = "Desactivado por omisión. Los agentes siempre pueden leer métricas y hacer vistas previas en simulación. Con esto activado, un agente puede ejecutar un `mo clean` / `optimize` real, pero SOLO si además envía un indicador de confirmación explícito, de modo que una eliminación nunca dependa de una frase suelta. Desactívalo y los agentes vuelven a ser de solo lectura. Los datos se quedan en este Mac.";
+"Also allow uninstalls & permanent deletes" = "Permitir también desinstalaciones y borrados permanentes";
+"A second key for what the Trash can't undo: real `mo uninstall`, and `permanent:true` deletes. Needs the cleanup switch above too; an uninstall also aborts unless mo matches exactly the requested apps." = "Una segunda llave para lo que la papelera no puede deshacer: el `mo uninstall` real y los borrados con `permanent:true`. También necesita el interruptor de limpieza de arriba; además, una desinstalación se cancela si mo no coincide exactamente con las apps solicitadas.";
+
+/* ===== Uninstall pre-flight verification ===== */
+"Uninstall aborted" = "Desinstalación cancelada";
+"%1$@ would also remove: %2$@" = "%1$@ también eliminaría: %2$@";
+"%1$@ did not match: %2$@" = "%1$@ no coincidió con: %2$@";
+"The engine" = "El motor";
+"mo" = "mo";
+"The dry run's output wasn't in a format Burrow can confirm a matched set from, so nothing was removed." = "La salida de la simulación no tenía un formato con el que Burrow pueda confirmar el conjunto seleccionado, así que no se eliminó nada.";
+"The engine refused the dry run, so nothing was removed: %@" = "El motor rechazó la simulación, así que no se eliminó nada: %@";
+"The engine matched no installed app for: %@" = "El motor no encontró ninguna app instalada para: %@";
+"“%1$@” resolves to %2$d applications (%3$@), so the engine refuses to act on it. Remove them one at a time." = "«%1$@» corresponde a %2$d aplicaciones (%3$@), así que el motor se niega a actuar. Elimínalas de una en una.";
+"The engine resolved %1$d applications for %2$d selected, so the sets don't line up." = "El motor encontró %1$d aplicaciones para %2$d seleccionadas, así que los conjuntos no cuadran.";
+"The engine won't remove %1$@: %2$@" = "El motor no eliminará %1$@: %2$@";
+"Needs an administrator: %@. Burrow doesn't elevate this run, so it may fail on the app itself." = "Requiere un administrador: %@. Burrow no eleva los permisos en esta ejecución, así que puede fallar con la app en sí.";
+"one of these apps" = "una de estas apps";
+"Homebrew removes %1$@: `%2$@`. `--zap` also deletes configuration and data the cask declares, which the preview can't list." = "Homebrew elimina %1$@: `%2$@`. `--zap` borra además la configuración y los datos que declara el cask, que la vista previa no puede enumerar.";
+"aborted — nothing removed" = "cancelado: no se eliminó nada";
+"The engine reported: %@" = "El motor informó: %@";
+"uninstall failed" = "la desinstalación falló";
+"Uninstall failed" = "La desinstalación falló";
+"The engine reported a failure with no error output. Nothing was removed." = "El motor informó de un fallo sin ningún mensaje de error. No se eliminó nada.";
+"OK" = "OK";
+
+/* ===== Uninstall outcomes (per app: removed / partial / refused) ===== */
+"Uninstall didn't finish" = "La desinstalación no terminó";
+"Uninstall finished partly" = "La desinstalación se completó solo en parte";
+"Uninstall finished" = "Desinstalación completada";
+"%@ — the engine refused to remove the application." = "%@: el motor se negó a eliminar la aplicación.";
+"%@ — the application could not be removed." = "%@: no se pudo eliminar la aplicación.";
+"%@ — the application was removed, but some of its support files were not." = "%@: se eliminó la aplicación, pero no todos sus archivos de apoyo.";
+"%@ — the removal finished partly." = "%@: la eliminación se completó solo en parte.";
+"Its support files were left alone, so the app is still installed rather than half-removed." = "Sus archivos de apoyo se han dejado intactos, así que la app sigue instalada en lugar de quedar a medio eliminar.";
+"Next: %@" = "Siguiente: %@";
+
+/* ===== i18n backfill (2026-06): legacy hardcoded strings ===== */
+/* Installer/purge chooser — clean (non-plural) labels */
+"done" = "hecho";
+"failed" = "falló";
+"select none" = "no seleccionar nada";
+"select all" = "seleccionar todo";
+"Remove" = "Eliminar";
+"Remove (%lld)" = "Eliminar (%lld)";
+"Show all %lld" = "Mostrar los %lld";
+"Showing the %lld biggest of %lld." = "Se muestran los %1$lld mayores de %2$lld.";
+"Loading all %lld… (%lld so far)" = "Cargando los %lld… (%lld hasta ahora)";
+/* Elevated-run cancellation (OperationFlow) */
+"authorization cancelled" = "autorización cancelada";
+/* Touch ID for sudo (Settings) */
+"Couldn't update Touch ID for sudo" = "No se pudo cambiar Touch ID para sudo";
+"`mo touchid %@` didn't complete (the password prompt may have been cancelled). You can also run it in a terminal." = "`mo touchid %@` no se completó (puede que se cancelara la petición de contraseña). También puedes ejecutarlo en un terminal.";
+/* AI "Explain" lens errors (AIConfig) */
+"No Ollama model is set — pick one in Settings." = "No hay ningún modelo de Ollama definido; elige uno en los ajustes.";
+"No model name is set for the OpenAI-compatible API — set one in Settings." = "No hay ningún nombre de modelo para la API compatible con OpenAI; indica uno en los ajustes.";
+"The API base URL isn't a valid http(s) URL — check it in Settings." = "La URL base de la API no es una URL http(s) válida; revísala en los ajustes.";
+
+/* i18n backfill (cont.) — running count + AI settings field labels */
+"%lld running" = "%lld en ejecución";
+"blank for LM Studio" = "en blanco para LM Studio";
+
+/* ============================================================
+   2026-06 UI/UX redesign (plans/ui-ux-review-2026-06-10.md)
+   Onboarding · access banner · Clean review · result hero ·
+   task ticker · Software (uninstall/updates/startup) · Settings
+   tabs · menu-bar tools · Status/popover · Analyze progress
+   ============================================================ */
+
+/* Onboarding */
+"Step %d of %d" = "Paso %1$d de %2$d";
+"Grant access to get started." = "Concede acceso para empezar.";
+"Optional — the safe scan works without it." = "Opcional: el análisis seguro funciona sin ello.";
+"Full Disk Access" = "Acceso total al disco";
+"Unlocks the caches and leftovers Burrow needs to reach." = "Desbloquea las cachés y los restos a los que Burrow necesita llegar.";
+"Granted in Settings but still gray? macOS applies it at the next launch." = "¿Concedido en Ajustes pero sigue en gris? macOS lo aplica en el siguiente arranque.";
+"Relaunch to apply" = "Reiniciar para aplicar";
+"Continue" = "Continuar";
+"Burrow is free." = "Burrow es gratis.";
+"Open source, local-first. No license, no trial, no upsell." = "Código abierto y local por diseño. Sin licencia, sin periodo de prueba, sin ventas añadidas.";
+"forever" = "para siempre";
+"Every tool unlocked — Clean, Purge, Installers, Software, Optimize, Analyze" = "Todas las herramientas disponibles: Limpieza, Limpieza profunda, Instaladores, Software, Optimización, Análisis";
+"Watches your Mac over weeks, not seconds — 30–90 day history" = "Observa tu Mac durante semanas, no segundos: de 30 a 90 días de historial";
+"Agent-ready — MCP tools for Claude, Cursor, Codex (off until you opt in)" = "Listo para agentes: herramientas MCP para Claude, Cursor y Codex (desactivadas hasta que tú las actives)";
+"Open source — read every line" = "Código abierto: puedes leer cada línea";
+"Open the Burrow repository on GitHub" = "Abrir el repositorio de Burrow en GitHub";
+"Start using Burrow" = "Empezar a usar Burrow";
+"Open Settings" = "Abrir Ajustes";
+"Check" = "Comprobar";
+"Granted" = "Concedido";
+"Not granted" = "No concedido";
+
+/* Access banner */
+"Full Disk Access is off" = "El acceso total al disco está desactivado";
+"Without it, Burrow can't reach most system caches." = "Sin él, Burrow no llega a la mayoría de las cachés del sistema.";
+"Use Touch ID for admin operations" = "Usar Touch ID para las operaciones de administrador";
+"Install the signed helper and scan, clean, and optimize authenticate with a fingerprint instead of a password." = "Instala el asistente firmado y el análisis, la limpieza y la optimización se autorizarán con la huella en vez de con la contraseña.";
+"Set up" = "Configurar";
+"Dismiss" = "Cerrar";
+
+/* Clean — result hero & run */
+"Scan your Mac" = "Analizar tu Mac";
+"%@ found" = "%@ encontrados";
+"Scanning, %@ found so far" = "Analizando, %@ encontrados hasta ahora";
+"Stopped before the end — results are partial." = "Se detuvo antes de terminar: los resultados son parciales.";
+"Review results" = "Revisar los resultados";
+"Limited scan active · App Support and container caches are skipped" = "Análisis limitado · se omiten las cachés de App Support y de contenedores";
+"Limited scan active. App Support and container caches are skipped. Open for options." = "Análisis limitado en curso. Se omiten las cachés de App Support y de contenedores. Ábrelo para ver las opciones.";
+"Why limited?" = "¿Por qué limitado?";
+"Without Full Disk Access, macOS hides most app and container caches from Burrow. Grant it once for full scans — or rerun this scan with administrator rights (one password)." = "Sin acceso total al disco, macOS oculta a Burrow la mayoría de las cachés de apps y contenedores. Concédelo una vez para análisis completos, o repite este análisis con permisos de administrador (una contraseña).";
+"Scan with admin" = "Analizar como administrador";
+"This preview is stale" = "Esta vista previa está desfasada";
+"The scan is more than a few minutes old — caches that appeared since wouldn't have been reviewed. Rescan to get current numbers, then clean." = "El análisis tiene más de unos minutos: las cachés aparecidas desde entonces no se han revisado. Vuelve a analizar para tener cifras actuales y después limpia.";
+"Couldn't protect deselected items" = "No se pudieron proteger los elementos deseleccionados";
+"Writing the whitelist failed (%@), so the engine would clean everything it found. Nothing was cleaned." = "No se pudo escribir la lista blanca (%@), así que el motor limpiaría todo lo que encontró. No se limpió nada.";
+"Move %d items (%@) to the Trash?" = "¿Mover %1$d elementos (%2$@) a la papelera?";
+"They stay recoverable until you empty the Trash. Space frees when it empties; this run won't appear in `mo history`." = "Se pueden recuperar hasta que vacíes la papelera. El espacio se libera al vaciarla, y esta ejecución no aparecerá en `mo history`.";
+"Moving caches to Trash" = "Moviendo las cachés a la papelera";
+"%d moved · %d failed" = "%1$d movidos · %2$d con error";
+"Moved %d items (%@) to the Trash." = "Se movieron %1$d elementos (%2$@) a la papelera.";
+"Moved %d items; %d were locked or already gone." = "Se movieron %1$d elementos; %2$d estaban bloqueados o ya no existían.";
+"Moved to Trash" = "Movidos a la papelera";
+"Freed %@" = "%@ liberados";
+"Cleaned %@" = "%@ limpiados";
+"%@ free now" = "%@ libres ahora";
+"%@ items" = "%@ elementos";
+"Done" = "Listo";
+
+/* Clean — review screen */
+"Ready to clean" = "Listo para limpiar";
+"Close %@ to clean another %@ · %d items" = "Cierra %1$@ para limpiar %2$@ más · %3$d elementos";
+"Everything below came from the scan — untick anything you'd rather keep." = "Todo lo de abajo salió del análisis: desmarca lo que prefieras conservar.";
+"Back to results" = "Volver a los resultados";
+"Select all" = "Seleccionar todo";
+"Deselect all" = "Deseleccionar todo";
+"%@, %d of %d selected, %@ of %@" = "%1$@, %2$d de %3$d seleccionados, %4$@ de %5$@";
+"Toggle category" = "Mostrar u ocultar la categoría";
+"%d items" = "%d elementos";
+"Safe" = "Seguro";
+"App open" = "App abierta";
+"System busy" = "Sistema ocupado";
+"The scan already excluded unsafe paths — everything here is removable cache data." = "El análisis ya excluyó las rutas poco seguras: todo lo que hay aquí son datos de caché eliminables.";
+"This app is running; its cache is locked. Quit the app and rescan to clean it." = "Esta app está en ejecución y su caché está bloqueada. Cierra la app y vuelve a analizar para limpiarla.";
+"A system service is using this path right now." = "Un servicio del sistema está usando esta ruta ahora mismo.";
+"Always skip this" = "Omitir siempre";
+"Permanently clean · %@" = "Limpiar permanentemente · %@";
+"Move to Trash · %@" = "Mover a la papelera · %@";
+"selected" = "seleccionado";
+"not selected" = "no seleccionado";
+"User essentials" = "Datos del usuario";
+"App caches" = "Cachés de apps";
+"Browsers" = "Navegadores";
+"Cloud & Office" = "Nube y ofimática";
+"Developer tools" = "Herramientas de desarrollo";
+"AI Tools" = "Herramientas de IA";
+"Communication" = "Comunicación";
+"Applications" = "Aplicaciones";
+"Virtualization" = "Virtualización";
+"Application Support" = "Application Support";
+"App leftovers" = "Restos de apps";
+"System-managed caches and logs. Regenerated as macOS needs them." = "Cachés y registros gestionados por el sistema. macOS los vuelve a crear cuando los necesita.";
+"App temporary files. Regenerated next launch." = "Archivos temporales de apps. Se recrean en el siguiente arranque.";
+"Page caches — sites load a touch slower on first visit." = "Cachés de páginas: los sitios cargarán algo más lento en la primera visita.";
+"Build and package caches. First build will be slower." = "Cachés de compilación y de paquetes. La primera compilación será más lenta.";
+"Model and tool caches. Re-downloaded on next use." = "Cachés de modelos y herramientas. Se descargan de nuevo al usarlos.";
+"Message media caches. Re-fetched when you scroll back." = "Cachés de archivos de mensajería. Se recuperan al volver hacia atrás en la conversación.";
+"VM and container caches. Images re-pull on next run." = "Cachés de máquinas virtuales y contenedores. Las imágenes se descargan de nuevo en la siguiente ejecución.";
+"Sync caches. Files re-sync from the cloud." = "Cachés de sincronización. Los archivos se vuelven a sincronizar desde la nube.";
+"Files from apps that are no longer installed." = "Archivos de apps que ya no están instaladas.";
+"Cache files. Regenerated as needed." = "Archivos de caché. Se recrean cuando hace falta.";
+
+/* Optimize — live ticker */
+"Refreshing…" = "Actualizando…";
+"Previewing…" = "Generando la vista previa…";
+"Working…" = "Trabajando…";
+"Working on %@, %d tasks done" = "Trabajando en %1$@, %2$d tareas completadas";
+
+/* Software — uninstall review */
+"Startup" = "Inicio";
+"Last Used" = "Último uso";
+"Refresh" = "Actualizar";
+"Sort by %@" = "Ordenar por %@";
+"ascending" = "ascendente";
+"descending" = "descendente";
+"%d files · %@" = "%1$d archivos · %2$@";
+"Select %@" = "Seleccionar %@";
+"Enumerating files…" = "Enumerando archivos…";
+"Auto selected" = "Seleccionado automáticamente";
+"Needs review" = "Requiere revisión";
+"Not selected by default. Review these before removing." = "No se selecciona por omisión. Revisa estos elementos antes de eliminarlos.";
+"Toggle %@ group" = "Mostrar u ocultar el grupo %@";
+"Couldn't enumerate this app's files — there's nothing to review here." = "No se pudieron enumerar los archivos de esta app: no hay nada que revisar aquí.";
+"Application" = "Aplicación";
+"App Support" = "App Support";
+"Preferences" = "Preferencias";
+"Container" = "Contenedor";
+"Group Container" = "Contenedor de grupo";
+"Helper" = "Asistente";
+"Login Item" = "Ítem de inicio";
+"Temporary Cache" = "Caché temporal";
+"Other" = "Otros";
+"%@ · 1 app · %@" = "%1$@ · 1 app · %2$@";
+"%d apps · %@" = "%1$d apps · %2$@";
+"Remove %d" = "Eliminar %d";
+"Remove %d app?" = "¿Eliminar %d app?";
+"Remove %d apps?" = "¿Eliminar %d apps?";
+"These move to the Trash — the app itself and the support files it keeps in your Library (containers, caches, preferences, saved state). You can put them back:\n\n%@" = "Esto va a la papelera: la app en sí y los archivos de apoyo que guarda en tu biblioteca (contenedores, cachés, preferencias, estados guardados). Puedes devolverlos a su sitio:\n\n%@";
+"Homebrew removes these by running `brew uninstall --cask --zap`. That doesn't use the Trash, and `--zap` also deletes configuration and data the cask declares — more than the file list can show:\n\n%@" = "Homebrew los elimina ejecutando `brew uninstall --cask --zap`. Eso no pasa por la papelera, y `--zap` borra además la configuración y los datos que declara el cask, más de lo que puede mostrar la lista de archivos:\n\n%@";
+"If an app can't be removed, Burrow leaves its support files alone too, rather than half-removing it." = "Si una app no se puede eliminar, Burrow deja también intactos sus archivos de apoyo en lugar de dejarla a medio eliminar.";
+"Skipped — these have no bundle identifier, so Burrow can't tell the engine which app it means:\n\n%@" = "Omitidos: no tienen identificador de paquete, así que Burrow no puede indicarle al motor a qué app se refiere:\n\n%@";
+"Nothing Burrow can remove" = "No hay nada que Burrow pueda eliminar";
+"These have no bundle identifier, so Burrow can't tell the engine which app it means:\n\n%@" = "No tienen identificador de paquete, así que Burrow no puede indicarle al motor a qué app se refiere:\n\n%@";
+"%d reviewed files" = "%d archivos revisados";
+"Reviewed subsets are trashed by Burrow directly and appear in Burrow's Activity log, not `mo history`." = "Los subconjuntos revisados los envía a la papelera el propio Burrow y aparecen en su registro de actividad, no en `mo history`.";
+"Removing reviewed files" = "Eliminando los archivos revisados";
+
+/* Software — startup segment */
+"Launch agent" = "Agente de inicio";
+"Launch daemon" = "Daemon de inicio";
+"Unreadable configuration" = "Configuración ilegible";
+"Program is missing" = "Falta el programa";
+"Bundled inside an app; review only" = "Incluido dentro de una app; solo revisión";
+"System-wide; review only" = "De todo el sistema; solo revisión";
+"Yours; remove the file to disable" = "Tuyo; elimina el archivo para desactivarlo";
+"Your launch agents" = "Tus agentes de inicio";
+"System launch agents" = "Agentes de inicio del sistema";
+"System launch daemons" = "Daemons de inicio del sistema";
+"Reading startup items…" = "Leyendo los ítems de inicio…";
+"Search items" = "Buscar ítems";
+"Error" = "Error";
+"Review only — managed by its app or the system." = "Solo revisión: lo gestiona su app o el sistema.";
+"Review only" = "Solo revisión";
+"All" = "Todos";
+"Launch agents" = "Agentes de inicio";
+"Launch daemons" = "Daemons de inicio";
+"Problems" = "Problemas";
+
+/* Software — updates */
+"App Store" = "App Store";
+"Sparkle" = "Sparkle";
+"Electron" = "Electron";
+"Homebrew" = "Homebrew";
+"Checking update sources…" = "Comprobando las fuentes de actualización…";
+"Sources detected locally — checking versions contacts Apple and vendor servers." = "Fuentes detectadas en local; comprobar las versiones contacta con los servidores de Apple y de los fabricantes.";
+"Check for updates" = "Buscar actualizaciones";
+"Check again" = "Comprobar de nuevo";
+"Update all brews" = "Actualizar todos los paquetes de Homebrew";
+"Updates available" = "Hay actualizaciones disponibles";
+"Up to date" = "Actualizado";
+"Not checkable" = "No comprobable";
+"No App Store receipt, Sparkle feed, or known updater inside these bundles." = "En estos paquetes no hay recibo de App Store, ni canal de Sparkle, ni ningún actualizador conocido.";
+"Apps with an update mechanism" = "Apps con mecanismo de actualización";
+"active now" = "activa ahora";
+"opened %@" = "abierta %@";
+"never opened" = "nunca abierta";
+
+/* Settings — tabs & general */
+"General" = "General";
+"Maintenance" = "Mantenimiento";
+"Menu Bar" = "Barra de menús";
+"Advanced" = "Avanzado";
+"Close settings" = "Cerrar los ajustes";
+"Permissions" = "Permisos";
+"On. Burrow can reach system and app caches." = "Activado. Burrow puede llegar a las cachés del sistema y de las apps.";
+"Off. Safe scan in use — most system caches stay out of reach." = "Desactivado. Se usa el análisis seguro: la mayoría de las cachés del sistema quedan fuera de alcance.";
+"Startup & window" = "Inicio y ventana";
+"Launch at Login" = "Abrir al iniciar sesión";
+"Starts Burrow quietly at login so sampling and the menu-bar monitor are always on." = "Abre Burrow discretamente al iniciar sesión para que el muestreo y el monitor de la barra de menús estén siempre activos.";
+"Hide Dock Icon when window closes" = "Ocultar el icono del Dock al cerrar la ventana";
+"On: Burrow retreats to the menu bar when you close the window. Off: it stays in the Dock. With the menu-bar icon hidden, the Dock icon always stays — otherwise the app would be unreachable." = "Activado: Burrow se repliega a la barra de menús cuando cierras la ventana. Desactivado: se queda en el Dock. Si el icono de la barra de menús está oculto, el del Dock permanece siempre; de lo contrario no habría forma de abrir la app.";
+"Skip Intro Screens" = "Omitir las pantallas de bienvenida";
+"Jumps past the tools' idle screens where a read-only preview can start right away (Clean starts its scan when you open the tab)." = "Salta las pantallas de espera de las herramientas cuando una vista previa de solo lectura puede empezar de inmediato (la limpieza inicia su análisis al abrir la pestaña).";
+"About" = "Acerca de";
+"Source on GitHub" = "Código en GitHub";
+
+/* Settings — maintenance */
+"Protected Items" = "Elementos protegidos";
+"Paths and glob patterns Mole never cleans — `mo clean` and `mo optimize` skip anything matching them. “Always skip this” in the Clean review writes here too." = "Rutas y patrones glob que Mole nunca limpia: `mo clean` y `mo optimize` omiten todo lo que coincida. «Omitir siempre», en la revisión de la limpieza, también escribe aquí.";
+"No protected items yet." = "Todavía no hay elementos protegidos.";
+"Add a path or glob pattern" = "Añadir una ruta o un patrón glob";
+"Add" = "Añadir";
+"Remove %@ from protected items" = "Quitar %@ de los elementos protegidos";
+"Cache removal" = "Eliminación de cachés";
+"Removal mode" = "Modo de eliminación";
+"Permanent" = "Permanente";
+"Trash" = "Papelera";
+"Permanent (default): the engine removes caches outright — freed space is real, immediately. Trash: reviewed, ticked paths go to the Trash instead — recoverable, but space frees only when Trash empties, and the run won't appear in `mo history`." = "Permanente (por omisión): el motor elimina las cachés directamente; el espacio se libera de verdad y al instante. Papelera: las rutas revisadas y marcadas van a la papelera; se pueden recuperar, pero el espacio solo se libera al vaciarla y la ejecución no aparecerá en `mo history`.";
+
+/* Settings — menu bar */
+"Display" = "Presentación";
+"Icon" = "Icono";
+"Metrics" = "Métricas";
+"Metrics shows live CPU and memory next to the mark, refreshed with the sampler." = "«Métricas» muestra la CPU y la memoria en directo junto al símbolo, al ritmo del muestreo.";
+"Keyboard shortcuts" = "Atajos de teclado";
+"Keep Screen On" = "Mantener la pantalla encendida";
+"Clean Screen" = "Limpiar la pantalla";
+"System-wide. Click a chip, press a combination with ⌃, ⌥ or ⌘; Esc cancels, × clears." = "Para todo el sistema. Haz clic en una etiqueta y pulsa una combinación con ⌃, ⌥ o ⌘; Esc cancela y × borra.";
+"Block keys while wiping" = "Bloquear las teclas mientras limpias";
+"Accessibility" = "Accesibilidad";
+"Needed to swallow key presses while you wipe. Esc always exits." = "Necesario para absorber las pulsaciones mientras limpias la pantalla. Esc siempre permite salir.";
+"Off: Clean Screen still works, keys just aren't blocked. Esc always exits either way." = "Desactivado: «Limpiar la pantalla» sigue funcionando, solo que las teclas no se bloquean. En ambos casos, Esc permite salir.";
+"Press keys…" = "Pulsa las teclas…";
+"Record" = "Grabar";
+"Record shortcut" = "Grabar el atajo";
+"Clear shortcut" = "Borrar el atajo";
+"None" = "Ninguno";
+
+/* Menu-bar tools */
+"15 minutes" = "15 minutos";
+"30 minutes" = "30 minutos";
+"1 hour" = "1 hora";
+"2 hours" = "2 horas";
+"Until turned off" = "Hasta que se desactive";
+"Turn Off" = "Desactivar";
+"Check for Updates…" = "Buscar actualizaciones…";
+"Couldn't check for updates" = "No se pudieron buscar actualizaciones";
+"GitHub didn't answer. Try again later, or open the releases page." = "GitHub no respondió. Vuelve a intentarlo más tarde o abre la página de versiones.";
+"Update available" = "Actualización disponible";
+"Burrow %@ is available (you have %@). Update with `brew upgrade --cask burrow`, or open the release page." = "Burrow %1$@ ya está disponible (tienes %2$@). Actualiza con `brew upgrade --cask burrow` o abre la página de la versión.";
+"Burrow %@ is available (you have %@). Download it from the release page." = "Burrow %1$@ ya está disponible (tienes %2$@). Descárgalo desde la página de la versión.";
+"You're up to date" = "Estás al día";
+"Burrow %@ is the latest release." = "Burrow %@ es la última versión.";
+"Open Release Page" = "Abrir la página de la versión";
+"Engine: %@" = "Motor: %@";
+"not found" = "no encontrado";
+"Releases" = "Versiones";
+"What telemetry is collected" = "Qué datos de telemetría se recogen";
+"Licenses" = "Licencias";
+"Wipe away — press Esc when you're done." = "Limpia con calma; pulsa Esc cuando termines.";
+
+/* Status dashboard */
+"%d fans" = "%d ventiladores";
+"macOS manages speed" = "macOS gestiona la velocidad";
+"No fan data on this Mac" = "No hay datos de ventiladores en este Mac";
+"Fan" = "Ventilador";
+"%d%% Health" = "%d%% de salud";
+"%d cyc" = "%d ciclos";
+"Mac" = "Mac";
+"%d percent" = "%d por ciento";
+"PWR" = "POT";
+"Energy billed since launch (mWh)" = "Energía consumida desde el arranque (mWh)";
+"Actions for %@" = "Acciones para %@";
+"Pin" = "Fijar";
+"Unpin" = "Dejar de fijar";
+"Copy name" = "Copiar el nombre";
+"Copy PID" = "Copiar el PID";
+"Quit…" = "Salir…";
+"Force Kill…" = "Forzar el cierre…";
+"Force kill %@?" = "¿Forzar el cierre de %@?";
+"Quit %@?" = "¿Cerrar %@?";
+"SIGKILL ends it immediately — unsaved work in this process is lost." = "SIGKILL lo termina de inmediato: se pierde todo el trabajo sin guardar de ese proceso.";
+"Sends a polite quit (SIGTERM). The process may save and exit, or ignore it." = "Envía una petición de cierre amable (SIGTERM). El proceso puede guardar y salir, o ignorarla.";
+"Force Kill" = "Forzar el cierre";
+"Quit Process" = "Cerrar el proceso";
+
+/* Menu-bar popover */
+"%@ free" = "%@ libres";
+"Health %d. Open Burrow." = "Salud %d. Abrir Burrow.";
+"up %@" = "activo %@";
+"%@ used · %.0f%%" = "%@ usados · %.0f%%";
+"No fan data" = "Sin datos de ventiladores";
+"Top drain — %@ · avg %.0f%% CPU over the last hour" = "Mayor consumo: %@ · %.0f%% de CPU de media en la última hora";
+"Stay Awake" = "Mantener despierto";
+"Wipe" = "Limpiar";
+"Eject" = "Expulsar";
+"on" = "activado";
+"Ejecting external volumes" = "Expulsando los volúmenes externos";
+"%d ejected · %d busy" = "%1$d expulsados · %2$d ocupados";
+"%@ cleaned · %d uninstalled · %d optimized" = "%1$@ limpiados · %2$d desinstaladas · %3$d optimizaciones";
+"Clean Watch" = "Seguimiento de la limpieza";
+
+/* Analyze progress */
+"Mapping your folders" = "Cartografiando tus carpetas";
+"Measuring…" = "Midiendo…";
+"Scanning %@, %d of %d" = "Analizando %1$@, %2$d de %3$d";
+"Scanning" = "Analizando";
+
+/* ===== Uninstall pre-flight: identity of the resolved app ===== */
+"“%@” isn't an identifier that names one app — it resolves to whichever app the engine happens to match first, so nothing was removed. Use the app's bundle id or its exact name." = "«%@» no es un identificador que designe una sola app: corresponde a la primera que encuentre el motor, así que no se eliminó nada. Usa el identificador de paquete de la app o su nombre exacto.";
+"The engine didn't say which application “%@” resolves to, so Burrow can't confirm it's the right one and nothing was removed." = "El motor no indicó a qué aplicación corresponde «%@», así que Burrow no puede confirmar que sea la correcta y no se eliminó nada.";
+"The engine resolved %@ twice, so the run wouldn't act on the set it reported." = "El motor resolvió %@ dos veces, así que la ejecución no actuaría sobre el conjunto que informó.";
+"“%1$@” isn't %2$@'s name or bundle id — the engine matched it by substring, so it may not be the app you meant. Nothing was removed; ask for it by name: %3$@." = "«%1$@» no es el nombre ni el identificador de paquete de %2$@: el motor lo encontró por coincidencia parcial, así que puede no ser la app que querías. No se eliminó nada; indícala por su nombre: %3$@.";
+"The engine resolved an argument Burrow didn't send (“%@”), so nothing was removed." = "El motor resolvió un argumento que Burrow no envió («%@»), así que no se eliminó nada.";
+"“%1$@” resolves to %2$@ (%3$@), not the %4$@ you picked (%5$@), so nothing was removed." = "«%1$@» corresponde a %2$@ (%3$@), no a %4$@ (%5$@) que elegiste, así que no se eliminó nada.";
+"“%1$@” resolves to an app whose bundle id is %2$@, not the %3$@ you picked, so nothing was removed." = "«%1$@» corresponde a una app cuyo identificador de paquete es %2$@, no %3$@ que elegiste, así que no se eliminó nada.";
+
+/* ===== Uninstall: the plan disagrees with the confirm sheet ===== */
+"This isn't quite what Burrow just told you" = "Esto no coincide del todo con lo que Burrow acaba de decirte";
+"Remove anyway" = "Eliminar de todos modos";
+"cancelled — nothing removed" = "cancelado: no se eliminó nada";
+"Homebrew removes these after all, with `brew uninstall --cask --zap` — that doesn't use the Trash, so you can't put them back: %@" = "Al final los elimina Homebrew, con `brew uninstall --cask --zap`: eso no pasa por la papelera, así que no podrás recuperarlos: %@";
+"These aren't Homebrew's after all — Burrow moves them to the Trash itself: %@" = "Al final no son de Homebrew: Burrow los mueve él mismo a la papelera: %@";
+
+/* ===== Uninstall review: what Burrow may not remove by hand ===== */
+"Homebrew installed %1$@ — it has to be removed with `brew uninstall --cask --zap %2$@`. Trashing the app on its own would leave Homebrew still believing it's installed." = "%1$@ lo instaló Homebrew, así que hay que eliminarlo con `brew uninstall --cask --zap %2$@`. Mover solo la app a la papelera dejaría a Homebrew creyendo que sigue instalada.";
+"Burrow won't remove these itself" = "Burrow no eliminará estas por su cuenta";
+"These stay installed — only the reviewed support files move to the Trash, and you can put them back:\n\n%@" = "Estas siguen instaladas: solo van a la papelera los archivos de apoyo revisados, y puedes devolverlos a su sitio:\n\n%@";
+"Remove data from %d app?" = "¿Eliminar los datos de %d app?";
+"Remove data from %d apps?" = "¿Eliminar los datos de %d apps?";

@@ -198,31 +198,15 @@ enum ExplainPrompt {
     /// paragraph of English wedged between Russian labels reads as a broken
     /// translation rather than a deliberate choice. `nil` is the English UI,
     /// where the base prompt already answers in English unprompted.
-    static func replyLanguage() -> String? {
-        switch Store.appLanguage {
-        case "zh-Hans", "zh-Hant", "ru": return Store.appLanguage
-        case "en":                       return nil
-        default:
-            let lang = Bundle.main.preferredLocalizations.first ?? Locale.current.identifier
-            if lang.hasPrefix("ru") { return "ru" }
-            guard lang.hasPrefix("zh") else { return nil }
-            let traditional = lang.contains("Hant") || lang.contains("TW") || lang.contains("HK") || lang.contains("MO")
-            return traditional ? "zh-Hant" : "zh-Hans"
-        }
+    static func replyLanguage() -> AppLanguage? {
+        AppLanguage.resolved(override: Store.appLanguage,
+                             preferred: Bundle.main.preferredLocalizations.first ?? Locale.current.identifier)
     }
 
     static func make(_ ctx: ExplainContext) -> (system: String, user: String) {
-        let language: String
-        switch replyLanguage() {
-        case "zh-Hans":
-            language = "\n\nWrite the explanation in Simplified Chinese (简体中文). Keep the final ACTION line exactly as specified, in English."
-        case "zh-Hant":
-            language = "\n\nWrite the explanation in Traditional Chinese as used in Taiwan (繁體中文，台灣用語). Keep the final ACTION line exactly as specified, in English."
-        case "ru":
-            language = "\n\nWrite the explanation in Russian (русский). Keep the final ACTION line exactly as specified, in English."
-        default:
-            language = ""
-        }
+        let language = replyLanguage().flatMap(\.explainDescription).map {
+            "\n\nWrite the explanation in \($0). Keep the final ACTION line exactly as specified, in English."
+        } ?? ""
         let system = """
         You are Burrow's assistant. Explain a macOS user's system health in plain, \
         calm English from the data below — a live snapshot, a short recent trend, and \

@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Burrow · macOS의 정리·소프트웨어·상태를 한곳에서 다루는 무료 오픈 소스 도구 &amp; Windows</title>
+<meta name="description" content="Burrow는 macOS(및 베타 단계의 Windows)를 위한 무료 오픈 소스 네이티브 앱입니다. 불필요한 파일 정리, 앱 관리, 유지 관리 실행, 디스크 지도, 실시간 상태 확인을 하나의 창에서 처리합니다. 장기 기록과 Claude Code용 MCP 서버도 함께 제공합니다.">
+<meta name="theme-color" content="#121217">
+<link rel="icon" type="image/png" href="../burrow-icon.png">
+<link rel="apple-touch-icon" href="../burrow-icon-512.png">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Burrow · Free, open-source desktop utility for macOS &amp; Windows">
+<meta property="og:description" content="불필요한 파일 정리, 앱 관리, 유지 관리, 디스크 지도, 실시간 상태 확인을 네이티브 앱 하나로. macOS 네이티브이며 Windows는 현재 베타입니다. 무료이고 MIT 라이선스입니다. 기록과 MCP 서버도 포함합니다.">
+<meta property="og:image" content="https://burrow.computer/burrow-icon-512.png">
+<meta property="og:url" content="https://burrow.computer/">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://burrow.computer/ko/">
+<link rel="alternate" hreflang="x-default" href="https://burrow.computer/">
+<link rel="alternate" hreflang="en" href="https://burrow.computer/">
+<link rel="alternate" hreflang="zh-Hans" href="https://burrow.computer/zh-Hans/">
+<link rel="alternate" hreflang="zh-Hant" href="https://burrow.computer/zh-Hant/">
+<link rel="alternate" hreflang="ru" href="https://burrow.computer/ru/">
+<link rel="alternate" hreflang="ja" href="https://burrow.computer/ja/">
+<link rel="alternate" hreflang="de" href="https://burrow.computer/de/">
+<link rel="alternate" hreflang="fr" href="https://burrow.computer/fr/">
+<link rel="alternate" hreflang="es" href="https://burrow.computer/es/">
+<link rel="alternate" hreflang="ko" href="https://burrow.computer/ko/">
+<link rel="alternate" hreflang="pt-BR" href="https://burrow.computer/pt-BR/">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://burrow.computer/#org","name":"Burrow","url":"https://burrow.computer","logo":"https://burrow.computer/burrow-icon-512.png","sameAs":["https://github.com/caezium/Burrow"]},{"@type":"WebSite","@id":"https://burrow.computer/#site","url":"https://burrow.computer","name":"Burrow","publisher":{"@id":"https://burrow.computer/#org"}}]}</script>
+<meta property="og:site_name" content="Burrow">
+<meta name="twitter:title" content="Burrow · 정리·디스크·상태를 위한 무료 오픈 소스 Mac 도구">
+<meta name="twitter:description" content="불필요한 파일을 치우고, 중복과 잔여 파일을 찾고, 디스크를 지도로 보여 주고, 상태를 실시간으로 지켜봅니다. 네이티브 창 하나로. 무료이고 오픈 소스입니다.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Burrow","applicationCategory":"UtilitiesApplication","operatingSystem":"macOS 14+, Windows 10/11","description":"A free, open-source desktop utility that clears junk, finds duplicate and leftover files, maps disk usage, and watches live system status, with an MCP server so coding agents can read the machine.","url":"https://burrow.computer","downloadUrl":"https://burrow.computer/install","license":"https://github.com/caezium/Burrow/blob/main/LICENSE","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is it really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. MIT-licensed, with no accounts, no trial limits, no paid tier, and nothing bundled in. The full source is on GitHub if you want to read it before you run it."}},{"@type":"Question","name":"Is Burrow safe to use?","acceptedAnswer":{"@type":"Answer","text":"Every action shows the file list and byte count before it runs, and Clean sorts categories by how safe they are to remove. There is no background root helper: when a task needs admin rights, macOS's own dialog asks you, Burrow runs that one command, then exits."}},{"@type":"Question","name":"What does it actually delete?","acceptedAnswer":{"@type":"Answer","text":"Caches and temporary files that apps regenerate on their own: browser caches, developer build artifacts, app support caches, logs, leftover installers. Package caches and build output with real rebuild cost stay unchecked until you confirm them yourself."}},{"@type":"Question","name":"Does it upload anything?","acceptedAnswer":{"@type":"Answer","text":"No files, paths, URLs, or metrics. Scans and history stay on the machine, and the MCP server is loopback only. Burrow does send anonymous, opt-out usage and crash diagnostics, disclosed field by field in TELEMETRY.md. One Settings switch turns it off, and source builds ship inert."}},{"@type":"Question","name":"Do I need Full Disk Access?","acceptedAnswer":{"@type":"Answer","text":"No. Burrow runs a safe scan without it. Granting it lets Burrow reach deeper App Support and container caches, and you can grant or revoke it whenever you like."}},{"@type":"Question","name":"Is it signed and notarized?","acceptedAnswer":{"@type":"Answer","text":"Yes, from 0.11.0 onward, and a tag cannot publish unless signing, notarization, stapling, and Gatekeeper assessment all pass. Archived 0.10.5-and-earlier builds predate that: right-click and choose Open if Gatekeeper blocks one. The full contract is in SECURITY.md."}},{"@type":"Question","name":"What can an agent do with it?","acceptedAnswer":{"@type":"Answer","text":"Twenty-six MCP tools cover snapshots, history, top processes, disk analysis, duplicates, ports, network, and more. Fourteen are read-only and available immediately; the ones that change your machine need their own explicit opt-in. The full list is in agent-tools.md."}},{"@type":"Question","name":"Does it run on Windows?","acceptedAnswer":{"@type":"Answer","text":"A native WinUI 3 and .NET 8 port is in active beta, reaching parity tool by tool. macOS is the mature flagship; the Windows preview ships as a zip today, with an installer coming. Track it on GitHub."}}]}</script>
+<link rel="preload" as="image" href="../burrow-icon-512.png">
+<script src="/analytics.js" defer></script>
+<link rel="stylesheet" href="../assets/chrome.css">
+
+<style>
+  /* All fonts self-hosted: a page whose pitch is "your data stays on your
+     Mac" shouldn't leak every visitor's IP to a fonts CDN. Geist + Geist
+     Mono are the MIT-licensed variable cuts from vercel/geist-font. */
+  @font-face {
+    font-family: "Geist";
+    src: url("assets/fonts/Geist[wght].woff2") format("woff2");
+    font-weight: 100 900; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    src: url("assets/fonts/GeistMono[wght].woff2") format("woff2");
+    font-weight: 100 900; font-style: normal; font-display: swap;
+  }
+  /* Cal Sans: caezium house display face (self-hosted) */
+  @font-face {
+    font-family: "Cal Sans";
+    src: url("assets/fonts/CalSans-SemiBold.woff2") format("woff2");
+    font-weight: 600; font-style: normal; font-display: swap;
+  }
+
+  :root {
+    /* ===== caezium house palette (devport) on reference geometry ===== */
+    --bg:        #121217;
+    --surface:   rgba(243,236,221,0.045);
+    --surface-2: rgba(243,236,221,0.07);
+    --elevated:  #191920;         /* shot-card ground */
+    --ink:       #F3ECDD;
+    --ink-2:     rgba(243,236,221,0.66);
+    --ink-3:     rgba(243,236,221,0.42);
+    --line:      rgba(243,236,221,0.13);
+    --line-soft: rgba(243,236,221,0.075);
+    --accent:    #D9A066;
+    --accent-hi: #E7C49A;
+    --accent-soft: rgba(217,160,102,0.14);
+    --on-accent: #241B12;
+
+    /* per-tool jewels, straight from Burrow's Tool.swift */
+    --teal:#35C2A5; --coral:#F0714E; --violet:#8E84F0; --azure:#4FA3E3;
+    --gold:#E6A93C; --moss:#6FB06A; --ginger:#D98C5F; --green:#57D58E; --red:#F0604E;
+    --lilac:#D6C6FF; --rose:#DB7E9C; --olive:#B7BE5A; --orchid:#D57BC4;
+    --cyan:#4FC3D9; --sage:#5AA98B;
+
+    --font-display: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    --font-mono:    "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --font-head:    "Cal Sans", "Geist", -apple-system, system-ui, sans-serif;
+
+    --maxw: 1080px;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overscroll-behavior-y: none; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: var(--font-display);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    line-height: 1.5;
+    overflow-x: hidden;
+    background-color: var(--bg);
+    background-image:
+      url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%3E%3Cfilter%20id='g'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.82'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23g)'%20opacity='0.06'/%3E%3C/svg%3E"),
+      radial-gradient(1200px 600px at 82% -10%, rgba(217,160,102,0.09), rgba(217,160,102,0) 60%),
+      radial-gradient(1000px 520px at -10% 108%, rgba(217,160,102,0.07), rgba(217,160,102,0) 60%);
+    background-repeat: repeat, no-repeat, no-repeat;
+    background-size: 180px 180px, auto, auto;
+    background-attachment: fixed;
+  }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+  ::selection { background: rgba(217,160,102,0.26); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+  .mono { font-family: var(--font-mono); }
+  code.k, .cmd { font-family: var(--font-mono); font-size: 0.86em; background: var(--surface-2);
+    border: 1px solid var(--line-soft); padding: 2px 6px; border-radius: 6px; color: var(--ink); white-space: nowrap; }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; padding-top: 104px; padding-bottom: 64px; }
+  .hero::before {
+    content: ""; position: absolute; inset: -180px 0 auto; height: 740px; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(620px 360px at 72% 8%, rgba(217,160,102,0.14), rgba(217,160,102,0) 70%),
+      radial-gradient(520px 320px at 8% 0, rgba(214,198,255,0.07), rgba(214,198,255,0) 70%);
+  }
+  .hero-inner { position: relative; z-index: 1; text-align: center; }
+  .hero-mark { width: 112px; height: 112px; margin: 0 auto 26px; display: block;
+    filter: drop-shadow(0 14px 30px rgba(0,0,0,0.55)); }
+  h1.headline { font-family: var(--font-head); font-weight: 600;
+    font-size: clamp(2.35rem, 4.4vw, 3.9rem); line-height: 1.05; letter-spacing: -0.025em;
+    max-width: 17ch; margin: 0 auto 20px; }
+  h1.headline .accent { color: var(--accent); }
+  .subhead { color: var(--ink-2); max-width: 52ch; margin: 0 auto 32px;
+    font-size: clamp(1rem, 1.9vw, 1.1875rem); font-weight: 450; line-height: 1.55; }
+  .cta-row { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .or-divider { display: flex; justify-content: center; align-items: center; gap: 12px;
+    width: min(100%, 380px); margin: 0 auto; padding: 16px 0 12px; }
+  .or-divider__line { flex: 1; height: 1px; background: var(--line-soft); }
+  .or-divider__text { flex: none; font-size: .8rem; font-weight: 500; color: var(--ink-3); }
+
+  .snippet-row { display: flex; justify-content: center; width: 100%; }
+  .snippet { display: flex; align-items: stretch; max-width: 100%; overflow: hidden;
+    background: var(--surface-2); border: 1px solid var(--line-soft); border-radius: 12px; }
+  .snippet-text { display: flex; align-items: center; min-width: 0; padding: 11px 12px 11px 16px; }
+  .snippet-code { font-family: var(--font-mono); font-size: .875rem; color: var(--ink);
+    white-space: nowrap; letter-spacing: .01em; overflow-x: auto; }
+  .snippet-copy { position: relative; width: 40px; flex: none; display: inline-flex; align-items: center;
+    justify-content: center; background: transparent; border: 0; border-left: 1px solid var(--line-soft);
+    color: var(--ink-2); cursor: pointer; transition: color .18s; }
+  .snippet-copy:hover { color: var(--ink); }
+  .snippet-ico { position: absolute; width: 14px; height: 14px; transition: opacity .2s, transform .2s; }
+  .snippet-ico--check { color: var(--green); opacity: 0; transform: scale(.6); }
+  .snippet-copy.copied .snippet-ico--copy { opacity: 0; transform: scale(.6); }
+  .snippet-copy.copied .snippet-ico--check { opacity: 1; transform: scale(1); }
+  @media (prefers-reduced-motion: reduce) { .snippet-ico { transition: none; } }
+
+  .meta-line { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px;
+    padding-top: 18px; font-family: var(--font-mono); font-size: .82rem; font-weight: 500; color: var(--ink-3); }
+  .meta-line .dot { opacity: .55; }
+  .meta-line b { color: var(--accent); font-weight: 500; }
+
+  .dl-line { margin-top: 14px; font-size: 13px; color: var(--ink-3); }
+  .dl-line b { font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+  .picker-wrap { margin-top: 44px; }
+  .install-note { margin-top: 26px; text-align: center; font-family: var(--font-mono);
+    font-size: 12.5px; line-height: 1.7; color: var(--ink-3); }
+  .install-note b { color: var(--accent); font-weight: 500; }
+  .install-note a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+  .install-note a:hover { color: var(--accent); }
+
+  .demo-wrap { margin-top: 40px; aspect-ratio: 1880/1344; overflow: hidden;
+    border: 1px solid var(--line); border-radius: 24px; background: var(--elevated);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 28px 60px -34px rgba(0,0,0,0.8); }
+  .demo-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+  .demo-wrap img.contain { object-fit: contain; }
+
+  /* ---------- sections ---------- */
+  .section { padding-top: 76px; padding-bottom: 76px; }
+  .section--ruled { border-top: 1px solid var(--line-soft); }
+  .sec-eyebrow, .sec-num { display: block; font-family: var(--font-mono); font-size: .72rem;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  h2.sec-title { font-family: var(--font-head); font-weight: 600;
+    font-size: clamp(1.65rem, 3.2vw, 2.1rem); line-height: 1.12; letter-spacing: -0.025em; margin: 0; }
+  .sec-intro { margin-top: 18px; max-width: 62ch; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
+  .sec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+
+  /* ---------- tool grid ---------- */
+  .tool-grid { margin-top: 48px; display: grid; grid-template-columns: repeat(2, 1fr);
+    border-top: 1px solid var(--line-soft); }
+  .tool-cell { padding: 26px; border-bottom: 1px solid var(--line-soft); transition: background .18s; }
+  .tool-cell:hover { background: var(--surface); }
+  .tool-cell:nth-child(odd):not(:last-child) { border-right: 1px solid var(--line-soft); }
+  .tool-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .tool-id { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .tool-ico { width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--c) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c) 34%, transparent); }
+  .tool-ico svg { width: 17px; height: 17px; stroke: var(--c); fill: none; stroke-width: 1.8; }
+  .tool-name { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .tool-cmd { flex: none; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums; }
+  .tool-cell p { margin-top: 12px; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+
+  /* ---------- feature run: alternating screenshot rows ---------- */
+  .feature { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 56px;
+    padding-top: 60px; padding-bottom: 60px; }
+  .feature--wide { grid-template-columns: 1fr; gap: 32px; padding-top: 40px; padding-bottom: 40px; }
+  .feature .f-text { order: 2; }
+  .feature .f-shot { order: 1; }
+  .feature h3 { font-family: var(--font-head); font-weight: 600;
+    font-size: clamp(1.35rem, 2.4vw, 1.55rem); line-height: 1.15; letter-spacing: -0.025em; }
+  .feature p { margin-top: 14px; max-width: 44ch; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
+  .feature .why { margin-top: 14px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+  .shot-card { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; border-radius: 22px; padding: 14px; border: 1px solid var(--line-soft); }
+  .shot-card::before { content: ""; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(var(--elevated), var(--elevated)),
+      radial-gradient(140% 100% at 50% 0%, rgba(217,160,102,0.14), transparent 65%); }
+  .shot-card img { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 12px 30px -18px rgba(0,0,0,0.9); }
+  .shot-card--narrow img { width: 78%; margin: 0 auto; }
+  .shot-card--tall { padding: 24px; }
+  .shot-card--tall img { width: auto; max-height: 520px; margin: 0 auto; }
+
+  /* ---------- what's new (markup owned by scripts/site-release.py) ---------- */
+  .wn-head { margin-bottom: 40px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .tcard { padding: 22px; border-radius: var(--radius); background: var(--surface);
+    border: 1px solid var(--line-soft); }
+  .tcard .top { display: flex; align-items: center; gap: 11px; }
+  .tcard .ico { width: 32px; height: 32px; border-radius: 10px; flex: none; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--c) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c) 34%, transparent); }
+  .tcard .ico svg { width: 16px; height: 16px; stroke: var(--c); fill: none; stroke-width: 1.8; }
+  .tcard .nm { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+  .tcard .ds { margin-top: 12px; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+  .tcard .ds a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .extra-label { margin-top: 26px; font-size: 11.5px; letter-spacing: .1em; color: var(--ink-3); }
+  .wn-chips { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 9px; }
+  .wn-chip { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono);
+    font-size: 12px; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line-soft);
+    border-radius: 999px; padding: 7px 13px; }
+  .wn-chip svg { width: 12px; height: 12px; stroke: var(--green); fill: none; stroke-width: 2.4; flex: none; }
+  .wn-chip a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+  /* ---------- trust ---------- */
+  .trust-head { text-align: center; }
+  .trust-head .sec-intro { margin-left: auto; margin-right: auto; }
+  .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
+  .trust-card { padding: 26px 24px; text-align: center; border-radius: var(--radius);
+    background: var(--surface); border: 1px solid var(--line-soft); }
+  .trust-card h3 { display: flex; align-items: center; justify-content: center; gap: 9px;
+    font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 10px; }
+  .trust-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; color: var(--accent); }
+  .trust-icon svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .trust-card p { font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
+  .trust-card p a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+    border-top: 1px solid var(--line-soft); }
+
+
+  /* ---------- FAQ ---------- */
+  .faq-head { text-align: center; }
+  .faq-list { max-width: 720px; margin: 38px auto 0; text-align: left; }
+  .faq-item { border-bottom: 1px solid var(--line-soft); }
+  .faq-item:first-child { border-top: 1px solid var(--line-soft); }
+  .faq-q { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 20px 0; font: inherit; font-size: 1.075rem; font-weight: 600; letter-spacing: -0.01em;
+    line-height: 1.3; text-align: left; color: inherit; background: 0 0; border: 0; cursor: pointer;
+    transition: color .18s; }
+  .faq-q:hover { color: var(--accent); }
+  .faq-chevron { width: 18px; height: 18px; flex: none; color: var(--ink-3); stroke: currentColor;
+    fill: none; stroke-width: 2; }
+  @media (prefers-reduced-motion: no-preference) {
+    .faq-chevron { transition: transform .32s cubic-bezier(.33,1,.68,1); }
+  }
+  .faq-item[data-open="true"] .faq-chevron { transform: rotate(180deg); color: var(--accent); }
+  .faq-panel { display: grid; grid-template-rows: 0fr; overflow: hidden; }
+  .faq-item[data-open="true"] .faq-panel { grid-template-rows: 1fr; }
+  .faq-panel-inner { min-height: 0; opacity: 0; transform: translateY(-4px); }
+  .faq-item[data-open="true"] .faq-panel-inner { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .faq-panel { transition: grid-template-rows .32s cubic-bezier(.33,1,.68,1); }
+    .faq-panel-inner { transition: opacity .2s, transform .32s cubic-bezier(.33,1,.68,1); }
+    .faq-item[data-open="true"] .faq-panel-inner { transition-delay: 80ms; }
+  }
+  .faq-a { max-width: 62ch; padding-bottom: 20px; padding-right: 28px;
+    font-size: 1.025rem; line-height: 1.6; color: var(--ink-2); }
+  .faq-a a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .faq-closing { margin-top: 34px; text-align: center; font-size: 14px; color: var(--ink-3); }
+  .faq-closing a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+    font-size: 12.5px; color: var(--ink-3); }
+
+  /* ---------- entrance animation ---------- */
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { opacity: 0; transform: translateY(12px); animation: .66s cubic-bezier(.2,.7,.2,1) forwards rise; }
+    .d1 { animation-delay: 50ms; } .d2 { animation-delay: .13s; } .d3 { animation-delay: .21s; }
+    .d4 { animation-delay: .3s; } .d5 { animation-delay: .4s; }
+    @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+    .io { opacity: 0; transform: translateY(16px); transition: opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1); }
+    .io.in { opacity: 1; transform: none; }
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 900px) {
+    .feature, .feature--flip { grid-template-columns: 1fr; gap: 28px; padding-top: 48px; padding-bottom: 48px; }
+    .feature .shot-card, .feature .f-shot { order: 2; }
+    .feature .f-text { order: 1; }
+    .shot-card--narrow img { width: 80%; }
+    .grid3, .trust-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    .hero { padding-top: 68px; padding-bottom: 44px; }
+    .section { padding-top: 56px; padding-bottom: 56px; }
+    .tool-grid { grid-template-columns: 1fr; }
+    .tool-cell:nth-child(odd):not(:last-child) { border-right: 0; }
+    .snippet-code { font-size: .8rem; }
+    .demo-wrap { border-radius: 18px; margin-top: 38px; }
+  }
+</style>
+</head>
+<body id="top">
+
+<!-- NAV:BEGIN generated by scripts/site-release.py -->
+<div class="topbar">
+  <div class="page in">
+    <a class="brand" href="./" aria-label="Burrow"><img class="mk" src="../burrow-icon.png" alt="" width="28" height="28" decoding="async"><span>Burrow</span></a>
+    <nav class="nav"><a href="./#tools">도구</a><a href="docs">문서</a><a href="compare">비교</a><a href="../blog/">블로그</a><a href="../install">설치</a><a href="releases">변경 사항</a><a href="roadmap">로드맵</a></nav>
+    <div class="nav-right">
+      <!-- LANGPICK:BEGIN --><details class="langpick"><summary aria-label="Language"><span>한국어</span></summary><nav><a href="/" hreflang="en">English</a><a href="/zh-Hans/" hreflang="zh-Hans">简体中文</a><a href="/zh-Hant/" hreflang="zh-Hant">繁體中文</a><a href="/ru/" hreflang="ru">Русский</a><a href="/ja/" hreflang="ja">日本語</a><a href="/de/" hreflang="de">Deutsch</a><a href="/fr/" hreflang="fr">Français</a><a href="/es/" hreflang="es">Español</a><a href="/ko/" hreflang="ko" aria-current="page">한국어</a><a href="/pt-BR/" hreflang="pt-BR">Português (Brasil)</a></nav></details><!-- LANGPICK:END -->
+      <a class="nav-github" href="https://github.com/caezium/Burrow" target="_blank" rel="noopener" aria-label="GitHub에서 Burrow 보기"><svg class="icon icon--github" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.3-1.8-1.3-1.8-1.1-.7 0-.7 0-.7 1.2 0 1.9 1.2 1.9 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0C17.3 5 18.3 5.3 18.3 5.3c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0012 .5z"/></svg><span class="nav-stars">1.2k</span></a>
+      <a class="btn" href="../install" data-burrow-analytics="download.home"><span class="btn-inner"><svg class="icon icon--apple" viewBox="0 0 814 1000" aria-hidden="true"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.2 0 129.8 2.6 196.3 99.2zm-234-181.1c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.2 32.4-54.4 84.4-54.4 136.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.8-71.3z"/></svg><span class="nav-label--full">Mac용 다운로드</span><span class="nav-label--short">다운로드</span></span></a>
+    </div>
+  </div>
+</div>
+<!-- NAV:END -->
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <div class="wrap hero-inner">
+    <img class="hero-mark reveal d1" src="../burrow-icon-512.png" alt="" width="112" height="112" decoding="async" fetchpriority="high">
+    <h1 class="headline reveal d2">지금까지 <span class="accent">앱 여섯 개</span> 로 하던 일을 한곳에.</h1>
+    <p class="subhead reveal d3">불필요한 파일을 치우고, 중복과 잔여 파일을 찾고, 디스크를 차지하는 것이 무엇인지 보여 주고, 시스템 상태를 실시간으로 지켜보는 무료 오픈 소스 Mac 도구입니다. 네이티브 창 하나로 끝나며, Windows 버전도 베타로 제공합니다.</p>
+    <div class="cta-row reveal d4">
+      <a class="btn btn-lg" href="../install" data-burrow-analytics="download.hero">
+        <span class="btn-inner">
+          <svg class="icon icon--apple" viewBox="0 0 814 1000" aria-hidden="true"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.2 0 129.8 2.6 196.3 99.2zm-234-181.1c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.2 32.4-54.4 84.4-54.4 136.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.8-71.3z"/></svg>
+          Mac용 다운로드
+        </span>
+      </a>
+    </div>
+    <div class="or-divider reveal d4" aria-hidden="true">
+      <span class="or-divider__line"></span><span class="or-divider__text">또는</span><span class="or-divider__line"></span>
+    </div>
+    <div class="snippet-row reveal d4">
+      <div class="snippet" role="group" aria-label="homebrew install command">
+        <div class="snippet-text"><code class="snippet-code">brew install --cask caezium/tap/burrow</code></div>
+        <button class="snippet-copy" type="button" data-copy="brew install --cask caezium/tap/burrow" aria-label="명령어 복사" data-burrow-analytics="homebrew.hero">
+          <svg class="snippet-ico snippet-ico--copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>
+          <svg class="snippet-ico snippet-ico--check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
+        </button>
+      </div>
+    </div>
+    <p class="meta-line reveal d4">
+      <span><b>무료</b></span><span class="dot">·</span><span id="hero-version">v0.14.0</span><span class="dot">·</span>
+      <span>macOS&nbsp;14+</span><span class="dot">·</span><span>Windows&nbsp;10/11 (베타)</span>
+    </p>
+    <!-- DL:BEGIN generated by scripts/site-release.py; counts come from GitHub releases -->
+    <p class="dl-line reveal d4">지금까지 내려받은 사람 <b>13,091</b> 명</p>
+    <!-- DL:END -->
+    <div class="demo-wrap reveal d5">
+      <img src="../assets/shot-analyze.png" alt="디스크 공간을 무엇이 쓰고 있는지 보여 주는 Burrow 분석 트리맵" width="1880" height="1344" decoding="async">
+    </div>
+  </div>
+</header>
+
+<!-- ===== TOOLS ===== -->
+<section class="section section--ruled" id="tools" style="margin-top:64px">
+  <div class="wrap">
+    <div class="io">
+      <span class="sec-eyebrow">안에 무엇이 있는지</span>
+      <h2 class="sec-title">열여섯 가지 기능, 창 하나.</h2>
+      <p class="sec-intro">도구를 바꾸면 창 전체의 색이 함께 바뀝니다. 색은 그 도구가 무엇을 건드리려 하는지 알려 주는 신호이기 때문입니다. 모든 도구가 터미널로 내보내지 않고 끝까지 일을 마칩니다.</p>
+    </div>
+
+    <div class="tool-grid io">
+      <div class="tool-cell" style="--c: var(--teal)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/><path d="M3 8l2-2M8 4l1.5-1.5M16 20l1.5 1.5"/></svg></span>
+            <span class="tool-name">정리</span>
+          </div>
+          <span class="tool-cmd">10가지 이상 분류</span>
+        </div>
+        <p>캐시·로그·임시 파일을 열 가지가 넘는 분류로 나누고, 지워도 안전한 순서대로 보여 줍니다. 무엇이 움직이기 전에 모든 파일과 용량을 확인할 수 있습니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--moss)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/></svg></span>
+            <span class="tool-name">심층 정리</span>
+          </div>
+          <span class="tool-cmd">개발 잔여물</span>
+        </div>
+        <p>개발 작업이 남긴 부스러기입니다. node_modules, DerivedData, 빌드 산출물, 오래된 패키지 캐시를 다시 만드는 데 드는 비용과 함께 보여 줍니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--ginger)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11M8 11l4 4 4-4"/><path d="M4 19h16"/></svg></span>
+            <span class="tool-name">설치 파일</span>
+          </div>
+          <span class="tool-cmd">다운로드 정리</span>
+        </div>
+        <p>이미 뜯어 놓은 상자들입니다. 앱을 설치한 지 한참 지나도 다운로드 폴더에 남아 있는 .dmg와 .pkg 파일을 찾아냅니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--coral)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 20V9"/></svg></span>
+            <span class="tool-name">앱</span>
+          </div>
+          <span class="tool-cmd">한꺼번에 삭제</span>
+        </div>
+        <p>설치된 모든 앱을 크기순이나 최근 사용순으로 정렬할 수 있고, 여러 개를 선택해 삭제하면 환경설정·관련 파일·실행 에이전트까지 함께 치웁니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--violet)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2 2M16.4 16.4l2 2M18.4 5.6l-2 2M7.6 16.4l-2 2"/><circle cx="12" cy="12" r="3.2"/></svg></span>
+            <span class="tool-name">최적화</span>
+          </div>
+          <span class="tool-cmd">확인 한 번</span>
+        </div>
+        <p>훑어보기 재구성, 캐시와 메타데이터 복구, DNS 비우기, 로그인 항목 점검. 늘 해야 하는 잡일을 확인 한 번 뒤에 모았습니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--sage)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2.2"/><circle cx="10" cy="16" r="2.2"/></svg></span>
+            <span class="tool-name">정비</span>
+          </div>
+          <span class="tool-cmd">한 번에</span>
+        </div>
+        <p>한 번에 전체를 손봅니다. 지금 이 Mac에 실제로 필요한 유지 관리만 골라 끝까지 실행합니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--azure)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="11" rx="1"/><rect x="13" y="3" width="8" height="6" rx="1"/><rect x="13" y="11" width="8" height="10" rx="1"/><rect x="3" y="16" width="8" height="5" rx="1"/></svg></span>
+            <span class="tool-name">분석</span>
+          </div>
+          <span class="tool-cmd">트리맵</span>
+        </div>
+        <p>디스크 전체를 정사각형에 가까운 트리맵으로 보여 줍니다. 어떤 가지든 파고들어 가서, 그 자리 메뉴로 Finder에서 열거나 휴지통으로 보낼 수 있습니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--rose)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="12" height="12" rx="2"/><path d="M4 9v10a2 2 0 002 2h10"/></svg></span>
+            <span class="tool-name">중복 파일</span>
+          </div>
+          <span class="tool-cmd">내용 해시 기반</span>
+        </div>
+        <p>내용의 해시로 중복을 찾고 하드링크도 인식하므로, 여러 도구가 공유하는 파일이 두 번 계산되지 않습니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--olive)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><path d="M9 11h.01M15 11h.01M9 15c1.5-1 4.5-1 6 0"/></svg></span>
+            <span class="tool-name">잔여 파일</span>
+          </div>
+          <span class="tool-cmd">남겨진 파일</span>
+        </div>
+        <p>오래전에 지운 앱이 남긴 관련 파일·환경설정·실행 에이전트를, 그것을 남긴 앱과 짝지어 보여 줍니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--orchid)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg></span>
+            <span class="tool-name">비슷한 사진</span>
+          </div>
+          <span class="tool-cmd">시각적 비교</span>
+        </div>
+        <p>보관함 전체를 시각적으로 비교해, 거의 똑같은 사진과 솎아낼 만한 연속 촬영 컷을 찾아냅니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--gold)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2 6 4-14 2 8h2l1.5-3H21"/></svg></span>
+            <span class="tool-name">상태</span>
+          </div>
+          <span class="tool-cmd">실시간 + HUD</span>
+        </div>
+        <p>CPU·메모리·GPU·디스크·네트워크·배터리를 각각의 소형 그래프와 함께 한 화면에. 고정할 수 있는 프로세스 표와 메뉴 막대 HUD도 함께 제공합니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--cyan)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="2"/><path d="M7 8V5M12 8V5M17 8V5M7 12.5h.01M11 12.5h6"/></svg></span>
+            <span class="tool-name">포트</span>
+          </div>
+          <span class="tool-cmd">무엇이 대기 중인지</span>
+        </div>
+        <p>대기 중인 모든 포트와 그 뒤의 프로세스를 함께 보여 주므로, lsof를 꺼내지 않고도 3000번을 잡고 있는 것을 찾을 수 있습니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--azure)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.5 4 5.6 4 9s-1.4 6.5-4 9c-2.6-2.5-4-5.6-4-9s1.4-6.5 4-9z"/></svg></span>
+            <span class="tool-name">네트워크</span>
+          </div>
+          <span class="tool-cmd">프로세스별</span>
+        </div>
+        <p>인터페이스별·프로세스별 실시간 처리량을 보여 주므로, 회선을 실제로 쓰고 있는 것이 무엇인지 알 수 있습니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--cyan)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a16 16 0 0120 0M5 12a11 11 0 0114 0M8.5 15.5a6 6 0 017 0"/><circle cx="12" cy="19" r="1"/></svg></span>
+            <span class="tool-name">연결 복구</span>
+          </div>
+          <span class="tool-cmd">진단</span>
+        </div>
+        <p>연결이 끊겼을 때 지상으로 돌아가는 안내 경로입니다. DNS, 게이트웨이, 인증 페이지, 인터페이스를 순서대로 점검합니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--moss)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+            <span class="tool-name">기록</span>
+          </div>
+          <span class="tool-cmd">90일</span>
+        </div>
+        <p>모든 상태 표본이 로컬 SQLite 파일에 쌓입니다. 5분 전부터 90일 전까지 자유롭게 되짚어 볼 수 있고, 프로세스별 최고치 표도 함께 봅니다.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--ginger)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg></span>
+            <span class="tool-name">에이전트 · MCP</span>
+          </div>
+          <span class="tool-cmd">26가지 도구</span>
+        </div>
+        <p>26가지 MCP 도구가 앱 전체를 Claude Code에 열어 주고, 루프백 HTTP API도 함께 제공합니다. 기본은 읽기 전용이며, 무언가를 지우는 동작은 따로 켜야 합니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURE RUN ===== -->
+<section class="section section--ruled" id="see">
+  <div class="wrap">
+    <div class="io">
+      <span class="sec-eyebrow">직접 보기</span>
+      <h2 class="sec-title">실행하는 것만이 아니라 바라보기 위해 만들었습니다.</h2>
+    </div>
+
+    <div class="feature io">
+      <div>
+        <h3>디스크를 실제로 먹고 있는 것을 확인하세요.</h3>
+        <p>모든 폴더를 실제로 차지하는 크기대로 그린 트리맵입니다. 원인이 분명해질 때까지 파고든 다음, 지도를 벗어나지 않고 바로 처리하세요.</p>
+        <p class="why">분석</p>
+      </div>
+      <div class="shot-card">
+        <img src="../assets/shot-analyze.png" alt="Burrow 분석: 디스크 사용량 트리맵을 폴더 단위까지 파고든 화면" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature io">
+      <div class="f-text">
+        <h3>이 Mac의 모든 맥박을 실시간으로.</h3>
+        <p>CPU·메모리·GPU·디스크·네트워크·배터리가 각자의 소형 그래프와 함께 한 화면에 모입니다. 프로세스 표는 정렬과 고정이 되므로 팬을 돌리는 주범을 계속 볼 수 있습니다.</p>
+        <p class="why">상태</p>
+      </div>
+      <div class="shot-card f-shot">
+        <img src="../assets/shot-status.png" alt="Burrow 상태: CPU·메모리·GPU·디스크·네트워크 실시간 표시와 프로세스 표" loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature io">
+      <div>
+        <h3>지우기 전에 보여 줍니다.</h3>
+        <p>정리는 찾아낸 것을 지워도 안전한 순서로 정렬하고, 무엇이 움직이기 전에 파일 목록과 용량을 보여 줍니다. 남기고 싶은 것은 체크만 해제하세요. 잘못 누른 한 번으로 사라지는 것은 없습니다.</p>
+        <p class="why">정리</p>
+      </div>
+      <div class="shot-card">
+        <img src="../assets/shot-clean.png" alt="Burrow 정리: 분류별 불필요한 파일과 개수·크기를 확인할 수 있는 화면" loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature io">
+      <div class="f-text">
+        <h3>굴의 긴 기억.</h3>
+        <p>상태 표본은 로컬 SQLite 기록에 쌓이며, 5분 전부터 90일 전까지 되짚어 볼 수 있습니다. 팬이 실제로 돌았던 순간에 대해서는 프로세스별 최고치 표도 확인할 수 있습니다.</p>
+        <p class="why">기록</p>
+      </div>
+      <div class="shot-card f-shot">
+        <img src="../assets/shot-history.png" alt="Burrow 기록: 90일에 걸친 CPU·메모리·디스크 장기 그래프" loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature io">
+      <div>
+        <h3>굴 전체를 메뉴 막대에서.</h3>
+        <p>앱을 열지 않아도 전체 그림을 펼쳐 보여 주는 HUD입니다. 실시간 지표, 상위 프로세스, 그리고 필요한 도구로 바로 가는 길이 들어 있습니다.</p>
+      </div>
+      <div class="shot-card shot-card--tall">
+        <img src="../assets/shot-menubar.png" alt="Burrow 메뉴 막대 HUD: 실시간 지표와 상위 프로세스를 펼침 메뉴로 표시" loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature feature--wide io">
+      <div>
+        <h3>Claude에서 내 Mac에 물어보세요.</h3>
+        <p>내장 MCP 서버가 <code class="k">burrow_snapshot</code>, <code class="k">burrow_history</code>,  <code class="k">burrow_top_processes</code> 를 모든 에이전트에 제공하며, 루프백 HTTP API도 <code class="k">127.0.0.1:9277</code>에서 함께 제공합니다. 둘 다 이 Mac 안에서만 동작합니다.</p>
+        <p class="why">에이전트 · MCP</p>
+      </div>
+      <div class="shot-card shot-card--narrow">
+        <img src="../assets/shot-ai.png" alt="Claude Code가 Burrow의 MCP 서버에 머신 상태를 묻는 화면" loading="lazy" decoding="async">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== What's new (content owned by scripts/site-release.py; edit docs/releases.json) ===== -->
+<section class="section section--ruled" id="new">
+  <div class="wrap">
+    <!-- WN:BEGIN generated by scripts/site-release.py; edit docs/releases.json instead -->
+    <div class="sec-head wn-head">
+      <div>
+        <span class="sec-num">새 소식 · 2026년 8월</span>
+        <h2 class="sec-title">0.14.0의 새로운 점</h2>
+      </div>
+      <a class="btn btn-out btn-sm" href="releases">전체 릴리스</a>
+    </div>
+
+    <div class="grid3 wn-grid">
+      <article class="tcard" style="--c: var(--accent)">
+        <div class="top"><div class="ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9.5A8 8 0 0120 12"/><path d="M7 12a5 5 0 0110 0c0 3-1 6-2.5 8"/><path d="M12 12c0 3-.6 5.5-1.8 7.6"/></svg></div><div class="nm">Burrow가 권한 도우미를 먼저 안내합니다</div></div>
+        <p class="ds">관리자 작업을 Touch ID로 승인하게 해 주는 도우미는 설정 안의 버튼 하나 뒤에 있었고, 그곳으로 안내하는 것이 아무것도 없었습니다. 이제는 전체 디스크 접근 권한과 같은 방식으로 안내합니다. 창 위에 배너 하나가 떠서 막지 않고 알려 주기만 하며, 닫으면 다시 나타나지 않습니다. 이 도우미는 편의를 위한 것이지 Burrow가 동작하는 데 필요한 것이 아니기 때문입니다.</p>
+      </article>
+      <article class="tcard" style="--c: var(--teal)">
+        <div class="top"><div class="ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg></div><div class="nm">확인 후 실행하는 정리가 삭제한 내용을 알려 줍니다</div></div>
+        <p class="ds">체크한 것을 정확히 지우고도 아무 일도 하지 않은 것처럼 보였습니다. 이 경로는 find로 삭제하는데, 성공해도 아무 것도 출력하지 않아 결과 화면에 보여 줄 내용이 없었기 때문입니다. 이제는 삭제가 허용된 경로를 분류별로 묶고 크기를 합산해 알려 줍니다.</p>
+      </article>
+    </div>
+
+    <div class="extra-label mono">// 0.14.0에서 함께 다듬은 것</div>
+    <div class="wn-chips">
+      <span class="wn-chip"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>확인 후 실행하는 정리가 지우는 대상은 그대로이고, 달라진 것은 알려 주는 내용뿐입니다</span>
+      <span class="wn-chip"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>도우미는 어디까지나 선택 사항입니다. 거절해도 모든 작업은 이전과 똑같이 동작합니다</span>
+    </div>
+    <!-- WN:END -->
+  </div>
+</section>
+
+<!-- ===== TRUST ===== -->
+<section class="section section--ruled" id="trust">
+  <div class="wrap">
+    <div class="trust-head io">
+      <span class="sec-eyebrow">믿어도 되는 이유</span>
+      <h2 class="sec-title">내 파일을 건드리는 도구라면 신뢰를 얻어야 합니다.</h2>
+    </div>
+    <div class="trust-grid io">
+      <div class="trust-card">
+        <h3><span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M8 18l-5-6 5-6M16 6l5 6-5 6"/></svg></span>오픈 소스</h3>
+        <p>모든 코드가 공개되어 있고 MIT 라이선스이므로 읽고, 검토하고, 갈라 나갈 수 있습니다. <a href="https://github.com/caezium/Burrow" target="_blank" rel="noopener">저장소 보기</a>.</p>
+      </div>
+      <div class="trust-card">
+        <h3><span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h13M3 12h9M3 18h13"/><path d="M17 15l3 3 4-5" transform="translate(-2,0)"/></svg></span>지우기 전에 보여 주기</h3>
+        <p>모든 작업이 파일과 용량을 먼저 나열합니다. 사용자가 확인해야 Burrow가 움직입니다. 백그라운드에서 도는 root 도우미는 없으며, 묻는 것은 macOS 자체 대화상자입니다.</p>
+      </div>
+      <div class="trust-card">
+        <h3><span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9.5 11.5l2 2 3.5-3.5"/></svg></span>데이터는 그 자리에 남습니다</h3>
+        <p>검사 결과, 지표, 기록은 이 기기를 절대 벗어나지 않습니다. 익명이며 끌 수 있는 진단 정보는 항목별로 <a href="https://github.com/caezium/Burrow/blob/main/TELEMETRY.md" target="_blank" rel="noopener">TELEMETRY.md</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== INSTALL ===== -->
+<section class="section section--ruled" id="install">
+  <div class="wrap">
+    <div class="io">
+      <span class="sec-eyebrow">설치</span>
+      <h2 class="sec-title">언제까지나 무료입니다. 계정도 구독도 없습니다.</h2>
+      <p class="sec-intro">모든 도구, 메뉴 막대 HUD, 기록, MCP 서버를 원하는 만큼 여러 대에서 쓸 수 있습니다.</p>
+    </div>
+
+    <div class="io picker-wrap">
+      <!-- PICK:BEGIN generated by scripts/site-release.py -->
+      <div class="plats">
+        <div class="plat">
+          <span class="gl"><svg viewBox="0 0 814 1000" fill="currentColor" aria-hidden="true"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.2 0 129.8 2.6 196.3 99.2zm-234-181.1c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.2 32.4-54.4 84.4-54.4 136.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.8-71.3z"/></svg></span>
+          <h3>macOS</h3>
+          <p class="kind">.zip &middot; Apple 실리콘 &amp; Intel</p>
+          <div class="foot">
+            <a class="dlbtn" href="https://github.com/caezium/Burrow/releases/download/v0.14.0/Burrow-0.14.0.zip" data-burrow-analytics="download.landing_mac">다운로드 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg></a>
+          </div>
+        </div>
+        <div class="plat">
+          <span class="gl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5l7.5-1v7.2H3zM11.8 4.3L21 3v8.7h-9.2zM3 12.9h7.5v7.2L3 18.8zM11.8 12.9H21V21l-9.2-1.3z"/></svg></span>
+          <h3>Windows</h3>
+          <p class="kind">.zip &middot; 64비트</p>
+          <span class="tag">beta &middot; 0.10.0</span>
+          <div class="foot">
+            <a class="dlbtn" href="https://github.com/caezium/Burrow/releases/download/v0.10.0/BurrowWin-0.10.0-win-x64.zip" data-burrow-analytics="download.landing_windows">다운로드 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg></a>
+          </div>
+        </div>
+        <div class="plat">
+          <span class="gl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h11v7a5 5 0 01-5 5H10a5 5 0 01-5-5z"/><path d="M16 10h1.5a2.5 2.5 0 010 5H16"/><path d="M7 4.5c0-.8.6-1.2.6-2M11 4.5c0-.8.6-1.2.6-2"/></svg></span>
+          <h3>Homebrew</h3>
+          <p class="kind">cask &middot; 앱 + 엔진</p>
+          <div class="foot">
+            <button type="button" class="cmdbtn" data-copy="brew install --cask caezium/tap/burrow" data-burrow-analytics="homebrew.landing" aria-label="Homebrew 설치 명령어 복사"><span class="lab">brew install --cask caezium/tap/burrow</span><span class="st">복사</span></button>
+          </div>
+        </div>
+      </div>
+      <!-- PICK:END -->
+    </div>
+
+    <p class="install-note io">Windows 버전은 Mac 버전보다 늦으며 아직 미리보기 단계입니다. 다른 설치 방법과 체크섬, 이전 버전은 <a href="../install">설치 페이지</a>.</p>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="section section--ruled" id="faq">
+  <div class="wrap">
+    <div class="faq-head io">
+      <h2 class="sec-title">자주 묻는 질문</h2>
+    </div>
+    <div class="faq-list io">
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-0">정말 무료인가요?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-0"><div class="faq-panel-inner">
+          <p class="faq-a">네. MIT 라이선스이며 계정도, 사용 기한도, 유료 등급도, 끼워 넣은 것도 없습니다. 실행하기 전에 읽어 보고 싶다면 전체 소스가 GitHub에 있습니다.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-1">Burrow는 안전한가요?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-1"><div class="faq-panel-inner">
+          <p class="faq-a">모든 작업이 실행 전에 파일 목록과 용량을 보여 주고, 정리는 분류를 지워도 안전한 순서로 정렬합니다. 백그라운드에서 도는 root 도우미는 없습니다. 관리자 권한이 필요하면 macOS 자체 대화상자가 묻고, Burrow는 그 명령 하나만 실행한 뒤 종료합니다.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-2">실제로 무엇을 지우나요?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-2"><div class="faq-panel-inner">
+          <p class="faq-a">앱이 알아서 다시 만드는 캐시와 임시 파일입니다. 브라우저 캐시, 개발 빌드 산출물, App Support 캐시, 로그, 남은 설치 파일 등입니다. 다시 만드는 데 실제로 비용이 드는 패키지 캐시와 빌드 산출물은 직접 확인하기 전까지 선택되지 않은 채로 둡니다.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-3">어딘가로 무언가를 보내나요?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-3"><div class="faq-panel-inner">
+          <p class="faq-a">파일, 경로, URL, 지표는 보내지 않습니다. 검사 결과와 기록은 기기에 남고, MCP 서버는 루프백에서만 동작합니다. 다만 익명이며 끌 수 있는 사용 및 충돌 진단 정보는 보내며, 그 항목은 <a href="https://github.com/caezium/Burrow/blob/main/TELEMETRY.md" target="_blank" rel="noopener">TELEMETRY.md</a>에 하나씩 적어 두었습니다. 설정의 스위치 하나로 끌 수 있고, 소스에서 빌드한 경우에는 처음부터 아무것도 보내지 않습니다.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-4">전체 디스크 접근 권한이 필요한가요?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-4"><div class="faq-panel-inner">
+          <p class="faq-a">아니요. 권한이 없어도 Burrow는 안전한 검사를 실행합니다. 허용하면 App Support와 컨테이너의 더 깊은 캐시까지 닿을 수 있으며, 언제든 허용하거나 취소할 수 있습니다.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-5">서명과 공증이 되어 있나요?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-5"><div class="faq-panel-inner">
+          <p class="faq-a">네, 0.11.0부터입니다. 서명·공증·스테이플링·Gatekeeper 검사를 모두 통과하지 않으면 태그에서 배포될 수 없습니다. 보관된 0.10.5 이하 빌드는 그 이전 것이라, Gatekeeper가 막으면 마우스 오른쪽 버튼을 눌러 <b>열기</b> 를 선택하세요. 전체 약속은 <a href="https://github.com/caezium/Burrow/blob/main/SECURITY.md" target="_blank" rel="noopener">SECURITY.md</a>.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-6">에이전트는 무엇을 할 수 있나요?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-6"><div class="faq-panel-inner">
+          <p class="faq-a">26가지 MCP 도구가 스냅샷, 기록, 상위 프로세스, 디스크 분석, 중복 파일, 포트, 네트워크 등을 다룹니다. 그중 14가지는 읽기 전용이라 바로 쓸 수 있고, 기기를 바꾸는 도구는 각각 따로 명시적으로 켜야 합니다. 전체 목록은 <a href="https://github.com/caezium/Burrow/blob/main/docs/agent-tools.md" target="_blank" rel="noopener">agent-tools.md</a>.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-7">Windows에서도 실행되나요?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-7"><div class="faq-panel-inner">
+          <p class="faq-a">WinUI 3와 .NET 8로 만든 네이티브 이식판이 베타로 진행 중이며, 도구 단위로 기능을 맞춰 가고 있습니다. macOS가 완성도 높은 주력이고, Windows 미리보기는 현재 zip으로 배포되며 설치 프로그램도 준비 중입니다. <a href="https://github.com/caezium/Burrow/tree/main/windows" target="_blank" rel="noopener">GitHub에서 살펴보기</a>.</p>
+        </div></div>
+      </div>
+    </div>
+    <p class="faq-closing io">소스에서 빌드하거나 MCP 서버를 연결하는 방법, 그 밖의 모든 것은 <a href="https://github.com/caezium/Burrow#readme" target="_blank" rel="noopener">README</a>.</p>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <a class="brand" href="#top" aria-label="Burrow">
+        <img class="brand-logo" src="../burrow-icon.png" alt="" width="28" height="28" decoding="async">
+        <span>Burrow</span>
+      </a>
+      <div class="footer-links">
+        <a href="https://github.com/caezium/Burrow" target="_blank" rel="noopener">GitHub</a>
+        <a href="releases">변경 사항</a>
+        <a href="roadmap">로드맵</a>
+        <a href="https://github.com/caezium/Burrow/blob/main/SECURITY.md" target="_blank" rel="noopener">보안</a>
+        <a href="https://github.com/caezium/Burrow/blob/main/TELEMETRY.md" target="_blank" rel="noopener">수집 정보</a>
+        <a href="https://github.com/caezium/Burrow/blob/main/LICENSE" target="_blank" rel="noopener">라이선스</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ---- copy buttons (hero snippet + install cards) ----
+  function copyText(t) { if (navigator.clipboard) navigator.clipboard.writeText(t).catch(function(){}); }
+  document.querySelectorAll('.snippet-copy').forEach(function (b) {
+    b.addEventListener('click', function () {
+      copyText(b.getAttribute('data-copy') || '');
+      b.classList.add('copied');
+      setTimeout(function () { b.classList.remove('copied'); }, 1500);
+    });
+  });
+  document.querySelectorAll('.cmdbtn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      copyText(btn.getAttribute('data-copy') || '');
+      var st = btn.querySelector('.st');
+      btn.classList.add('done'); st.textContent = 'copied';
+      setTimeout(function () { btn.classList.remove('done'); st.textContent = 'copy'; }, 1500);
+    });
+  });
+
+  // ---- FAQ accordion (grid-template-rows 0fr -> 1fr) ----
+  document.querySelectorAll('.faq-item').forEach(function (item) {
+    var q = item.querySelector('.faq-q');
+    q.addEventListener('click', function () {
+      var open = item.getAttribute('data-open') === 'true';
+      var panel = item.querySelector('.faq-panel');
+      item.setAttribute('data-open', open ? 'false' : 'true');
+      q.setAttribute('aria-expanded', open ? 'false' : 'true');
+      if (open) { panel.setAttribute('inert', ''); } else { panel.removeAttribute('inert'); }
+    });
+  });
+
+  // ---- scroll reveal for sections (respects reduced motion) ----
+  if (window.matchMedia('(prefers-reduced-motion: no-preference)').matches && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.08 });
+    document.querySelectorAll('.io').forEach(function (el) { io.observe(el); });
+  } else {
+    document.querySelectorAll('.io').forEach(function (el) { el.classList.add('in'); });
+  }
+</script>
+</body>
+</html>

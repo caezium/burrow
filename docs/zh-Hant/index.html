@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Burrow · 免費開源的 macOS 清理、軟體與狀態工具 &amp; Windows</title>
+<meta name="description" content="Burrow 是一款專為 macOS 打造的免費開源原生桌面應用程式（Windows 版本仍在測試階段）：清理垃圾、管理應用程式、執行維護、繪製磁碟地圖、即時查看狀態，全都在同一個視窗裡完成。此外還有長期歷史紀錄，以及給 Claude Code 使用的 MCP 伺服器。">
+<meta name="theme-color" content="#121217">
+<link rel="icon" type="image/png" href="../burrow-icon.png">
+<link rel="apple-touch-icon" href="../burrow-icon-512.png">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Burrow · Free, open-source desktop utility for macOS &amp; Windows">
+<meta property="og:description" content="清理垃圾、管理應用程式、執行維護、繪製磁碟地圖、即時查看狀態，全部在一個原生桌面應用程式裡。macOS 原生，Windows 版本現正測試中。免費，採用 MIT 授權。另有歷史紀錄與 MCP 伺服器。">
+<meta property="og:image" content="https://burrow.computer/burrow-icon-512.png">
+<meta property="og:url" content="https://burrow.computer/">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://burrow.computer/zh-Hant/">
+<link rel="alternate" hreflang="x-default" href="https://burrow.computer/">
+<link rel="alternate" hreflang="en" href="https://burrow.computer/">
+<link rel="alternate" hreflang="zh-Hans" href="https://burrow.computer/zh-Hans/">
+<link rel="alternate" hreflang="zh-Hant" href="https://burrow.computer/zh-Hant/">
+<link rel="alternate" hreflang="ru" href="https://burrow.computer/ru/">
+<link rel="alternate" hreflang="ja" href="https://burrow.computer/ja/">
+<link rel="alternate" hreflang="de" href="https://burrow.computer/de/">
+<link rel="alternate" hreflang="fr" href="https://burrow.computer/fr/">
+<link rel="alternate" hreflang="es" href="https://burrow.computer/es/">
+<link rel="alternate" hreflang="ko" href="https://burrow.computer/ko/">
+<link rel="alternate" hreflang="pt-BR" href="https://burrow.computer/pt-BR/">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://burrow.computer/#org","name":"Burrow","url":"https://burrow.computer","logo":"https://burrow.computer/burrow-icon-512.png","sameAs":["https://github.com/caezium/Burrow"]},{"@type":"WebSite","@id":"https://burrow.computer/#site","url":"https://burrow.computer","name":"Burrow","publisher":{"@id":"https://burrow.computer/#org"}}]}</script>
+<meta property="og:site_name" content="Burrow">
+<meta name="twitter:title" content="Burrow · 免費開源的 Mac 清理、磁碟與狀態工具">
+<meta name="twitter:description" content="清理垃圾，找出重複檔案與殘留，繪製磁碟地圖，即時查看狀態。一個原生視窗。免費且開源。">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Burrow","applicationCategory":"UtilitiesApplication","operatingSystem":"macOS 14+, Windows 10/11","description":"A free, open-source desktop utility that clears junk, finds duplicate and leftover files, maps disk usage, and watches live system status, with an MCP server so coding agents can read the machine.","url":"https://burrow.computer","downloadUrl":"https://burrow.computer/install","license":"https://github.com/caezium/Burrow/blob/main/LICENSE","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is it really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. MIT-licensed, with no accounts, no trial limits, no paid tier, and nothing bundled in. The full source is on GitHub if you want to read it before you run it."}},{"@type":"Question","name":"Is Burrow safe to use?","acceptedAnswer":{"@type":"Answer","text":"Every action shows the file list and byte count before it runs, and Clean sorts categories by how safe they are to remove. There is no background root helper: when a task needs admin rights, macOS's own dialog asks you, Burrow runs that one command, then exits."}},{"@type":"Question","name":"What does it actually delete?","acceptedAnswer":{"@type":"Answer","text":"Caches and temporary files that apps regenerate on their own: browser caches, developer build artifacts, app support caches, logs, leftover installers. Package caches and build output with real rebuild cost stay unchecked until you confirm them yourself."}},{"@type":"Question","name":"Does it upload anything?","acceptedAnswer":{"@type":"Answer","text":"No files, paths, URLs, or metrics. Scans and history stay on the machine, and the MCP server is loopback only. Burrow does send anonymous, opt-out usage and crash diagnostics, disclosed field by field in TELEMETRY.md. One Settings switch turns it off, and source builds ship inert."}},{"@type":"Question","name":"Do I need Full Disk Access?","acceptedAnswer":{"@type":"Answer","text":"No. Burrow runs a safe scan without it. Granting it lets Burrow reach deeper App Support and container caches, and you can grant or revoke it whenever you like."}},{"@type":"Question","name":"Is it signed and notarized?","acceptedAnswer":{"@type":"Answer","text":"Yes, from 0.11.0 onward, and a tag cannot publish unless signing, notarization, stapling, and Gatekeeper assessment all pass. Archived 0.10.5-and-earlier builds predate that: right-click and choose Open if Gatekeeper blocks one. The full contract is in SECURITY.md."}},{"@type":"Question","name":"What can an agent do with it?","acceptedAnswer":{"@type":"Answer","text":"Twenty-six MCP tools cover snapshots, history, top processes, disk analysis, duplicates, ports, network, and more. Fourteen are read-only and available immediately; the ones that change your machine need their own explicit opt-in. The full list is in agent-tools.md."}},{"@type":"Question","name":"Does it run on Windows?","acceptedAnswer":{"@type":"Answer","text":"A native WinUI 3 and .NET 8 port is in active beta, reaching parity tool by tool. macOS is the mature flagship; the Windows preview ships as a zip today, with an installer coming. Track it on GitHub."}}]}</script>
+<link rel="preload" as="image" href="../burrow-icon-512.png">
+<script src="/analytics.js" defer></script>
+<link rel="stylesheet" href="../assets/chrome.css">
+
+<style>
+  /* All fonts self-hosted: a page whose pitch is "your data stays on your
+     Mac" shouldn't leak every visitor's IP to a fonts CDN. Geist + Geist
+     Mono are the MIT-licensed variable cuts from vercel/geist-font. */
+  @font-face {
+    font-family: "Geist";
+    src: url("assets/fonts/Geist[wght].woff2") format("woff2");
+    font-weight: 100 900; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    src: url("assets/fonts/GeistMono[wght].woff2") format("woff2");
+    font-weight: 100 900; font-style: normal; font-display: swap;
+  }
+  /* Cal Sans: caezium house display face (self-hosted) */
+  @font-face {
+    font-family: "Cal Sans";
+    src: url("assets/fonts/CalSans-SemiBold.woff2") format("woff2");
+    font-weight: 600; font-style: normal; font-display: swap;
+  }
+
+  :root {
+    /* ===== caezium house palette (devport) on reference geometry ===== */
+    --bg:        #121217;
+    --surface:   rgba(243,236,221,0.045);
+    --surface-2: rgba(243,236,221,0.07);
+    --elevated:  #191920;         /* shot-card ground */
+    --ink:       #F3ECDD;
+    --ink-2:     rgba(243,236,221,0.66);
+    --ink-3:     rgba(243,236,221,0.42);
+    --line:      rgba(243,236,221,0.13);
+    --line-soft: rgba(243,236,221,0.075);
+    --accent:    #D9A066;
+    --accent-hi: #E7C49A;
+    --accent-soft: rgba(217,160,102,0.14);
+    --on-accent: #241B12;
+
+    /* per-tool jewels, straight from Burrow's Tool.swift */
+    --teal:#35C2A5; --coral:#F0714E; --violet:#8E84F0; --azure:#4FA3E3;
+    --gold:#E6A93C; --moss:#6FB06A; --ginger:#D98C5F; --green:#57D58E; --red:#F0604E;
+    --lilac:#D6C6FF; --rose:#DB7E9C; --olive:#B7BE5A; --orchid:#D57BC4;
+    --cyan:#4FC3D9; --sage:#5AA98B;
+
+    --font-display: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    --font-mono:    "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --font-head:    "Cal Sans", "Geist", -apple-system, system-ui, sans-serif;
+
+    --maxw: 1080px;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overscroll-behavior-y: none; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: var(--font-display);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    line-height: 1.5;
+    overflow-x: hidden;
+    background-color: var(--bg);
+    background-image:
+      url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%3E%3Cfilter%20id='g'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.82'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23g)'%20opacity='0.06'/%3E%3C/svg%3E"),
+      radial-gradient(1200px 600px at 82% -10%, rgba(217,160,102,0.09), rgba(217,160,102,0) 60%),
+      radial-gradient(1000px 520px at -10% 108%, rgba(217,160,102,0.07), rgba(217,160,102,0) 60%);
+    background-repeat: repeat, no-repeat, no-repeat;
+    background-size: 180px 180px, auto, auto;
+    background-attachment: fixed;
+  }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+  ::selection { background: rgba(217,160,102,0.26); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+  .mono { font-family: var(--font-mono); }
+  code.k, .cmd { font-family: var(--font-mono); font-size: 0.86em; background: var(--surface-2);
+    border: 1px solid var(--line-soft); padding: 2px 6px; border-radius: 6px; color: var(--ink); white-space: nowrap; }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; padding-top: 104px; padding-bottom: 64px; }
+  .hero::before {
+    content: ""; position: absolute; inset: -180px 0 auto; height: 740px; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(620px 360px at 72% 8%, rgba(217,160,102,0.14), rgba(217,160,102,0) 70%),
+      radial-gradient(520px 320px at 8% 0, rgba(214,198,255,0.07), rgba(214,198,255,0) 70%);
+  }
+  .hero-inner { position: relative; z-index: 1; text-align: center; }
+  .hero-mark { width: 112px; height: 112px; margin: 0 auto 26px; display: block;
+    filter: drop-shadow(0 14px 30px rgba(0,0,0,0.55)); }
+  h1.headline { font-family: var(--font-head); font-weight: 600;
+    font-size: clamp(2.35rem, 4.4vw, 3.9rem); line-height: 1.05; letter-spacing: -0.025em;
+    max-width: 17ch; margin: 0 auto 20px; }
+  h1.headline .accent { color: var(--accent); }
+  .subhead { color: var(--ink-2); max-width: 52ch; margin: 0 auto 32px;
+    font-size: clamp(1rem, 1.9vw, 1.1875rem); font-weight: 450; line-height: 1.55; }
+  .cta-row { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .or-divider { display: flex; justify-content: center; align-items: center; gap: 12px;
+    width: min(100%, 380px); margin: 0 auto; padding: 16px 0 12px; }
+  .or-divider__line { flex: 1; height: 1px; background: var(--line-soft); }
+  .or-divider__text { flex: none; font-size: .8rem; font-weight: 500; color: var(--ink-3); }
+
+  .snippet-row { display: flex; justify-content: center; width: 100%; }
+  .snippet { display: flex; align-items: stretch; max-width: 100%; overflow: hidden;
+    background: var(--surface-2); border: 1px solid var(--line-soft); border-radius: 12px; }
+  .snippet-text { display: flex; align-items: center; min-width: 0; padding: 11px 12px 11px 16px; }
+  .snippet-code { font-family: var(--font-mono); font-size: .875rem; color: var(--ink);
+    white-space: nowrap; letter-spacing: .01em; overflow-x: auto; }
+  .snippet-copy { position: relative; width: 40px; flex: none; display: inline-flex; align-items: center;
+    justify-content: center; background: transparent; border: 0; border-left: 1px solid var(--line-soft);
+    color: var(--ink-2); cursor: pointer; transition: color .18s; }
+  .snippet-copy:hover { color: var(--ink); }
+  .snippet-ico { position: absolute; width: 14px; height: 14px; transition: opacity .2s, transform .2s; }
+  .snippet-ico--check { color: var(--green); opacity: 0; transform: scale(.6); }
+  .snippet-copy.copied .snippet-ico--copy { opacity: 0; transform: scale(.6); }
+  .snippet-copy.copied .snippet-ico--check { opacity: 1; transform: scale(1); }
+  @media (prefers-reduced-motion: reduce) { .snippet-ico { transition: none; } }
+
+  .meta-line { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px;
+    padding-top: 18px; font-family: var(--font-mono); font-size: .82rem; font-weight: 500; color: var(--ink-3); }
+  .meta-line .dot { opacity: .55; }
+  .meta-line b { color: var(--accent); font-weight: 500; }
+
+  .dl-line { margin-top: 14px; font-size: 13px; color: var(--ink-3); }
+  .dl-line b { font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+  .picker-wrap { margin-top: 44px; }
+  .install-note { margin-top: 26px; text-align: center; font-family: var(--font-mono);
+    font-size: 12.5px; line-height: 1.7; color: var(--ink-3); }
+  .install-note b { color: var(--accent); font-weight: 500; }
+  .install-note a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+  .install-note a:hover { color: var(--accent); }
+
+  .demo-wrap { margin-top: 40px; aspect-ratio: 1880/1344; overflow: hidden;
+    border: 1px solid var(--line); border-radius: 24px; background: var(--elevated);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 28px 60px -34px rgba(0,0,0,0.8); }
+  .demo-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+  .demo-wrap img.contain { object-fit: contain; }
+
+  /* ---------- sections ---------- */
+  .section { padding-top: 76px; padding-bottom: 76px; }
+  .section--ruled { border-top: 1px solid var(--line-soft); }
+  .sec-eyebrow, .sec-num { display: block; font-family: var(--font-mono); font-size: .72rem;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  h2.sec-title { font-family: var(--font-head); font-weight: 600;
+    font-size: clamp(1.65rem, 3.2vw, 2.1rem); line-height: 1.12; letter-spacing: -0.025em; margin: 0; }
+  .sec-intro { margin-top: 18px; max-width: 62ch; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
+  .sec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+
+  /* ---------- tool grid ---------- */
+  .tool-grid { margin-top: 48px; display: grid; grid-template-columns: repeat(2, 1fr);
+    border-top: 1px solid var(--line-soft); }
+  .tool-cell { padding: 26px; border-bottom: 1px solid var(--line-soft); transition: background .18s; }
+  .tool-cell:hover { background: var(--surface); }
+  .tool-cell:nth-child(odd):not(:last-child) { border-right: 1px solid var(--line-soft); }
+  .tool-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .tool-id { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .tool-ico { width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--c) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c) 34%, transparent); }
+  .tool-ico svg { width: 17px; height: 17px; stroke: var(--c); fill: none; stroke-width: 1.8; }
+  .tool-name { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .tool-cmd { flex: none; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums; }
+  .tool-cell p { margin-top: 12px; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+
+  /* ---------- feature run: alternating screenshot rows ---------- */
+  .feature { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 56px;
+    padding-top: 60px; padding-bottom: 60px; }
+  .feature--wide { grid-template-columns: 1fr; gap: 32px; padding-top: 40px; padding-bottom: 40px; }
+  .feature .f-text { order: 2; }
+  .feature .f-shot { order: 1; }
+  .feature h3 { font-family: var(--font-head); font-weight: 600;
+    font-size: clamp(1.35rem, 2.4vw, 1.55rem); line-height: 1.15; letter-spacing: -0.025em; }
+  .feature p { margin-top: 14px; max-width: 44ch; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
+  .feature .why { margin-top: 14px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+  .shot-card { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; border-radius: 22px; padding: 14px; border: 1px solid var(--line-soft); }
+  .shot-card::before { content: ""; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(var(--elevated), var(--elevated)),
+      radial-gradient(140% 100% at 50% 0%, rgba(217,160,102,0.14), transparent 65%); }
+  .shot-card img { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 12px 30px -18px rgba(0,0,0,0.9); }
+  .shot-card--narrow img { width: 78%; margin: 0 auto; }
+  .shot-card--tall { padding: 24px; }
+  .shot-card--tall img { width: auto; max-height: 520px; margin: 0 auto; }
+
+  /* ---------- what's new (markup owned by scripts/site-release.py) ---------- */
+  .wn-head { margin-bottom: 40px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .tcard { padding: 22px; border-radius: var(--radius); background: var(--surface);
+    border: 1px solid var(--line-soft); }
+  .tcard .top { display: flex; align-items: center; gap: 11px; }
+  .tcard .ico { width: 32px; height: 32px; border-radius: 10px; flex: none; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--c) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c) 34%, transparent); }
+  .tcard .ico svg { width: 16px; height: 16px; stroke: var(--c); fill: none; stroke-width: 1.8; }
+  .tcard .nm { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+  .tcard .ds { margin-top: 12px; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+  .tcard .ds a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .extra-label { margin-top: 26px; font-size: 11.5px; letter-spacing: .1em; color: var(--ink-3); }
+  .wn-chips { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 9px; }
+  .wn-chip { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono);
+    font-size: 12px; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line-soft);
+    border-radius: 999px; padding: 7px 13px; }
+  .wn-chip svg { width: 12px; height: 12px; stroke: var(--green); fill: none; stroke-width: 2.4; flex: none; }
+  .wn-chip a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+  /* ---------- trust ---------- */
+  .trust-head { text-align: center; }
+  .trust-head .sec-intro { margin-left: auto; margin-right: auto; }
+  .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
+  .trust-card { padding: 26px 24px; text-align: center; border-radius: var(--radius);
+    background: var(--surface); border: 1px solid var(--line-soft); }
+  .trust-card h3 { display: flex; align-items: center; justify-content: center; gap: 9px;
+    font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 10px; }
+  .trust-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; color: var(--accent); }
+  .trust-icon svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .trust-card p { font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
+  .trust-card p a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+    border-top: 1px solid var(--line-soft); }
+
+
+  /* ---------- FAQ ---------- */
+  .faq-head { text-align: center; }
+  .faq-list { max-width: 720px; margin: 38px auto 0; text-align: left; }
+  .faq-item { border-bottom: 1px solid var(--line-soft); }
+  .faq-item:first-child { border-top: 1px solid var(--line-soft); }
+  .faq-q { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 20px 0; font: inherit; font-size: 1.075rem; font-weight: 600; letter-spacing: -0.01em;
+    line-height: 1.3; text-align: left; color: inherit; background: 0 0; border: 0; cursor: pointer;
+    transition: color .18s; }
+  .faq-q:hover { color: var(--accent); }
+  .faq-chevron { width: 18px; height: 18px; flex: none; color: var(--ink-3); stroke: currentColor;
+    fill: none; stroke-width: 2; }
+  @media (prefers-reduced-motion: no-preference) {
+    .faq-chevron { transition: transform .32s cubic-bezier(.33,1,.68,1); }
+  }
+  .faq-item[data-open="true"] .faq-chevron { transform: rotate(180deg); color: var(--accent); }
+  .faq-panel { display: grid; grid-template-rows: 0fr; overflow: hidden; }
+  .faq-item[data-open="true"] .faq-panel { grid-template-rows: 1fr; }
+  .faq-panel-inner { min-height: 0; opacity: 0; transform: translateY(-4px); }
+  .faq-item[data-open="true"] .faq-panel-inner { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .faq-panel { transition: grid-template-rows .32s cubic-bezier(.33,1,.68,1); }
+    .faq-panel-inner { transition: opacity .2s, transform .32s cubic-bezier(.33,1,.68,1); }
+    .faq-item[data-open="true"] .faq-panel-inner { transition-delay: 80ms; }
+  }
+  .faq-a { max-width: 62ch; padding-bottom: 20px; padding-right: 28px;
+    font-size: 1.025rem; line-height: 1.6; color: var(--ink-2); }
+  .faq-a a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .faq-closing { margin-top: 34px; text-align: center; font-size: 14px; color: var(--ink-3); }
+  .faq-closing a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+    font-size: 12.5px; color: var(--ink-3); }
+
+  /* ---------- entrance animation ---------- */
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { opacity: 0; transform: translateY(12px); animation: .66s cubic-bezier(.2,.7,.2,1) forwards rise; }
+    .d1 { animation-delay: 50ms; } .d2 { animation-delay: .13s; } .d3 { animation-delay: .21s; }
+    .d4 { animation-delay: .3s; } .d5 { animation-delay: .4s; }
+    @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+    .io { opacity: 0; transform: translateY(16px); transition: opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1); }
+    .io.in { opacity: 1; transform: none; }
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 900px) {
+    .feature, .feature--flip { grid-template-columns: 1fr; gap: 28px; padding-top: 48px; padding-bottom: 48px; }
+    .feature .shot-card, .feature .f-shot { order: 2; }
+    .feature .f-text { order: 1; }
+    .shot-card--narrow img { width: 80%; }
+    .grid3, .trust-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    .hero { padding-top: 68px; padding-bottom: 44px; }
+    .section { padding-top: 56px; padding-bottom: 56px; }
+    .tool-grid { grid-template-columns: 1fr; }
+    .tool-cell:nth-child(odd):not(:last-child) { border-right: 0; }
+    .snippet-code { font-size: .8rem; }
+    .demo-wrap { border-radius: 18px; margin-top: 38px; }
+  }
+</style>
+</head>
+<body id="top">
+
+<!-- NAV:BEGIN generated by scripts/site-release.py -->
+<div class="topbar">
+  <div class="page in">
+    <a class="brand" href="./" aria-label="Burrow"><img class="mk" src="../burrow-icon.png" alt="" width="28" height="28" decoding="async"><span>Burrow</span></a>
+    <nav class="nav"><a href="./#tools">工具</a><a href="docs">文件</a><a href="compare">比較</a><a href="../blog/">部落格</a><a href="../install">安裝</a><a href="releases">更新紀錄</a><a href="roadmap">藍圖</a></nav>
+    <div class="nav-right">
+      <!-- LANGPICK:BEGIN --><details class="langpick"><summary aria-label="Language"><span>繁體中文</span></summary><nav><a href="/" hreflang="en">English</a><a href="/zh-Hans/" hreflang="zh-Hans">简体中文</a><a href="/zh-Hant/" hreflang="zh-Hant" aria-current="page">繁體中文</a><a href="/ru/" hreflang="ru">Русский</a><a href="/ja/" hreflang="ja">日本語</a><a href="/de/" hreflang="de">Deutsch</a><a href="/fr/" hreflang="fr">Français</a><a href="/es/" hreflang="es">Español</a><a href="/ko/" hreflang="ko">한국어</a><a href="/pt-BR/" hreflang="pt-BR">Português (Brasil)</a></nav></details><!-- LANGPICK:END -->
+      <a class="nav-github" href="https://github.com/caezium/Burrow" target="_blank" rel="noopener" aria-label="在 GitHub 上檢視 Burrow"><svg class="icon icon--github" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.3-1.8-1.3-1.8-1.1-.7 0-.7 0-.7 1.2 0 1.9 1.2 1.9 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0C17.3 5 18.3 5.3 18.3 5.3c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0012 .5z"/></svg><span class="nav-stars">1.2k</span></a>
+      <a class="btn" href="../install" data-burrow-analytics="download.home"><span class="btn-inner"><svg class="icon icon--apple" viewBox="0 0 814 1000" aria-hidden="true"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.2 0 129.8 2.6 196.3 99.2zm-234-181.1c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.2 32.4-54.4 84.4-54.4 136.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.8-71.3z"/></svg><span class="nav-label--full">下載 Mac 版</span><span class="nav-label--short">下載</span></span></a>
+    </div>
+  </div>
+</div>
+<!-- NAV:END -->
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <div class="wrap hero-inner">
+    <img class="hero-mark reveal d1" src="../burrow-icon-512.png" alt="" width="112" height="112" decoding="async" fetchpriority="high">
+    <h1 class="headline reveal d2">過去得開 <span class="accent">六個應用程式</span> 才能做的事。</h1>
+    <p class="subhead reveal d3">一款免費開源的 Mac 工具：清理垃圾，找出重複檔案與殘留，看清是什麼吃掉了磁碟，並即時查看系統狀態。一個原生視窗就夠，Windows 版本正在測試中。</p>
+    <div class="cta-row reveal d4">
+      <a class="btn btn-lg" href="../install" data-burrow-analytics="download.hero">
+        <span class="btn-inner">
+          <svg class="icon icon--apple" viewBox="0 0 814 1000" aria-hidden="true"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.2 0 129.8 2.6 196.3 99.2zm-234-181.1c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.2 32.4-54.4 84.4-54.4 136.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.8-71.3z"/></svg>
+          下載 Mac 版
+        </span>
+      </a>
+    </div>
+    <div class="or-divider reveal d4" aria-hidden="true">
+      <span class="or-divider__line"></span><span class="or-divider__text">或</span><span class="or-divider__line"></span>
+    </div>
+    <div class="snippet-row reveal d4">
+      <div class="snippet" role="group" aria-label="homebrew install command">
+        <div class="snippet-text"><code class="snippet-code">brew install --cask caezium/tap/burrow</code></div>
+        <button class="snippet-copy" type="button" data-copy="brew install --cask caezium/tap/burrow" aria-label="複製指令" data-burrow-analytics="homebrew.hero">
+          <svg class="snippet-ico snippet-ico--copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>
+          <svg class="snippet-ico snippet-ico--check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
+        </button>
+      </div>
+    </div>
+    <p class="meta-line reveal d4">
+      <span><b>免費</b></span><span class="dot">·</span><span id="hero-version">v0.14.0</span><span class="dot">·</span>
+      <span>macOS&nbsp;14+</span><span class="dot">·</span><span>Windows&nbsp;10/11（測試版）</span>
+    </p>
+    <!-- DL:BEGIN generated by scripts/site-release.py; counts come from GitHub releases -->
+    <p class="dl-line reveal d4">已下載人數 <b>13,091</b> 人</p>
+    <!-- DL:END -->
+    <div class="demo-wrap reveal d5">
+      <img src="../assets/shot-analyze.png" alt="Burrow 分析樹狀圖，顯示磁碟空間被什麼佔用" width="1880" height="1344" decoding="async">
+    </div>
+  </div>
+</header>
+
+<!-- ===== TOOLS ===== -->
+<section class="section section--ruled" id="tools" style="margin-top:64px">
+  <div class="wrap">
+    <div class="io">
+      <span class="sec-eyebrow">裡面有什麼</span>
+      <h2 class="sec-title">十六種工具，一個視窗。</h2>
+      <p class="sec-intro">每個工具都會用自己的顏色重新鋪陳整個視窗，因為顏色正是它告訴你即將動到什麼的方式。每個工具都把事情做完，不會把你丟回終端機。</p>
+    </div>
+
+    <div class="tool-grid io">
+      <div class="tool-cell" style="--c: var(--teal)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/><path d="M3 8l2-2M8 4l1.5-1.5M16 20l1.5 1.5"/></svg></span>
+            <span class="tool-name">清理</span>
+          </div>
+          <span class="tool-cmd">10 多種類別</span>
+        </div>
+        <p>十多種類別的快取、日誌與暫存檔，依刪除的安全程度排序。在任何東西被移動之前，你都能看到每個檔案與每一個位元組。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--moss)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/></svg></span>
+            <span class="tool-name">深度清理</span>
+          </div>
+          <span class="tool-cmd">開發殘留</span>
+        </div>
+        <p>開發工作留下的碎土：node_modules、DerivedData、建置產物、過期的套件快取，並附上各自重新建置的代價。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--ginger)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11M8 11l4 4 4-4"/><path d="M4 19h16"/></svg></span>
+            <span class="tool-name">安裝檔</span>
+          </div>
+          <span class="tool-cmd">清掃下載項目</span>
+        </div>
+        <p>你早就拆開的箱子。找出應用程式裝好許久之後，仍留在「下載項目」裡的 .dmg 與 .pkg 檔案。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--coral)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 20V9"/></svg></span>
+            <span class="tool-name">應用程式</span>
+          </div>
+          <span class="tool-cmd">批次解除安裝</span>
+        </div>
+        <p>列出所有已安裝的應用程式，可依大小或最近使用排序；多選解除安裝時，會一併清掉偏好設定、支援檔案與啟動代理程式。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--violet)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2 2M16.4 16.4l2 2M18.4 5.6l-2 2M7.6 16.4l-2 2"/><circle cx="12" cy="12" r="3.2"/></svg></span>
+            <span class="tool-name">最佳化</span>
+          </div>
+          <span class="tool-cmd">一次確認</span>
+        </div>
+        <p>重建預覽、修復快取與中繼資料、清除 DNS、檢查登入項目。把這些例行雜事收進一次確認裡。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--sage)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2.2"/><circle cx="10" cy="16" r="2.2"/></svg></span>
+            <span class="tool-name">調校</span>
+          </div>
+          <span class="tool-cmd">一次做完</span>
+        </div>
+        <p>一次做完整套保養。挑出此刻真正適用於這台電腦的維護項目，並從頭執行到尾。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--azure)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="11" rx="1"/><rect x="13" y="3" width="8" height="6" rx="1"/><rect x="13" y="11" width="8" height="10" rx="1"/><rect x="3" y="16" width="8" height="5" rx="1"/></svg></span>
+            <span class="tool-name">分析</span>
+          </div>
+          <span class="tool-cmd">樹狀圖</span>
+        </div>
+        <p>整顆磁碟的方塊樹狀圖。可深入任一分支，再從快捷選單在 Finder 中顯示，或移到垃圾桶。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--rose)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="12" height="12" rx="2"/><path d="M4 9v10a2 2 0 002 2h10"/></svg></span>
+            <span class="tool-name">重複檔案</span>
+          </div>
+          <span class="tool-cmd">依內容雜湊</span>
+        </div>
+        <p>依內容雜湊尋找重複檔案，並能辨識硬連結，因此被多個工具共用的檔案不會被重複計算。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--olive)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><path d="M9 11h.01M15 11h.01M9 15c1.5-1 4.5-1 6 0"/></svg></span>
+            <span class="tool-name">殘留檔案</span>
+          </div>
+          <span class="tool-cmd">孤立檔案</span>
+        </div>
+        <p>早已刪除的應用程式留下的支援檔案、偏好設定與啟動代理程式，並對應回是哪個應用程式留下的。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--orchid)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg></span>
+            <span class="tool-name">相似照片</span>
+          </div>
+          <span class="tool-cmd">感知比對</span>
+        </div>
+        <p>在整個圖庫中進行感知比對，找出幾乎相同的照片，以及值得精簡的連拍影格。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--gold)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2 6 4-14 2 8h2l1.5-3H21"/></svg></span>
+            <span class="tool-name">狀態</span>
+          </div>
+          <span class="tool-cmd">即時 + 浮動面板</span>
+        </div>
+        <p>CPU、記憶體、GPU、磁碟、網路與電池同頁呈現，各自附上迷你走勢圖；另有可釘選的處理程序清單，以及選單列浮動面板。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--cyan)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="2"/><path d="M7 8V5M12 8V5M17 8V5M7 12.5h.01M11 12.5h6"/></svg></span>
+            <span class="tool-name">連接埠</span>
+          </div>
+          <span class="tool-cmd">誰在監聽</span>
+        </div>
+        <p>列出每個監聽中的連接埠及其背後的處理程序，不必再敲 lsof 就能找出是誰佔著 3000。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--azure)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.5 4 5.6 4 9s-1.4 6.5-4 9c-2.6-2.5-4-5.6-4-9s1.4-6.5 4-9z"/></svg></span>
+            <span class="tool-name">網路</span>
+          </div>
+          <span class="tool-cmd">依處理程序</span>
+        </div>
+        <p>依網路介面與處理程序即時顯示流量，讓你看清究竟是什麼在佔用連線。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--cyan)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a16 16 0 0120 0M5 12a11 11 0 0114 0M8.5 15.5a6 6 0 017 0"/><circle cx="12" cy="19" r="1"/></svg></span>
+            <span class="tool-name">恢復連線</span>
+          </div>
+          <span class="tool-cmd">診斷</span>
+        </div>
+        <p>斷線時帶你一步步回到地面：依序檢查 DNS、閘道、認證頁面與網路介面。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--moss)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+            <span class="tool-name">歷史</span>
+          </div>
+          <span class="tool-cmd">90 天</span>
+        </div>
+        <p>每一次狀態取樣都寫入本機的 SQLite 檔案。可從五分鐘一路回溯到九十天，並附上各處理程序的尖峰表。</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--ginger)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg></span>
+            <span class="tool-name">代理程式 · MCP</span>
+          </div>
+          <span class="tool-cmd">26 種工具</span>
+        </div>
+        <p>二十六種 MCP 工具把整個應用程式開放給 Claude Code，另有一個僅限本機回送的 HTTP 介面。預設唯讀；會造成刪除的操作需要另行開啟。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURE RUN ===== -->
+<section class="section section--ruled" id="see">
+  <div class="wrap">
+    <div class="io">
+      <span class="sec-eyebrow">看一看</span>
+      <h2 class="sec-title">它是拿來看的，不只是拿來跑的。</h2>
+    </div>
+
+    <div class="feature io">
+      <div>
+        <h3>看清究竟是什麼在吃掉磁碟。</h3>
+        <p>把每個資料夾依實際佔用畫成方塊樹狀圖。一層層深入，直到元凶一目了然，然後不必離開這張圖就能處理。</p>
+        <p class="why">分析</p>
+      </div>
+      <div class="shot-card">
+        <img src="../assets/shot-analyze.png" alt="Burrow 分析：磁碟佔用樹狀圖，已深入到某個資料夾" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature io">
+      <div class="f-text">
+        <h3>這台電腦的每一次脈動，即時可見。</h3>
+        <p>CPU、記憶體、GPU、磁碟、網路與電池共處一頁，各自附上迷你走勢圖。處理程序清單可排序、可釘選，讓那個把風扇吹起來的東西始終在視線內。</p>
+        <p class="why">狀態</p>
+      </div>
+      <div class="shot-card f-shot">
+        <img src="../assets/shot-status.png" alt="Burrow 狀態：即時的 CPU、記憶體、GPU、磁碟與網路，並附處理程序清單" loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature io">
+      <div>
+        <h3>先讓你看，再動手刪。</h3>
+        <p>清理會把找到的一切依刪除的安全程度排序，並在任何東西被移動前列出檔案清單與位元組數。想留下的取消勾選即可；不會因為手滑點一下就刪掉什麼。</p>
+        <p class="why">清理</p>
+      </div>
+      <div class="shot-card">
+        <img src="../assets/shot-clean.png" alt="Burrow 清理：依類別列出的垃圾檔案及其數量與大小，可逐項確認" loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature io">
+      <div class="f-text">
+        <h3>洞穴的長久記憶。</h3>
+        <p>狀態取樣寫入本機的 SQLite 歷史紀錄，可從五分鐘回溯到九十天；風扇真正轉起來的那些時刻，還能查看各處理程序的尖峰表。</p>
+        <p class="why">歷史</p>
+      </div>
+      <div class="shot-card f-shot">
+        <img src="../assets/shot-history.png" alt="Burrow 歷史：九十天內 CPU、記憶體與磁碟的長期曲線" loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature io">
+      <div>
+        <h3>整個洞穴，盡在選單列。</h3>
+        <p>不必開啟應用程式，就能拉下完整概況的浮動面板：即時指標、佔用最高的處理程序，以及直接跳進所需工具的入口。</p>
+      </div>
+      <div class="shot-card shot-card--tall">
+        <img src="../assets/shot-menubar.png" alt="Burrow 選單列浮動面板：以下拉方式顯示即時指標與佔用最高的處理程序" loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature feature--wide io">
+      <div>
+        <h3>在 Claude 裡問你的 Mac。</h3>
+        <p>內建的 MCP 伺服器向任何代理程式開放 <code class="k">burrow_snapshot</code>, <code class="k">burrow_history</code>、 <code class="k">burrow_top_processes</code> ，並在 <code class="k">127.0.0.1:9277</code>上提供回送 HTTP 介面。兩者都只留在本機。</p>
+        <p class="why">代理程式 · MCP</p>
+      </div>
+      <div class="shot-card shot-card--narrow">
+        <img src="../assets/shot-ai.png" alt="Claude Code 透過 Burrow 的 MCP 伺服器查詢電腦狀態" loading="lazy" decoding="async">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== What's new (content owned by scripts/site-release.py; edit docs/releases.json) ===== -->
+<section class="section section--ruled" id="new">
+  <div class="wrap">
+    <!-- WN:BEGIN generated by scripts/site-release.py; edit docs/releases.json instead -->
+    <div class="sec-head wn-head">
+      <div>
+        <span class="sec-num">新變化 · 2026 年 8 月</span>
+        <h2 class="sec-title">0.14.0 新增</h2>
+      </div>
+      <a class="btn btn-out btn-sm" href="releases">所有版本</a>
+    </div>
+
+    <div class="grid3 wn-grid">
+      <article class="tcard" style="--c: var(--accent)">
+        <div class="top"><div class="ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9.5A8 8 0 0120 12"/><path d="M7 12a5 5 0 0110 0c0 3-1 6-2.5 8"/><path d="M12 12c0 3-.6 5.5-1.8 7.6"/></svg></div><div class="nm">Burrow 會主動提供特權輔助程式</div></div>
+        <p class="ds">那個讓管理者操作可用 Touch ID 驗證的輔助程式，先前藏在設定裡的一個按鈕後面，而沒有任何地方指向它。現在它像「完全取用磁碟」那樣被主動提供——視窗上方一條橫幅，只做告知而不擋路；關掉之後就不再出現，因為這個輔助程式只是方便，並非 Burrow 運作所必需。</p>
+      </article>
+      <article class="tcard" style="--c: var(--teal)">
+        <div class="top"><div class="ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg></div><div class="nm">確認後的清理會回報刪除了什麼</div></div>
+        <p class="ds">它確實刪掉了勾選的內容，看起來卻像什麼都沒做：這條路徑用 find 刪除，成功時不會輸出任何內容，結果頁因此無從呈現。現在它會回報被授權刪除的路徑，依類別分組並合計大小。</p>
+      </article>
+    </div>
+
+    <div class="extra-label mono">// 0.14.0 中的其他改進</div>
+    <div class="wn-chips">
+      <span class="wn-chip"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>確認後的清理刪除什麼並未改變，改變的只是它告訴你什麼</span>
+      <span class="wn-chip"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>這個輔助程式完全是選用的；拒絕之後，所有操作照舊可用</span>
+    </div>
+    <!-- WN:END -->
+  </div>
+</section>
+
+<!-- ===== TRUST ===== -->
+<section class="section section--ruled" id="trust">
+  <div class="wrap">
+    <div class="trust-head io">
+      <span class="sec-eyebrow">為什麼可以信任它</span>
+      <h2 class="sec-title">會碰你檔案的工具，理當先贏得信任。</h2>
+    </div>
+    <div class="trust-grid io">
+      <div class="trust-card">
+        <h3><span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M8 18l-5-6 5-6M16 6l5 6-5 6"/></svg></span>開源</h3>
+        <p>每一行程式碼都公開，採用 MIT 授權，你可以閱讀、稽核，也可以另行分支。 <a href="https://github.com/caezium/Burrow" target="_blank" rel="noopener">查看儲存庫</a>.</p>
+      </div>
+      <div class="trust-card">
+        <h3><span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h13M3 12h9M3 18h13"/><path d="M17 15l3 3 4-5" transform="translate(-2,0)"/></svg></span>先讓你看，再動手刪</h3>
+        <p>每個操作都會先列出檔案與位元組數。你確認，Burrow 才動手。沒有常駐背景的 root 輔助程式：來詢問你的是 macOS 自己的對話框。</p>
+      </div>
+      <div class="trust-card">
+        <h3><span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9.5 11.5l2 2 3.5-3.5"/></svg></span>你的資料留在原地</h3>
+        <p>掃描結果、指標與歷史紀錄絕不會離開這台電腦。匿名、可隨時關閉的診斷資料，逐項列在 <a href="https://github.com/caezium/Burrow/blob/main/TELEMETRY.md" target="_blank" rel="noopener">TELEMETRY.md</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== INSTALL ===== -->
+<section class="section section--ruled" id="install">
+  <div class="wrap">
+    <div class="io">
+      <span class="sec-eyebrow">安裝</span>
+      <h2 class="sec-title">永久免費。不需帳號，也沒有訂閱。</h2>
+      <p class="sec-intro">所有工具、選單列浮動面板、歷史紀錄與 MCP 伺服器，想裝幾台電腦都可以。</p>
+    </div>
+
+    <div class="io picker-wrap">
+      <!-- PICK:BEGIN generated by scripts/site-release.py -->
+      <div class="plats">
+        <div class="plat">
+          <span class="gl"><svg viewBox="0 0 814 1000" fill="currentColor" aria-hidden="true"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.2 0 129.8 2.6 196.3 99.2zm-234-181.1c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.2 32.4-54.4 84.4-54.4 136.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.8-71.3z"/></svg></span>
+          <h3>macOS</h3>
+          <p class="kind">.zip &middot; Apple 晶片 &amp; Intel</p>
+          <div class="foot">
+            <a class="dlbtn" href="https://github.com/caezium/Burrow/releases/download/v0.14.0/Burrow-0.14.0.zip" data-burrow-analytics="download.landing_mac">下載 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg></a>
+          </div>
+        </div>
+        <div class="plat">
+          <span class="gl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5l7.5-1v7.2H3zM11.8 4.3L21 3v8.7h-9.2zM3 12.9h7.5v7.2L3 18.8zM11.8 12.9H21V21l-9.2-1.3z"/></svg></span>
+          <h3>Windows</h3>
+          <p class="kind">.zip &middot; 64 位元</p>
+          <span class="tag">beta &middot; 0.10.0</span>
+          <div class="foot">
+            <a class="dlbtn" href="https://github.com/caezium/Burrow/releases/download/v0.10.0/BurrowWin-0.10.0-win-x64.zip" data-burrow-analytics="download.landing_windows">下載 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg></a>
+          </div>
+        </div>
+        <div class="plat">
+          <span class="gl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h11v7a5 5 0 01-5 5H10a5 5 0 01-5-5z"/><path d="M16 10h1.5a2.5 2.5 0 010 5H16"/><path d="M7 4.5c0-.8.6-1.2.6-2M11 4.5c0-.8.6-1.2.6-2"/></svg></span>
+          <h3>Homebrew</h3>
+          <p class="kind">cask &middot; 應用程式 + 引擎</p>
+          <div class="foot">
+            <button type="button" class="cmdbtn" data-copy="brew install --cask caezium/tap/burrow" data-burrow-analytics="homebrew.landing" aria-label="複製 Homebrew 安裝指令"><span class="lab">brew install --cask caezium/tap/burrow</span><span class="st">複製</span></button>
+          </div>
+        </div>
+      </div>
+      <!-- PICK:END -->
+    </div>
+
+    <p class="install-note io">Windows 版本落後於 Mac 版本，目前仍是預覽。更多安裝方式、總和檢查碼與舊版本，請見 <a href="../install">安裝頁面</a>.</p>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="section section--ruled" id="faq">
+  <div class="wrap">
+    <div class="faq-head io">
+      <h2 class="sec-title">常見問題</h2>
+    </div>
+    <div class="faq-list io">
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-0">真的免費嗎？
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-0"><div class="faq-panel-inner">
+          <p class="faq-a">是的。採用 MIT 授權，沒有帳號、沒有試用期限、沒有付費方案，也不會夾帶任何東西。若你想先讀過再執行，完整原始碼都放在 GitHub 上。</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-1">Burrow 用起來安全嗎？
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-1"><div class="faq-panel-inner">
+          <p class="faq-a">每個操作在執行前都會顯示檔案清單與位元組數，清理也會依刪除的安全程度為類別排序。沒有常駐背景的 root 輔助程式：當某項工作需要管理者權限時，由 macOS 自己的對話框詢問你，Burrow 只執行那一道指令，隨後結束。</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-2">它到底刪些什麼？
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-2"><div class="faq-panel-inner">
+          <p class="faq-a">應用程式會自行重建的快取與暫存檔：瀏覽器快取、開發建置產物、App Support 快取、日誌、遺留的安裝檔。至於重新建置確實有代價的套件快取與建置產物，在你親自確認之前都維持未勾選。</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-3">它會上傳什麼嗎？
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-3"><div class="faq-panel-inner">
+          <p class="faq-a">不上傳檔案、路徑、網址或指標。掃描結果與歷史紀錄留在本機，MCP 伺服器也只監聽回送位址。Burrow 確實會傳送匿名、可關閉的使用與當機診斷資料，各欄位逐項揭露於 <a href="https://github.com/caezium/Burrow/blob/main/TELEMETRY.md" target="_blank" rel="noopener">TELEMETRY.md</a>。設定裡一個開關即可關閉，而從原始碼建置的版本本來就不會傳送任何內容。</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-4">一定要開啟完全取用磁碟嗎？
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-4"><div class="faq-panel-inner">
+          <p class="faq-a">不必。沒有它，Burrow 也能執行安全掃描。授予之後，Burrow 才能觸及更深處的 App Support 與容器快取；你隨時可以授予或收回。</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-5">有簽署與公證嗎？
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-5"><div class="faq-panel-inner">
+          <p class="faq-a">有，自 0.11.0 起皆是；簽署、公證、裝訂與 Gatekeeper 評估全部通過，標籤才可能發布。封存的 0.10.5 及更早版本早於此，若被 Gatekeeper 擋下，請按右鍵選擇 <b>打開</b> 。完整的承諾寫在 <a href="https://github.com/caezium/Burrow/blob/main/SECURITY.md" target="_blank" rel="noopener">SECURITY.md</a>.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-6">代理程式能用它做什麼？
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-6"><div class="faq-panel-inner">
+          <p class="faq-a">二十六種 MCP 工具涵蓋快照、歷史、佔用最高的處理程序、磁碟分析、重複檔案、連接埠、網路等等。其中十四種唯讀，可立即使用；會更動你電腦的那些，需要各自明確開啟。完整清單見 <a href="https://github.com/caezium/Burrow/blob/main/docs/agent-tools.md" target="_blank" rel="noopener">agent-tools.md</a>.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-7">能在 Windows 上執行嗎？
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-7"><div class="faq-panel-inner">
+          <p class="faq-a">以 WinUI 3 與 .NET 8 打造的原生移植版正在積極測試，並逐一補齊各項工具。macOS 是成熟的主力版本；Windows 預覽版目前以 zip 形式提供，安裝程式也在準備中。 <a href="https://github.com/caezium/Burrow/tree/main/windows" target="_blank" rel="noopener">在 GitHub 上追蹤進度</a>.</p>
+        </div></div>
+      </div>
+    </div>
+    <p class="faq-closing io">從原始碼建置、接上 MCP 伺服器，或是其他事情？這些都寫在 <a href="https://github.com/caezium/Burrow#readme" target="_blank" rel="noopener">README</a>.</p>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <a class="brand" href="#top" aria-label="Burrow">
+        <img class="brand-logo" src="../burrow-icon.png" alt="" width="28" height="28" decoding="async">
+        <span>Burrow</span>
+      </a>
+      <div class="footer-links">
+        <a href="https://github.com/caezium/Burrow" target="_blank" rel="noopener">GitHub</a>
+        <a href="releases">更新紀錄</a>
+        <a href="roadmap">藍圖</a>
+        <a href="https://github.com/caezium/Burrow/blob/main/SECURITY.md" target="_blank" rel="noopener">安全性</a>
+        <a href="https://github.com/caezium/Burrow/blob/main/TELEMETRY.md" target="_blank" rel="noopener">資料收集</a>
+        <a href="https://github.com/caezium/Burrow/blob/main/LICENSE" target="_blank" rel="noopener">授權</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ---- copy buttons (hero snippet + install cards) ----
+  function copyText(t) { if (navigator.clipboard) navigator.clipboard.writeText(t).catch(function(){}); }
+  document.querySelectorAll('.snippet-copy').forEach(function (b) {
+    b.addEventListener('click', function () {
+      copyText(b.getAttribute('data-copy') || '');
+      b.classList.add('copied');
+      setTimeout(function () { b.classList.remove('copied'); }, 1500);
+    });
+  });
+  document.querySelectorAll('.cmdbtn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      copyText(btn.getAttribute('data-copy') || '');
+      var st = btn.querySelector('.st');
+      btn.classList.add('done'); st.textContent = 'copied';
+      setTimeout(function () { btn.classList.remove('done'); st.textContent = 'copy'; }, 1500);
+    });
+  });
+
+  // ---- FAQ accordion (grid-template-rows 0fr -> 1fr) ----
+  document.querySelectorAll('.faq-item').forEach(function (item) {
+    var q = item.querySelector('.faq-q');
+    q.addEventListener('click', function () {
+      var open = item.getAttribute('data-open') === 'true';
+      var panel = item.querySelector('.faq-panel');
+      item.setAttribute('data-open', open ? 'false' : 'true');
+      q.setAttribute('aria-expanded', open ? 'false' : 'true');
+      if (open) { panel.setAttribute('inert', ''); } else { panel.removeAttribute('inert'); }
+    });
+  });
+
+  // ---- scroll reveal for sections (respects reduced motion) ----
+  if (window.matchMedia('(prefers-reduced-motion: no-preference)').matches && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.08 });
+    document.querySelectorAll('.io').forEach(function (el) { io.observe(el); });
+  } else {
+    document.querySelectorAll('.io').forEach(function (el) { el.classList.add('in'); });
+  }
+</script>
+</body>
+</html>

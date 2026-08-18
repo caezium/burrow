@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Burrow · Utilitário livre e de código aberto para limpeza, software e status no macOS &amp; Windows</title>
+<meta name="description" content="O Burrow é um app nativo, gratuito e de código aberto para macOS (e Windows, em beta): limpa o que sobra, gerencia apps, roda a manutenção, mapeia o disco e acompanha o status ao vivo, tudo em uma janela. Além disso, histórico de longo prazo e um servidor MCP para o Claude Code.">
+<meta name="theme-color" content="#121217">
+<link rel="icon" type="image/png" href="../burrow-icon.png">
+<link rel="apple-touch-icon" href="../burrow-icon-512.png">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Burrow · Free, open-source desktop utility for macOS &amp; Windows">
+<meta property="og:description" content="Limpe o que sobra, gerencie apps, rode a manutenção, mapeie o disco e acompanhe o status ao vivo, em um único app nativo. Nativo no macOS e agora em beta no Windows. Gratuito e sob licença MIT. Com histórico e um servidor MCP.">
+<meta property="og:image" content="https://burrow.computer/burrow-icon-512.png">
+<meta property="og:url" content="https://burrow.computer/">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://burrow.computer/pt-BR/">
+<link rel="alternate" hreflang="x-default" href="https://burrow.computer/">
+<link rel="alternate" hreflang="en" href="https://burrow.computer/">
+<link rel="alternate" hreflang="zh-Hans" href="https://burrow.computer/zh-Hans/">
+<link rel="alternate" hreflang="zh-Hant" href="https://burrow.computer/zh-Hant/">
+<link rel="alternate" hreflang="ru" href="https://burrow.computer/ru/">
+<link rel="alternate" hreflang="ja" href="https://burrow.computer/ja/">
+<link rel="alternate" hreflang="de" href="https://burrow.computer/de/">
+<link rel="alternate" hreflang="fr" href="https://burrow.computer/fr/">
+<link rel="alternate" hreflang="es" href="https://burrow.computer/es/">
+<link rel="alternate" hreflang="ko" href="https://burrow.computer/ko/">
+<link rel="alternate" hreflang="pt-BR" href="https://burrow.computer/pt-BR/">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://burrow.computer/#org","name":"Burrow","url":"https://burrow.computer","logo":"https://burrow.computer/burrow-icon-512.png","sameAs":["https://github.com/caezium/Burrow"]},{"@type":"WebSite","@id":"https://burrow.computer/#site","url":"https://burrow.computer","name":"Burrow","publisher":{"@id":"https://burrow.computer/#org"}}]}</script>
+<meta property="og:site_name" content="Burrow">
+<meta name="twitter:title" content="Burrow · Utilitário livre e de código aberto para limpeza, disco e status no Mac">
+<meta name="twitter:description" content="Limpa o que sobra, encontra duplicatas e sobras, mapeia o disco e acompanha o status ao vivo. Uma janela nativa. Gratuito e de código aberto.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Burrow","applicationCategory":"UtilitiesApplication","operatingSystem":"macOS 14+, Windows 10/11","description":"A free, open-source desktop utility that clears junk, finds duplicate and leftover files, maps disk usage, and watches live system status, with an MCP server so coding agents can read the machine.","url":"https://burrow.computer","downloadUrl":"https://burrow.computer/install","license":"https://github.com/caezium/Burrow/blob/main/LICENSE","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is it really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. MIT-licensed, with no accounts, no trial limits, no paid tier, and nothing bundled in. The full source is on GitHub if you want to read it before you run it."}},{"@type":"Question","name":"Is Burrow safe to use?","acceptedAnswer":{"@type":"Answer","text":"Every action shows the file list and byte count before it runs, and Clean sorts categories by how safe they are to remove. There is no background root helper: when a task needs admin rights, macOS's own dialog asks you, Burrow runs that one command, then exits."}},{"@type":"Question","name":"What does it actually delete?","acceptedAnswer":{"@type":"Answer","text":"Caches and temporary files that apps regenerate on their own: browser caches, developer build artifacts, app support caches, logs, leftover installers. Package caches and build output with real rebuild cost stay unchecked until you confirm them yourself."}},{"@type":"Question","name":"Does it upload anything?","acceptedAnswer":{"@type":"Answer","text":"No files, paths, URLs, or metrics. Scans and history stay on the machine, and the MCP server is loopback only. Burrow does send anonymous, opt-out usage and crash diagnostics, disclosed field by field in TELEMETRY.md. One Settings switch turns it off, and source builds ship inert."}},{"@type":"Question","name":"Do I need Full Disk Access?","acceptedAnswer":{"@type":"Answer","text":"No. Burrow runs a safe scan without it. Granting it lets Burrow reach deeper App Support and container caches, and you can grant or revoke it whenever you like."}},{"@type":"Question","name":"Is it signed and notarized?","acceptedAnswer":{"@type":"Answer","text":"Yes, from 0.11.0 onward, and a tag cannot publish unless signing, notarization, stapling, and Gatekeeper assessment all pass. Archived 0.10.5-and-earlier builds predate that: right-click and choose Open if Gatekeeper blocks one. The full contract is in SECURITY.md."}},{"@type":"Question","name":"What can an agent do with it?","acceptedAnswer":{"@type":"Answer","text":"Twenty-six MCP tools cover snapshots, history, top processes, disk analysis, duplicates, ports, network, and more. Fourteen are read-only and available immediately; the ones that change your machine need their own explicit opt-in. The full list is in agent-tools.md."}},{"@type":"Question","name":"Does it run on Windows?","acceptedAnswer":{"@type":"Answer","text":"A native WinUI 3 and .NET 8 port is in active beta, reaching parity tool by tool. macOS is the mature flagship; the Windows preview ships as a zip today, with an installer coming. Track it on GitHub."}}]}</script>
+<link rel="preload" as="image" href="../burrow-icon-512.png">
+<script src="/analytics.js" defer></script>
+<link rel="stylesheet" href="../assets/chrome.css">
+
+<style>
+  /* All fonts self-hosted: a page whose pitch is "your data stays on your
+     Mac" shouldn't leak every visitor's IP to a fonts CDN. Geist + Geist
+     Mono are the MIT-licensed variable cuts from vercel/geist-font. */
+  @font-face {
+    font-family: "Geist";
+    src: url("assets/fonts/Geist[wght].woff2") format("woff2");
+    font-weight: 100 900; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    src: url("assets/fonts/GeistMono[wght].woff2") format("woff2");
+    font-weight: 100 900; font-style: normal; font-display: swap;
+  }
+  /* Cal Sans: caezium house display face (self-hosted) */
+  @font-face {
+    font-family: "Cal Sans";
+    src: url("assets/fonts/CalSans-SemiBold.woff2") format("woff2");
+    font-weight: 600; font-style: normal; font-display: swap;
+  }
+
+  :root {
+    /* ===== caezium house palette (devport) on reference geometry ===== */
+    --bg:        #121217;
+    --surface:   rgba(243,236,221,0.045);
+    --surface-2: rgba(243,236,221,0.07);
+    --elevated:  #191920;         /* shot-card ground */
+    --ink:       #F3ECDD;
+    --ink-2:     rgba(243,236,221,0.66);
+    --ink-3:     rgba(243,236,221,0.42);
+    --line:      rgba(243,236,221,0.13);
+    --line-soft: rgba(243,236,221,0.075);
+    --accent:    #D9A066;
+    --accent-hi: #E7C49A;
+    --accent-soft: rgba(217,160,102,0.14);
+    --on-accent: #241B12;
+
+    /* per-tool jewels, straight from Burrow's Tool.swift */
+    --teal:#35C2A5; --coral:#F0714E; --violet:#8E84F0; --azure:#4FA3E3;
+    --gold:#E6A93C; --moss:#6FB06A; --ginger:#D98C5F; --green:#57D58E; --red:#F0604E;
+    --lilac:#D6C6FF; --rose:#DB7E9C; --olive:#B7BE5A; --orchid:#D57BC4;
+    --cyan:#4FC3D9; --sage:#5AA98B;
+
+    --font-display: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    --font-mono:    "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --font-head:    "Cal Sans", "Geist", -apple-system, system-ui, sans-serif;
+
+    --maxw: 1080px;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overscroll-behavior-y: none; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: var(--font-display);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    line-height: 1.5;
+    overflow-x: hidden;
+    background-color: var(--bg);
+    background-image:
+      url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%3E%3Cfilter%20id='g'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.82'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23g)'%20opacity='0.06'/%3E%3C/svg%3E"),
+      radial-gradient(1200px 600px at 82% -10%, rgba(217,160,102,0.09), rgba(217,160,102,0) 60%),
+      radial-gradient(1000px 520px at -10% 108%, rgba(217,160,102,0.07), rgba(217,160,102,0) 60%);
+    background-repeat: repeat, no-repeat, no-repeat;
+    background-size: 180px 180px, auto, auto;
+    background-attachment: fixed;
+  }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+  ::selection { background: rgba(217,160,102,0.26); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+  .mono { font-family: var(--font-mono); }
+  code.k, .cmd { font-family: var(--font-mono); font-size: 0.86em; background: var(--surface-2);
+    border: 1px solid var(--line-soft); padding: 2px 6px; border-radius: 6px; color: var(--ink); white-space: nowrap; }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; padding-top: 104px; padding-bottom: 64px; }
+  .hero::before {
+    content: ""; position: absolute; inset: -180px 0 auto; height: 740px; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(620px 360px at 72% 8%, rgba(217,160,102,0.14), rgba(217,160,102,0) 70%),
+      radial-gradient(520px 320px at 8% 0, rgba(214,198,255,0.07), rgba(214,198,255,0) 70%);
+  }
+  .hero-inner { position: relative; z-index: 1; text-align: center; }
+  .hero-mark { width: 112px; height: 112px; margin: 0 auto 26px; display: block;
+    filter: drop-shadow(0 14px 30px rgba(0,0,0,0.55)); }
+  h1.headline { font-family: var(--font-head); font-weight: 600;
+    font-size: clamp(2.35rem, 4.4vw, 3.9rem); line-height: 1.05; letter-spacing: -0.025em;
+    max-width: 17ch; margin: 0 auto 20px; }
+  h1.headline .accent { color: var(--accent); }
+  .subhead { color: var(--ink-2); max-width: 52ch; margin: 0 auto 32px;
+    font-size: clamp(1rem, 1.9vw, 1.1875rem); font-weight: 450; line-height: 1.55; }
+  .cta-row { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .or-divider { display: flex; justify-content: center; align-items: center; gap: 12px;
+    width: min(100%, 380px); margin: 0 auto; padding: 16px 0 12px; }
+  .or-divider__line { flex: 1; height: 1px; background: var(--line-soft); }
+  .or-divider__text { flex: none; font-size: .8rem; font-weight: 500; color: var(--ink-3); }
+
+  .snippet-row { display: flex; justify-content: center; width: 100%; }
+  .snippet { display: flex; align-items: stretch; max-width: 100%; overflow: hidden;
+    background: var(--surface-2); border: 1px solid var(--line-soft); border-radius: 12px; }
+  .snippet-text { display: flex; align-items: center; min-width: 0; padding: 11px 12px 11px 16px; }
+  .snippet-code { font-family: var(--font-mono); font-size: .875rem; color: var(--ink);
+    white-space: nowrap; letter-spacing: .01em; overflow-x: auto; }
+  .snippet-copy { position: relative; width: 40px; flex: none; display: inline-flex; align-items: center;
+    justify-content: center; background: transparent; border: 0; border-left: 1px solid var(--line-soft);
+    color: var(--ink-2); cursor: pointer; transition: color .18s; }
+  .snippet-copy:hover { color: var(--ink); }
+  .snippet-ico { position: absolute; width: 14px; height: 14px; transition: opacity .2s, transform .2s; }
+  .snippet-ico--check { color: var(--green); opacity: 0; transform: scale(.6); }
+  .snippet-copy.copied .snippet-ico--copy { opacity: 0; transform: scale(.6); }
+  .snippet-copy.copied .snippet-ico--check { opacity: 1; transform: scale(1); }
+  @media (prefers-reduced-motion: reduce) { .snippet-ico { transition: none; } }
+
+  .meta-line { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px;
+    padding-top: 18px; font-family: var(--font-mono); font-size: .82rem; font-weight: 500; color: var(--ink-3); }
+  .meta-line .dot { opacity: .55; }
+  .meta-line b { color: var(--accent); font-weight: 500; }
+
+  .dl-line { margin-top: 14px; font-size: 13px; color: var(--ink-3); }
+  .dl-line b { font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+  .picker-wrap { margin-top: 44px; }
+  .install-note { margin-top: 26px; text-align: center; font-family: var(--font-mono);
+    font-size: 12.5px; line-height: 1.7; color: var(--ink-3); }
+  .install-note b { color: var(--accent); font-weight: 500; }
+  .install-note a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+  .install-note a:hover { color: var(--accent); }
+
+  .demo-wrap { margin-top: 40px; aspect-ratio: 1880/1344; overflow: hidden;
+    border: 1px solid var(--line); border-radius: 24px; background: var(--elevated);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 28px 60px -34px rgba(0,0,0,0.8); }
+  .demo-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+  .demo-wrap img.contain { object-fit: contain; }
+
+  /* ---------- sections ---------- */
+  .section { padding-top: 76px; padding-bottom: 76px; }
+  .section--ruled { border-top: 1px solid var(--line-soft); }
+  .sec-eyebrow, .sec-num { display: block; font-family: var(--font-mono); font-size: .72rem;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  h2.sec-title { font-family: var(--font-head); font-weight: 600;
+    font-size: clamp(1.65rem, 3.2vw, 2.1rem); line-height: 1.12; letter-spacing: -0.025em; margin: 0; }
+  .sec-intro { margin-top: 18px; max-width: 62ch; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
+  .sec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+
+  /* ---------- tool grid ---------- */
+  .tool-grid { margin-top: 48px; display: grid; grid-template-columns: repeat(2, 1fr);
+    border-top: 1px solid var(--line-soft); }
+  .tool-cell { padding: 26px; border-bottom: 1px solid var(--line-soft); transition: background .18s; }
+  .tool-cell:hover { background: var(--surface); }
+  .tool-cell:nth-child(odd):not(:last-child) { border-right: 1px solid var(--line-soft); }
+  .tool-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .tool-id { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .tool-ico { width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--c) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c) 34%, transparent); }
+  .tool-ico svg { width: 17px; height: 17px; stroke: var(--c); fill: none; stroke-width: 1.8; }
+  .tool-name { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .tool-cmd { flex: none; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums; }
+  .tool-cell p { margin-top: 12px; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+
+  /* ---------- feature run: alternating screenshot rows ---------- */
+  .feature { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 56px;
+    padding-top: 60px; padding-bottom: 60px; }
+  .feature--wide { grid-template-columns: 1fr; gap: 32px; padding-top: 40px; padding-bottom: 40px; }
+  .feature .f-text { order: 2; }
+  .feature .f-shot { order: 1; }
+  .feature h3 { font-family: var(--font-head); font-weight: 600;
+    font-size: clamp(1.35rem, 2.4vw, 1.55rem); line-height: 1.15; letter-spacing: -0.025em; }
+  .feature p { margin-top: 14px; max-width: 44ch; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
+  .feature .why { margin-top: 14px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+  .shot-card { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; border-radius: 22px; padding: 14px; border: 1px solid var(--line-soft); }
+  .shot-card::before { content: ""; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(var(--elevated), var(--elevated)),
+      radial-gradient(140% 100% at 50% 0%, rgba(217,160,102,0.14), transparent 65%); }
+  .shot-card img { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 12px 30px -18px rgba(0,0,0,0.9); }
+  .shot-card--narrow img { width: 78%; margin: 0 auto; }
+  .shot-card--tall { padding: 24px; }
+  .shot-card--tall img { width: auto; max-height: 520px; margin: 0 auto; }
+
+  /* ---------- what's new (markup owned by scripts/site-release.py) ---------- */
+  .wn-head { margin-bottom: 40px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .tcard { padding: 22px; border-radius: var(--radius); background: var(--surface);
+    border: 1px solid var(--line-soft); }
+  .tcard .top { display: flex; align-items: center; gap: 11px; }
+  .tcard .ico { width: 32px; height: 32px; border-radius: 10px; flex: none; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--c) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c) 34%, transparent); }
+  .tcard .ico svg { width: 16px; height: 16px; stroke: var(--c); fill: none; stroke-width: 1.8; }
+  .tcard .nm { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+  .tcard .ds { margin-top: 12px; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+  .tcard .ds a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .extra-label { margin-top: 26px; font-size: 11.5px; letter-spacing: .1em; color: var(--ink-3); }
+  .wn-chips { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 9px; }
+  .wn-chip { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono);
+    font-size: 12px; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line-soft);
+    border-radius: 999px; padding: 7px 13px; }
+  .wn-chip svg { width: 12px; height: 12px; stroke: var(--green); fill: none; stroke-width: 2.4; flex: none; }
+  .wn-chip a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+  /* ---------- trust ---------- */
+  .trust-head { text-align: center; }
+  .trust-head .sec-intro { margin-left: auto; margin-right: auto; }
+  .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
+  .trust-card { padding: 26px 24px; text-align: center; border-radius: var(--radius);
+    background: var(--surface); border: 1px solid var(--line-soft); }
+  .trust-card h3 { display: flex; align-items: center; justify-content: center; gap: 9px;
+    font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 10px; }
+  .trust-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; color: var(--accent); }
+  .trust-icon svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .trust-card p { font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
+  .trust-card p a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+    border-top: 1px solid var(--line-soft); }
+
+
+  /* ---------- FAQ ---------- */
+  .faq-head { text-align: center; }
+  .faq-list { max-width: 720px; margin: 38px auto 0; text-align: left; }
+  .faq-item { border-bottom: 1px solid var(--line-soft); }
+  .faq-item:first-child { border-top: 1px solid var(--line-soft); }
+  .faq-q { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 20px 0; font: inherit; font-size: 1.075rem; font-weight: 600; letter-spacing: -0.01em;
+    line-height: 1.3; text-align: left; color: inherit; background: 0 0; border: 0; cursor: pointer;
+    transition: color .18s; }
+  .faq-q:hover { color: var(--accent); }
+  .faq-chevron { width: 18px; height: 18px; flex: none; color: var(--ink-3); stroke: currentColor;
+    fill: none; stroke-width: 2; }
+  @media (prefers-reduced-motion: no-preference) {
+    .faq-chevron { transition: transform .32s cubic-bezier(.33,1,.68,1); }
+  }
+  .faq-item[data-open="true"] .faq-chevron { transform: rotate(180deg); color: var(--accent); }
+  .faq-panel { display: grid; grid-template-rows: 0fr; overflow: hidden; }
+  .faq-item[data-open="true"] .faq-panel { grid-template-rows: 1fr; }
+  .faq-panel-inner { min-height: 0; opacity: 0; transform: translateY(-4px); }
+  .faq-item[data-open="true"] .faq-panel-inner { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .faq-panel { transition: grid-template-rows .32s cubic-bezier(.33,1,.68,1); }
+    .faq-panel-inner { transition: opacity .2s, transform .32s cubic-bezier(.33,1,.68,1); }
+    .faq-item[data-open="true"] .faq-panel-inner { transition-delay: 80ms; }
+  }
+  .faq-a { max-width: 62ch; padding-bottom: 20px; padding-right: 28px;
+    font-size: 1.025rem; line-height: 1.6; color: var(--ink-2); }
+  .faq-a a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .faq-closing { margin-top: 34px; text-align: center; font-size: 14px; color: var(--ink-3); }
+  .faq-closing a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+    font-size: 12.5px; color: var(--ink-3); }
+
+  /* ---------- entrance animation ---------- */
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { opacity: 0; transform: translateY(12px); animation: .66s cubic-bezier(.2,.7,.2,1) forwards rise; }
+    .d1 { animation-delay: 50ms; } .d2 { animation-delay: .13s; } .d3 { animation-delay: .21s; }
+    .d4 { animation-delay: .3s; } .d5 { animation-delay: .4s; }
+    @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+    .io { opacity: 0; transform: translateY(16px); transition: opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1); }
+    .io.in { opacity: 1; transform: none; }
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 900px) {
+    .feature, .feature--flip { grid-template-columns: 1fr; gap: 28px; padding-top: 48px; padding-bottom: 48px; }
+    .feature .shot-card, .feature .f-shot { order: 2; }
+    .feature .f-text { order: 1; }
+    .shot-card--narrow img { width: 80%; }
+    .grid3, .trust-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    .hero { padding-top: 68px; padding-bottom: 44px; }
+    .section { padding-top: 56px; padding-bottom: 56px; }
+    .tool-grid { grid-template-columns: 1fr; }
+    .tool-cell:nth-child(odd):not(:last-child) { border-right: 0; }
+    .snippet-code { font-size: .8rem; }
+    .demo-wrap { border-radius: 18px; margin-top: 38px; }
+  }
+</style>
+</head>
+<body id="top">
+
+<!-- NAV:BEGIN generated by scripts/site-release.py -->
+<div class="topbar">
+  <div class="page in">
+    <a class="brand" href="./" aria-label="Burrow"><img class="mk" src="../burrow-icon.png" alt="" width="28" height="28" decoding="async"><span>Burrow</span></a>
+    <nav class="nav"><a href="./#tools">Ferramentas</a><a href="docs">Documentação</a><a href="compare">Comparar</a><a href="../blog/">Blog</a><a href="../install">Instalar</a><a href="releases">Novidades</a><a href="roadmap">Planejamento</a></nav>
+    <div class="nav-right">
+      <!-- LANGPICK:BEGIN --><details class="langpick"><summary aria-label="Language"><span>Português (Brasil)</span></summary><nav><a href="/" hreflang="en">English</a><a href="/zh-Hans/" hreflang="zh-Hans">简体中文</a><a href="/zh-Hant/" hreflang="zh-Hant">繁體中文</a><a href="/ru/" hreflang="ru">Русский</a><a href="/ja/" hreflang="ja">日本語</a><a href="/de/" hreflang="de">Deutsch</a><a href="/fr/" hreflang="fr">Français</a><a href="/es/" hreflang="es">Español</a><a href="/ko/" hreflang="ko">한국어</a><a href="/pt-BR/" hreflang="pt-BR" aria-current="page">Português (Brasil)</a></nav></details><!-- LANGPICK:END -->
+      <a class="nav-github" href="https://github.com/caezium/Burrow" target="_blank" rel="noopener" aria-label="Ver o Burrow no GitHub"><svg class="icon icon--github" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.3-1.8-1.3-1.8-1.1-.7 0-.7 0-.7 1.2 0 1.9 1.2 1.9 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0C17.3 5 18.3 5.3 18.3 5.3c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0012 .5z"/></svg><span class="nav-stars">1.2k</span></a>
+      <a class="btn" href="../install" data-burrow-analytics="download.home"><span class="btn-inner"><svg class="icon icon--apple" viewBox="0 0 814 1000" aria-hidden="true"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.2 0 129.8 2.6 196.3 99.2zm-234-181.1c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.2 32.4-54.4 84.4-54.4 136.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.8-71.3z"/></svg><span class="nav-label--full">Baixar para Mac</span><span class="nav-label--short">Baixar</span></span></a>
+    </div>
+  </div>
+</div>
+<!-- NAV:END -->
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <div class="wrap hero-inner">
+    <img class="hero-mark reveal d1" src="../burrow-icon-512.png" alt="" width="112" height="112" decoding="async" fetchpriority="high">
+    <h1 class="headline reveal d2">Tudo para o que você abria <span class="accent">seis apps</span> , em um só lugar.</h1>
+    <p class="subhead reveal d3">Um utilitário para Mac, gratuito e de código aberto, que limpa o que sobra, encontra duplicatas e sobras, mostra o que está comendo seu disco e acompanha o status do sistema ao vivo. Uma janela nativa, e uma versão para Windows em beta.</p>
+    <div class="cta-row reveal d4">
+      <a class="btn btn-lg" href="../install" data-burrow-analytics="download.hero">
+        <span class="btn-inner">
+          <svg class="icon icon--apple" viewBox="0 0 814 1000" aria-hidden="true"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.2 0 129.8 2.6 196.3 99.2zm-234-181.1c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.2 32.4-54.4 84.4-54.4 136.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.8-71.3z"/></svg>
+          Baixar para Mac
+        </span>
+      </a>
+    </div>
+    <div class="or-divider reveal d4" aria-hidden="true">
+      <span class="or-divider__line"></span><span class="or-divider__text">ou</span><span class="or-divider__line"></span>
+    </div>
+    <div class="snippet-row reveal d4">
+      <div class="snippet" role="group" aria-label="homebrew install command">
+        <div class="snippet-text"><code class="snippet-code">brew install --cask caezium/tap/burrow</code></div>
+        <button class="snippet-copy" type="button" data-copy="brew install --cask caezium/tap/burrow" aria-label="copiar o comando" data-burrow-analytics="homebrew.hero">
+          <svg class="snippet-ico snippet-ico--copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>
+          <svg class="snippet-ico snippet-ico--check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
+        </button>
+      </div>
+    </div>
+    <p class="meta-line reveal d4">
+      <span><b>Gratuito</b></span><span class="dot">·</span><span id="hero-version">v0.14.0</span><span class="dot">·</span>
+      <span>macOS&nbsp;14+</span><span class="dot">·</span><span>Windows&nbsp;10/11 (beta)</span>
+    </p>
+    <!-- DL:BEGIN generated by scripts/site-release.py; counts come from GitHub releases -->
+    <p class="dl-line reveal d4">Já baixado por <b>13,091</b> pessoas</p>
+    <!-- DL:END -->
+    <div class="demo-wrap reveal d5">
+      <img src="../assets/shot-analyze.png" alt="O mapa de árvore do Burrow mostrando o que está ocupando espaço em disco" width="1880" height="1344" decoding="async">
+    </div>
+  </div>
+</header>
+
+<!-- ===== TOOLS ===== -->
+<section class="section section--ruled" id="tools" style="margin-top:64px">
+  <div class="wrap">
+    <div class="io">
+      <span class="sec-eyebrow">o que tem dentro</span>
+      <h2 class="sec-title">Dezesseis ferramentas, uma janela.</h2>
+      <p class="sec-intro">Cada ferramenta recolore a janela inteira do seu jeito, porque a cor é o modo de dizer no que ela está prestes a mexer. Todas fazem o trabalho do início ao fim, sem jogar você num terminal.</p>
+    </div>
+
+    <div class="tool-grid io">
+      <div class="tool-cell" style="--c: var(--teal)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/><path d="M3 8l2-2M8 4l1.5-1.5M16 20l1.5 1.5"/></svg></span>
+            <span class="tool-name">Limpeza</span>
+          </div>
+          <span class="tool-cmd">mais de 10 categorias</span>
+        </div>
+        <p>Caches, registros e arquivos temporários em mais de dez categorias, ordenados pelo que é mais seguro remover. Você vê cada arquivo e cada byte antes de qualquer coisa se mexer.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--moss)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/></svg></span>
+            <span class="tool-name">Limpeza profunda</span>
+          </div>
+          <span class="tool-cmd">sobras de desenvolvimento</span>
+        </div>
+        <p>O entulho que o desenvolvimento deixa: node_modules, DerivedData, saídas de compilação, caches de pacotes vencidos, cada um com o custo de refazer.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--ginger)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11M8 11l4 4 4-4"/><path d="M4 19h16"/></svg></span>
+            <span class="tool-name">Instaladores</span>
+          </div>
+          <span class="tool-cmd">faxina nos downloads</span>
+        </div>
+        <p>As caixas que você já desempacotou. Encontra .dmg e .pkg parados em Downloads muito depois de o app ter sido instalado.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--coral)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 20V9"/></svg></span>
+            <span class="tool-name">Apps</span>
+          </div>
+          <span class="tool-cmd">desinstalar em lote</span>
+        </div>
+        <p>Todos os apps instalados, ordenáveis por tamanho ou por uso recente, com desinstalação em lote que leva junto preferências, arquivos de apoio e agentes de inicialização.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--violet)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2 2M16.4 16.4l2 2M18.4 5.6l-2 2M7.6 16.4l-2 2"/><circle cx="12" cy="12" r="3.2"/></svg></span>
+            <span class="tool-name">Otimização</span>
+          </div>
+          <span class="tool-cmd">uma confirmação</span>
+        </div>
+        <p>Reconstruir a Visualização Rápida, reparar caches e metadados, limpar o DNS, revisar os itens de início. As tarefas de sempre atrás de uma única confirmação.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--sage)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2.2"/><circle cx="10" cy="16" r="2.2"/></svg></span>
+            <span class="tool-name">Ajuste fino</span>
+          </div>
+          <span class="tool-cmd">uma passada</span>
+        </div>
+        <p>Cuidado completo em uma passada. Escolhe a manutenção que realmente se aplica ao seu Mac agora e leva até o fim.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--azure)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="11" rx="1"/><rect x="13" y="3" width="8" height="6" rx="1"/><rect x="13" y="11" width="8" height="10" rx="1"/><rect x="3" y="16" width="8" height="5" rx="1"/></svg></span>
+            <span class="tool-name">Análise</span>
+          </div>
+          <span class="tool-cmd">mapa de árvore</span>
+        </div>
+        <p>Um mapa de árvore do disco inteiro. Desça por qualquer ramo e mostre no Finder ou mande para o Lixo pelo menu de contexto.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--rose)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="12" height="12" rx="2"/><path d="M4 9v10a2 2 0 002 2h10"/></svg></span>
+            <span class="tool-name">Duplicatas</span>
+          </div>
+          <span class="tool-cmd">pelo conteúdo</span>
+        </div>
+        <p>Localiza duplicatas pelo hash do conteúdo e reconhece links físicos, então arquivos compartilhados entre ferramentas não são contados duas vezes.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--olive)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><path d="M9 11h.01M15 11h.01M9 15c1.5-1 4.5-1 6 0"/></svg></span>
+            <span class="tool-name">Sobras</span>
+          </div>
+          <span class="tool-cmd">arquivos órfãos</span>
+        </div>
+        <p>Arquivos de apoio, preferências e agentes de inicialização de apps que você removeu há tempos, associados de volta ao app que os deixou.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--orchid)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg></span>
+            <span class="tool-name">Fotos parecidas</span>
+          </div>
+          <span class="tool-cmd">comparação visual</span>
+        </div>
+        <p>Comparação visual em toda a sua fototeca para trazer à tona fotos quase idênticas e sequências que vale a pena afinar.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--gold)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2 6 4-14 2 8h2l1.5-3H21"/></svg></span>
+            <span class="tool-name">Status</span>
+          </div>
+          <span class="tool-cmd">ao vivo + HUD</span>
+        </div>
+        <p>CPU, memória, GPU, disco, rede e bateria em uma página só, cada um com seu minigráfico, mais uma tabela de processos que pode ser fixada e um HUD na barra de menus.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--cyan)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="2"/><path d="M7 8V5M12 8V5M17 8V5M7 12.5h.01M11 12.5h6"/></svg></span>
+            <span class="tool-name">Portas</span>
+          </div>
+          <span class="tool-cmd">quem está escutando</span>
+        </div>
+        <p>Cada porta em escuta com o processo por trás dela, para descobrir o que está segurando a 3000 sem recorrer ao lsof.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--azure)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.5 4 5.6 4 9s-1.4 6.5-4 9c-2.6-2.5-4-5.6-4-9s1.4-6.5 4-9z"/></svg></span>
+            <span class="tool-name">Rede</span>
+          </div>
+          <span class="tool-cmd">por processo</span>
+        </div>
+        <p>Tráfego ao vivo por interface e por processo, para ver o que está realmente usando a conexão.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--cyan)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a16 16 0 0120 0M5 12a11 11 0 0114 0M8.5 15.5a6 6 0 017 0"/><circle cx="12" cy="19" r="1"/></svg></span>
+            <span class="tool-name">Voltar à rede</span>
+          </div>
+          <span class="tool-cmd">diagnóstico</span>
+        </div>
+        <p>Um caminho guiado de volta à superfície quando a conexão cai: DNS, gateway, portal de autenticação e interfaces, verificados em ordem.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--moss)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+            <span class="tool-name">Histórico</span>
+          </div>
+          <span class="tool-cmd">90 dias</span>
+        </div>
+        <p>Cada amostra de status vai para um arquivo SQLite local. Percorra de cinco minutos até noventa dias, com tabelas de pico por processo.</p>
+      </div>
+      <div class="tool-cell" style="--c: var(--ginger)">
+        <div class="tool-top">
+          <div class="tool-id">
+            <span class="tool-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg></span>
+            <span class="tool-name">Agente · MCP</span>
+          </div>
+          <span class="tool-cmd">26 ferramentas</span>
+        </div>
+        <p>Vinte e seis ferramentas MCP abrem o app inteiro para o Claude Code, além de uma API HTTP em loopback. Somente leitura por padrão; o que apaga precisa ser liberado à parte.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURE RUN ===== -->
+<section class="section section--ruled" id="see">
+  <div class="wrap">
+    <div class="io">
+      <span class="sec-eyebrow">ver de perto</span>
+      <h2 class="sec-title">Feito para ser olhado, não só executado.</h2>
+    </div>
+
+    <div class="feature io">
+      <div>
+        <h3>Veja o que está realmente comendo o disco.</h3>
+        <p>Um mapa de árvore de cada pasta, dimensionado pelo que ela de fato custa. Desça até o culpado ficar óbvio e resolva sem sair do mapa.</p>
+        <p class="why">Análise</p>
+      </div>
+      <div class="shot-card">
+        <img src="../assets/shot-analyze.png" alt="Burrow Análise: um mapa de árvore do uso do disco, aberto até uma pasta" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature io">
+      <div class="f-text">
+        <h3>Cada batida da máquina, ao vivo.</h3>
+        <p>CPU, memória, GPU, disco, rede e bateria dividem uma página, cada um com seu minigráfico. A tabela de processos ordena e fixa, para que o que está acelerando suas ventoinhas fique à vista.</p>
+        <p class="why">Status</p>
+      </div>
+      <div class="shot-card f-shot">
+        <img src="../assets/shot-status.png" alt="Burrow Status: CPU, memória, GPU, disco e rede ao vivo, com a tabela de processos" loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature io">
+      <div>
+        <h3>Mostrar antes de remover.</h3>
+        <p>A limpeza ordena tudo o que encontra pelo quanto é seguro apagar e mostra a lista de arquivos e os bytes antes de qualquer coisa se mexer. Desmarque o que quiser manter: nada some por causa de um clique errado.</p>
+        <p class="why">Limpeza</p>
+      </div>
+      <div class="shot-card">
+        <img src="../assets/shot-clean.png" alt="Burrow Limpeza: o que sobra separado por categoria, com contagem e tamanho, pronto para revisar" loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature io">
+      <div class="f-text">
+        <h3>Uma longa memória da toca.</h3>
+        <p>As amostras de status vão para um histórico SQLite local que você pode percorrer de cinco minutos até noventa dias, com tabelas de pico por processo para os momentos em que as ventoinhas realmente aceleraram.</p>
+        <p class="why">Histórico</p>
+      </div>
+      <div class="shot-card f-shot">
+        <img src="../assets/shot-history.png" alt="Burrow Histórico: gráficos de longo prazo de CPU, memória e disco ao longo de noventa dias" loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature io">
+      <div>
+        <h3>A toca inteira, pela barra de menus.</h3>
+        <p>Um HUD que abre o quadro completo sem abrir o app: métricas ao vivo, principais processos e um atalho para a ferramenta de que você precisa.</p>
+      </div>
+      <div class="shot-card shot-card--tall">
+        <img src="../assets/shot-menubar.png" alt="HUD do Burrow na barra de menus: métricas ao vivo e principais processos em um menu suspenso" loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="feature feature--wide io">
+      <div>
+        <h3>Pergunte ao seu Mac, direto do Claude.</h3>
+        <p>O servidor MCP integrado expõe <code class="k">burrow_snapshot</code>, <code class="k">burrow_history</code> e  <code class="k">burrow_top_processes</code> para qualquer agente, além de uma API HTTP em loopback em <code class="k">127.0.0.1:9277</code>. Os dois ficam locais.</p>
+        <p class="why">Agente · MCP</p>
+      </div>
+      <div class="shot-card shot-card--narrow">
+        <img src="../assets/shot-ai.png" alt="Claude Code consultando o servidor MCP do Burrow sobre o estado da máquina" loading="lazy" decoding="async">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== What's new (content owned by scripts/site-release.py; edit docs/releases.json) ===== -->
+<section class="section section--ruled" id="new">
+  <div class="wrap">
+    <!-- WN:BEGIN generated by scripts/site-release.py; edit docs/releases.json instead -->
+    <div class="sec-head wn-head">
+      <div>
+        <span class="sec-num">Novidades · agosto de 2026</span>
+        <h2 class="sec-title">Novo na 0.14.0</h2>
+      </div>
+      <a class="btn btn-out btn-sm" href="releases">Todas as versões</a>
+    </div>
+
+    <div class="grid3 wn-grid">
+      <article class="tcard" style="--c: var(--accent)">
+        <div class="top"><div class="ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9.5A8 8 0 0120 12"/><path d="M7 12a5 5 0 0110 0c0 3-1 6-2.5 8"/><path d="M12 12c0 3-.6 5.5-1.8 7.6"/></svg></div><div class="nm">O Burrow oferece o auxiliar privilegiado</div></div>
+        <p class="ds">O auxiliar que permite autorizar operações de administrador com o Touch ID ficava atrás de um único botão nos ajustes, sem nada apontando para ele. Agora é oferecido do mesmo jeito que o Acesso Total ao Disco: um aviso sobre a janela, que informa sem bloquear. Fechá-lo é definitivo, porque o auxiliar é uma comodidade e não algo de que o Burrow precise para funcionar.</p>
+      </article>
+      <article class="tcard" style="--c: var(--teal)">
+        <div class="top"><div class="ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg></div><div class="nm">A limpeza revisada informa o que removeu</div></div>
+        <p class="ds">Ela apagava exatamente o que estava marcado e depois parecia não ter feito nada: esse caminho apaga com o find, que termina em silêncio, então a tela de resultado não tinha o que mostrar. Agora informa os caminhos que teve autorização para remover, agrupados por categoria e com os tamanhos somados.</p>
+      </article>
+    </div>
+
+    <div class="extra-label mono">// também ajustado na 0.14.0</div>
+    <div class="wn-chips">
+      <span class="wn-chip"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Nada mudou no que a limpeza revisada apaga — só no que ela conta a você</span>
+      <span class="wn-chip"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>O auxiliar continua totalmente opcional; recuse e tudo funciona como antes</span>
+    </div>
+    <!-- WN:END -->
+  </div>
+</section>
+
+<!-- ===== TRUST ===== -->
+<section class="section section--ruled" id="trust">
+  <div class="wrap">
+    <div class="trust-head io">
+      <span class="sec-eyebrow">por que dá para confiar</span>
+      <h2 class="sec-title">Uma ferramenta que mexe nos seus arquivos precisa merecer isso.</h2>
+    </div>
+    <div class="trust-grid io">
+      <div class="trust-card">
+        <h3><span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M8 18l-5-6 5-6M16 6l5 6-5 6"/></svg></span>Código aberto</h3>
+        <p>Cada linha é pública e sob licença MIT, então você pode ler, auditar ou bifurcar. <a href="https://github.com/caezium/Burrow" target="_blank" rel="noopener">Ver o repositório</a>.</p>
+      </div>
+      <div class="trust-card">
+        <h3><span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h13M3 12h9M3 18h13"/><path d="M17 15l3 3 4-5" transform="translate(-2,0)"/></svg></span>Mostrar antes de remover</h3>
+        <p>Toda ação lista primeiro os arquivos e os bytes. Você confirma, o Burrow age. Sem auxiliar root em segundo plano: quem pergunta é a própria janela do macOS.</p>
+      </div>
+      <div class="trust-card">
+        <h3><span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9.5 11.5l2 2 3.5-3.5"/></svg></span>Seus dados ficam onde estão</h3>
+        <p>Verificações, métricas e histórico nunca saem da máquina. Os diagnósticos anônimos, que você pode desligar, estão listados campo a campo em <a href="https://github.com/caezium/Burrow/blob/main/TELEMETRY.md" target="_blank" rel="noopener">TELEMETRY.md</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== INSTALL ===== -->
+<section class="section section--ruled" id="install">
+  <div class="wrap">
+    <div class="io">
+      <span class="sec-eyebrow">instalação</span>
+      <h2 class="sec-title">Gratuito, para sempre. Sem conta e sem assinatura.</h2>
+      <p class="sec-intro">Todas as ferramentas, o HUD da barra de menus, o histórico e o servidor MCP, em quantas máquinas você quiser.</p>
+    </div>
+
+    <div class="io picker-wrap">
+      <!-- PICK:BEGIN generated by scripts/site-release.py -->
+      <div class="plats">
+        <div class="plat">
+          <span class="gl"><svg viewBox="0 0 814 1000" fill="currentColor" aria-hidden="true"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.2 0 129.8 2.6 196.3 99.2zm-234-181.1c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.2 32.4-54.4 84.4-54.4 136.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.8-71.3z"/></svg></span>
+          <h3>macOS</h3>
+          <p class="kind">.zip &middot; Apple Silicon &amp; Intel</p>
+          <div class="foot">
+            <a class="dlbtn" href="https://github.com/caezium/Burrow/releases/download/v0.14.0/Burrow-0.14.0.zip" data-burrow-analytics="download.landing_mac">Baixar <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg></a>
+          </div>
+        </div>
+        <div class="plat">
+          <span class="gl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5l7.5-1v7.2H3zM11.8 4.3L21 3v8.7h-9.2zM3 12.9h7.5v7.2L3 18.8zM11.8 12.9H21V21l-9.2-1.3z"/></svg></span>
+          <h3>Windows</h3>
+          <p class="kind">.zip &middot; 64 bits</p>
+          <span class="tag">beta &middot; 0.10.0</span>
+          <div class="foot">
+            <a class="dlbtn" href="https://github.com/caezium/Burrow/releases/download/v0.10.0/BurrowWin-0.10.0-win-x64.zip" data-burrow-analytics="download.landing_windows">Baixar <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg></a>
+          </div>
+        </div>
+        <div class="plat">
+          <span class="gl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h11v7a5 5 0 01-5 5H10a5 5 0 01-5-5z"/><path d="M16 10h1.5a2.5 2.5 0 010 5H16"/><path d="M7 4.5c0-.8.6-1.2.6-2M11 4.5c0-.8.6-1.2.6-2"/></svg></span>
+          <h3>Homebrew</h3>
+          <p class="kind">cask &middot; app + motor</p>
+          <div class="foot">
+            <button type="button" class="cmdbtn" data-copy="brew install --cask caezium/tap/burrow" data-burrow-analytics="homebrew.landing" aria-label="copiar o comando de instalação do Homebrew"><span class="lab">brew install --cask caezium/tap/burrow</span><span class="st">copiar</span></button>
+          </div>
+        </div>
+      </div>
+      <!-- PICK:END -->
+    </div>
+
+    <p class="install-note io">A versão Windows vem atrás da do Mac e ainda é uma prévia. Outras formas de instalar, as somas de verificação e as versões antigas estão na <a href="../install">página de instalação</a>.</p>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="section section--ruled" id="faq">
+  <div class="wrap">
+    <div class="faq-head io">
+      <h2 class="sec-title">Perguntas frequentes</h2>
+    </div>
+    <div class="faq-list io">
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-0">É gratuito mesmo?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-0"><div class="faq-panel-inner">
+          <p class="faq-a">Sim. Sob licença MIT, sem contas, sem limite de teste, sem plano pago e sem nada embutido junto. O código completo está no GitHub, caso você queira ler antes de executar.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-1">O Burrow é seguro?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-1"><div class="faq-panel-inner">
+          <p class="faq-a">Toda ação mostra a lista de arquivos e os bytes antes de rodar, e a limpeza ordena as categorias pelo quanto é seguro removê-las. Não há auxiliar root em segundo plano: quando uma tarefa precisa de permissões de administrador, quem pergunta é a própria janela do macOS, o Burrow roda aquele único comando e encerra.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-2">O que ele apaga, afinal?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-2"><div class="faq-panel-inner">
+          <p class="faq-a">Caches e arquivos temporários que os apps recriam sozinhos: caches de navegadores, artefatos de compilação, caches do App Support, registros, instaladores esquecidos. Caches de pacotes e saídas de compilação cujo custo de refazer é real ficam desmarcados até você confirmar.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-3">Ele envia alguma coisa?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-3"><div class="faq-panel-inner">
+          <p class="faq-a">Nem arquivos, nem caminhos, nem URLs, nem métricas. As verificações e o histórico ficam na máquina, e o servidor MCP só escuta em loopback. O Burrow envia, sim, diagnósticos anônimos de uso e de falha, que você pode desligar e estão descritos campo a campo em <a href="https://github.com/caezium/Burrow/blob/main/TELEMETRY.md" target="_blank" rel="noopener">TELEMETRY.md</a>. Um interruptor nos ajustes desliga tudo, e as compilações feitas a partir do código não enviam nada.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-4">Preciso do Acesso Total ao Disco?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-4"><div class="faq-panel-inner">
+          <p class="faq-a">Não. O Burrow faz uma verificação segura sem ele. Concedê-lo permite alcançar caches mais profundos do App Support e de contêineres, e você pode conceder ou revogar quando quiser.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-5">Ele é assinado e notarizado?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-5"><div class="faq-panel-inner">
+          <p class="faq-a">Sim, da 0.11.0 em diante, e uma tag só publica se assinatura, notarização, grampeamento e avaliação do Gatekeeper passarem. As versões arquivadas 0.10.5 e anteriores são de antes disso: clique com o botão direito e escolha <b>Abrir</b> se o Gatekeeper bloquear alguma. O compromisso completo está em <a href="https://github.com/caezium/Burrow/blob/main/SECURITY.md" target="_blank" rel="noopener">SECURITY.md</a>.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-6">O que um agente consegue fazer com isso?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-6"><div class="faq-panel-inner">
+          <p class="faq-a">Vinte e seis ferramentas MCP cobrem instantâneos, histórico, principais processos, análise de disco, duplicatas, portas, rede e mais. Catorze são somente leitura e ficam disponíveis de imediato; as que alteram sua máquina exigem uma liberação explícita cada uma. A lista completa está em <a href="https://github.com/caezium/Burrow/blob/main/docs/agent-tools.md" target="_blank" rel="noopener">agent-tools.md</a>.</p>
+        </div></div>
+      </div>
+      <div class="faq-item" data-open="false">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-panel-7">Funciona no Windows?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="faq-panel" inert id="faq-panel-7"><div class="faq-panel-inner">
+          <p class="faq-a">Há uma versão nativa em WinUI 3 e .NET 8 em beta ativo, alcançando a paridade ferramenta por ferramenta. O macOS é a versão madura; a prévia do Windows sai hoje como zip, e um instalador está a caminho. <a href="https://github.com/caezium/Burrow/tree/main/windows" target="_blank" rel="noopener">Acompanhar no GitHub</a>.</p>
+        </div></div>
+      </div>
+    </div>
+    <p class="faq-closing io">Compilar a partir do código, ligar o servidor MCP ou qualquer outra coisa? Está tudo no <a href="https://github.com/caezium/Burrow#readme" target="_blank" rel="noopener">README</a>.</p>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <a class="brand" href="#top" aria-label="Burrow">
+        <img class="brand-logo" src="../burrow-icon.png" alt="" width="28" height="28" decoding="async">
+        <span>Burrow</span>
+      </a>
+      <div class="footer-links">
+        <a href="https://github.com/caezium/Burrow" target="_blank" rel="noopener">GitHub</a>
+        <a href="releases">Novidades</a>
+        <a href="roadmap">Planejamento</a>
+        <a href="https://github.com/caezium/Burrow/blob/main/SECURITY.md" target="_blank" rel="noopener">Segurança</a>
+        <a href="https://github.com/caezium/Burrow/blob/main/TELEMETRY.md" target="_blank" rel="noopener">Telemetria</a>
+        <a href="https://github.com/caezium/Burrow/blob/main/LICENSE" target="_blank" rel="noopener">Licença</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ---- copy buttons (hero snippet + install cards) ----
+  function copyText(t) { if (navigator.clipboard) navigator.clipboard.writeText(t).catch(function(){}); }
+  document.querySelectorAll('.snippet-copy').forEach(function (b) {
+    b.addEventListener('click', function () {
+      copyText(b.getAttribute('data-copy') || '');
+      b.classList.add('copied');
+      setTimeout(function () { b.classList.remove('copied'); }, 1500);
+    });
+  });
+  document.querySelectorAll('.cmdbtn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      copyText(btn.getAttribute('data-copy') || '');
+      var st = btn.querySelector('.st');
+      btn.classList.add('done'); st.textContent = 'copied';
+      setTimeout(function () { btn.classList.remove('done'); st.textContent = 'copy'; }, 1500);
+    });
+  });
+
+  // ---- FAQ accordion (grid-template-rows 0fr -> 1fr) ----
+  document.querySelectorAll('.faq-item').forEach(function (item) {
+    var q = item.querySelector('.faq-q');
+    q.addEventListener('click', function () {
+      var open = item.getAttribute('data-open') === 'true';
+      var panel = item.querySelector('.faq-panel');
+      item.setAttribute('data-open', open ? 'false' : 'true');
+      q.setAttribute('aria-expanded', open ? 'false' : 'true');
+      if (open) { panel.setAttribute('inert', ''); } else { panel.removeAttribute('inert'); }
+    });
+  });
+
+  // ---- scroll reveal for sections (respects reduced motion) ----
+  if (window.matchMedia('(prefers-reduced-motion: no-preference)').matches && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.08 });
+    document.querySelectorAll('.io').forEach(function (el) { io.observe(el); });
+  } else {
+    document.querySelectorAll('.io').forEach(function (el) { el.classList.add('in'); });
+  }
+</script>
+</body>
+</html>

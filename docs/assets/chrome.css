@@ -18,6 +18,30 @@
 .brand:hover { transform: scale(1.03); }
 .brand .mk, .brand-logo { width: 28px; height: 28px; border-radius: 8px; flex: none; }
 
+/* Language picker, filled in by scripts/site-i18n.py. A bare <details> so it
+   opens with no JavaScript — the translated pages are the one place a visitor
+   may not read enough English to debug a menu that needs a script. */
+.langpick { position: relative; }
+.langpick > summary { list-style: none; cursor: pointer; user-select: none;
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
+  border-radius: 999px; font-size: 13px; color: rgba(243,236,221,0.66);
+  border: 1px solid rgba(243,236,221,0.14); }
+.langpick > summary::-webkit-details-marker { display: none; }
+.langpick > summary::after { content: ""; width: 5px; height: 5px; margin-left: 1px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg); }
+.langpick > summary:hover { color: #f3ecdd; border-color: rgba(243,236,221,0.3); }
+.langpick[open] > summary { color: #f3ecdd; }
+.langpick > nav { position: absolute; right: 0; top: calc(100% + 8px); z-index: 60;
+  display: grid; min-width: 176px; padding: 6px; border-radius: 12px;
+  background: #1b1b21; border: 1px solid rgba(243,236,221,0.14);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.45); }
+.langpick > nav a { padding: 7px 10px; border-radius: 8px; font-size: 13px;
+  color: rgba(243,236,221,0.78); text-decoration: none; white-space: nowrap; }
+.langpick > nav a:hover { background: rgba(243,236,221,0.08); color: #f3ecdd; }
+.langpick > nav a[aria-current="page"] { color: #f3ecdd; font-weight: 600; }
+@media (max-width: 720px) { .langpick > summary span { display: none; } }
+
 .topbar .nav { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 22px; }
 .topbar .nav a { font-family: "Geist", -apple-system, system-ui, sans-serif; font-size: 0.9rem;
   color: rgba(243,236,221,0.66); text-decoration: none; transition: color .18s; }

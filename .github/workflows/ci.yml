@@ -31,6 +31,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p 'test_*.py'
       - name: Test website analytics boundaries
         run: node --test scripts/tests/test_site_analytics.mjs
+      - name: Check translated site pages are current
+        run: python3 scripts/site-i18n.py --check
 
   test:
     runs-on: macos-15

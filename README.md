@@ -280,7 +280,7 @@ Everything is local and takes effect immediately unless noted:
 | **History retention** | How long metric history is kept (1 day → 1 year); older rows are pruned hourly. |
 | **Vacuum after large prunes** | Reclaim DB file space after a big prune (off by default). |
 | **Sampling rate** | How often Burrow runs `mo status --json` (5 s → 5 min). |
-| **App language** | Follow the system, or force English / 简体中文 / 繁體中文 / Русский *(relaunch)*. |
+| **App language** | Follow the system, or force English / 简体中文 / 繁體中文 / Русский / 日本語 / Deutsch / Français / Español / 한국어 / Português (Brasil) *(relaunch)*. See [docs/localization.md](docs/localization.md). |
 | **Menu-bar icon** | Show the menu-bar item, or run as a regular Dock app instead. |
 | **MCP / agent access** | Copyable stdio config + the tool list for Claude Code, Cursor, Codex, Cline, and any MCP client. |
 | **Local HTTP query server** | Optional loopback REST endpoints + port for dashboards/curl. On Windows, disabling this keeps the local `/mcp` bridge available for stdio MCP. |

@@ -269,10 +269,9 @@ struct SettingsView: View {
                     Spacer()
                     Picker("", selection: $appLanguage) {
                         Text(NSLocalizedString("System", comment: "")).tag("")
-                        Text(verbatim: "English").tag("en")
-                        Text(verbatim: "简体中文").tag("zh-Hans")
-                        Text(verbatim: "繁體中文").tag("zh-Hant")
-                        Text(verbatim: "Русский").tag("ru")
+                        ForEach(AppLanguage.all, id: \.code) { language in
+                            Text(verbatim: language.endonym).tag(language.code)
+                        }
                     }
                     .labelsHidden().pickerStyle(.menu).tint(Brand.textSecondary).fixedSize()
                     .onChange(of: appLanguage) { _, v in
@@ -280,7 +279,10 @@ struct SettingsView: View {
                         promptRelaunch()
                     }
                 }
-                footnote("Burrow ships English, 简体中文, 繁體中文, and Русский. A language change takes effect after a relaunch.")
+                // The picker already spells out what ships, and naming the
+                // languages here again would put a key that churns on every
+                // addition into all ten tables.
+                footnote("A language change takes effect after a relaunch.")
             }
 
             section("Startup & window", "macwindow") {
