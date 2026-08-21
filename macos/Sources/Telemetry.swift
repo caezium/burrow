@@ -25,7 +25,11 @@ enum Telemetry {
 
     private struct DeliveryConfiguration {
         let projectKey: String
-        let endpoint: URL
+        /// Validated HTTPS host root, shared by the `/batch` event endpoint
+        /// and the `/decide/` feature-flag endpoint.
+        let host: URL
+
+        var endpoint: URL { host.appendingPathComponent("batch") }
     }
 
     private static let stateLock = NSLock()
@@ -86,8 +90,8 @@ enum Telemetry {
         let projectKey = (info?["PHPostHogApiKey"] as? String) ?? ""
         let host = (info?["PHPostHogHost"] as? String).flatMap { $0.isEmpty ? nil : $0 }
             ?? "https://us.i.posthog.com"
-        if !projectKey.isEmpty, let endpoint = postHogEndpoint(host: host) {
-            deliveryConfiguration = DeliveryConfiguration(projectKey: projectKey, endpoint: endpoint)
+        if !projectKey.isEmpty, let hostRoot = postHogHostRoot(host: host) {
+            deliveryConfiguration = DeliveryConfiguration(projectKey: projectKey, host: hostRoot)
         }
         let delivery = deliveryConfiguration
         stateLock.unlock()
@@ -99,6 +103,7 @@ enum Telemetry {
         guard let delivery, isEnabled else { return }
         CrashReporter.breadcrumb("app_opened", category: "lifecycle")
         enqueue(.event("app_opened", ["cold_start": true]), using: delivery)
+        refreshFeatureFlags(using: delivery)
     }
 
     /// Best-effort termination flush. Every event has already started its own
@@ -161,6 +166,9 @@ enum Telemetry {
 
         if enabled {
             capture("telemetry_opt_in_changed", ["enabled": true])
+            // Flags were inert while opted out; pick them up now that the
+            // gate is open, exactly as a launch that begins opted-in would.
+            refreshFeatureFlags(using: delivery)
         } else {
             workQueue.async {
                 cancelInFlightDeliveries()
@@ -211,6 +219,11 @@ enum Telemetry {
         guard started, isEnabled else { return nil }
         return deliveryConfiguration
     }
+
+    /// Whether a feature-flag exposure would actually be queued. Used by
+    /// `FeatureFlags` to commit an exposure key only when the event is
+    /// admitted; otherwise the key stays eligible for a later lookup.
+    static var canCapture: Bool { activeDeliveryConfiguration() != nil }
 
     private static func configuredDelivery() -> DeliveryConfiguration? {
         stateLock.lock()
@@ -429,6 +442,12 @@ enum Telemetry {
     }
 
     static func postHogEndpoint(host: String) -> URL? {
+        postHogHostRoot(host: host)?.appendingPathComponent("batch")
+    }
+
+    /// Validated HTTPS host root (no credentials, query, or fragment) shared
+    /// by the event and decide endpoints.
+    static func postHogHostRoot(host: String) -> URL? {
         guard let base = URL(string: host),
               base.scheme == "https",
               base.host != nil,
@@ -436,7 +455,94 @@ enum Telemetry {
               base.password == nil,
               base.query == nil,
               base.fragment == nil else { return nil }
-        return base.appendingPathComponent("batch")
+        return base
+    }
+
+    /// The feature-flag decide endpoint. HTTPS comes from the validated host
+    /// root; the fixed `v=3` API version is the only query parameter.
+    static func decideEndpoint(on host: URL) -> URL? {
+        guard var components = URLComponents(url: host, resolvingAgainstBaseURL: false) else {
+            return nil
+        }
+        // Normalize a trailing slash so both "https://host" and
+        // "https://host/" produce exactly one separator.
+        var path = components.path
+        if path.hasSuffix("/") { path.removeLast() }
+        components.path = path + "/decide/"
+        components.query = "v=3"
+        return components.url
+    }
+
+    // MARK: - Feature flags (issue #322)
+
+    /// Fetches PostHog's decide response once per launch (and once more on
+    /// opt-in) on the telemetry queue, and hands the filtered result to
+    /// `FeatureFlags`. Nothing ever waits on this: lookups serve the
+    /// conservative defaults until a fresh cache or successful response is
+    /// applied, and every failure — opt-out, missing key, transport, HTTP,
+    /// malformed payload — simply leaves the local state untouched. There is
+    /// exactly one attempt per trigger, serialized behind the same queue as
+    /// event delivery, so flags add no timer, no retry loop, and no extra
+    /// concurrency; the next launch is the backoff.
+    private static func refreshFeatureFlags(using delivery: DeliveryConfiguration) {
+        workQueue.async {
+            // Re-check at execution time: an opt-out that raced this block
+            // must neither read the flag cache nor contact PostHog.
+            guard isEnabled else { return }
+            if let cached = FeatureFlags.loadCachedIfEnabled(
+                isEnabled: isEnabled,
+                directory: FeatureFlags.defaultCacheDirectory()
+            ) {
+                FeatureFlags.apply(cached, persistTo: nil)
+            }
+
+            // The decide request is the smallest possible: the project key
+            // and the same anonymous distinct id events already use. No
+            // person properties, no groups, no locale — the response is
+            // filtered down to the boolean allowlist in `FeatureFlags`
+            // regardless of what PostHog returns.
+            guard let decide = decideEndpoint(on: delivery.host) else { return }
+            let payload: [String: Any] = [
+                "api_key": delivery.projectKey,
+                "distinct_id": resolveDistinctID(projectKey: delivery.projectKey),
+            ]
+            guard JSONSerialization.isValidJSONObject(payload),
+                  let body = try? JSONSerialization.data(withJSONObject: payload) else { return }
+
+            var request = URLRequest(url: decide)
+            request.httpMethod = "POST"
+            request.timeoutInterval = 10
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+            request.setValue("Burrow/\(RuntimeEnvironment.current.appVersion)", forHTTPHeaderField: "User-Agent")
+            request.httpBody = body
+
+            let requestID = UUID()
+            deliveries.enter()
+            let task = session.dataTask(with: request) { data, response, error in
+                let status = (response as? HTTPURLResponse)?.statusCode
+                let disposition = deliveryDisposition(statusCode: status, hasTransportError: error != nil)
+                workQueue.async {
+                    inFlightTasks.removeValue(forKey: requestID)
+                    // Re-check the gate at completion: an opt-out that raced
+                    // the response must neither mutate nor persist flags.
+                    guard isEnabled, disposition == .delivered, let data,
+                          let decoded = try? JSONSerialization.jsonObject(with: data),
+                          let object = decoded as? [String: Any],
+                          let rawFlags = object["featureFlags"] as? [String: Any] else {
+                        deliveries.leave()
+                        return
+                    }
+                    FeatureFlags.apply(
+                        FeatureFlags.sanitizeRemoteFlags(rawFlags),
+                        persistTo: FeatureFlags.defaultCacheDirectory()
+                    )
+                    deliveries.leave()
+                }
+            }
+            inFlightTasks[requestID] = task
+            task.resume()
+        }
     }
 
     /// Stable random install id, resolved only after telemetry is enabled. For

@@ -376,6 +376,13 @@ struct SettingsView: View {
                              destination: UpdateRecovery.manualDownloadURL)
                         Link(NSLocalizedString("Source on GitHub", comment: ""),
                              destination: URL(string: "https://github.com/caezium/Burrow")!)
+                        // The harmless UI-only rollout validator (issue #322):
+                        // a cached, telemetry-gated boolean that adds one
+                        // factual link and does nothing else. OFF by default.
+                        if FeatureFlags.isEnabled(.aboutReleaseNotesLink) {
+                            Link(NSLocalizedString("Release Notes", comment: ""),
+                                 destination: URL(string: "https://github.com/caezium/Burrow/releases")!)
+                        }
                     }
                     .font(Brand.sans(11, .semibold)).foregroundStyle(Brand.green)
                 }

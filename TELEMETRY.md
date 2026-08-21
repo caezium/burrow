@@ -88,8 +88,55 @@ own project instead.
 
 Burrow's first-party client attaches no hidden SDK context. It additionally
 sends fixed PostHog protocol fields: `$ip: "0"`, `$lib: "burrow-macos"`,
-`$lib_version`, and `$process_person_profile: false`. A later feature-flag
-rollout will be separately reviewed and will use cached, conservative defaults.
+`$lib_version`, and `$process_person_profile: false`.
+
+## Feature flags (issue #322)
+
+Burrow fetches PostHog feature flags through the same opt-out gate and the
+same background queue as events. Flags exist for gradual rollout and UI
+experiments only — they are **never** consulted for cleaning/deletion
+behavior, permissions, security controls, signing/notarization, Sparkle
+verification, launch recovery, or telemetry consent. Client code:
+[`macos/Sources/FeatureFlags.swift`](macos/Sources/FeatureFlags.swift).
+
+**Request.** One HTTPS `POST` to `{validated PHPostHogHost}/decide/?v=3`
+per enabled launch (and once more on opt-in). The validated `PHPostHogHost`
+build setting overrides the default `https://us.i.posthog.com`; otherwise the
+default is used. The request is serialized on the telemetry queue with no
+timer and no retry — a failure falls back to local state and waits for the
+next launch. The request body contains exactly two fields: `api_key` and the
+same random `distinct_id` events already use. No person properties, groups,
+or locale.
+
+**Flags.** The complete allowlist, with its conservative (OFF) default:
+
+| Flag | Default | Purpose |
+|---|---|---|
+| `about_release_notes_link` | `false` | Shows a "Release Notes" link in Settings ▸ About. Deliberately harmless; validates the pipeline before any broader use. |
+
+Unknown flag keys and non-boolean values in the decide response are ignored
+at parse time, so a key not listed above cannot exist in Burrow regardless
+of what the server returns.
+
+**Cache.** The merged snapshot is stored at
+`~/Library/Application Support/Burrow/feature-flags.json` — a bounded
+(≤16 KB) JSON file with a schema version, an ISO-8601 fetch timestamp, and
+the boolean flags. It expires after 7 days; malformed, oversized, stale, or
+wrong-version files are discarded whole, and the conservative defaults stay
+in force until a later successful fetch rewrites it. An opted-out launch
+neither reads nor writes it, exactly like the event outbox.
+
+**Exposure event.** The first lookup of each flag per launch emits
+`feature_flag_exposed` with exactly two feature-flag-specific properties —
+`flag` (the allowlisted key) and `value` (boolean). The usual telemetry super
+properties (app version, OS build, platform, locale, etc.) are also attached,
+just like any other event. Like every event it is dropped while opted out.
+
+**Failure model.** Opt-out, missing release key, network error, non-2xx
+status, malformed payload, or stale cache all fall back to local values. If a
+usable cached snapshot exists, it is applied before the decide request and
+retained if the request fails; only a launch with no usable cache runs fully
+on the baked-in defaults, indistinguishable from a flag-free build.
 
 **IP address:** as with any HTTPS request, the TCP connection still exposes
 your IP to the receiving service at the network layer, but neither pipeline
@@ -108,6 +155,7 @@ so no IP is attached to events either.
 | `app_updated` | previous/current app version and build |
 | `engine_missing`, `install_window_ready`, `onboarding_completed` | none |
 | `telemetry_opt_in_changed` | enabled boolean |
+| `feature_flag_exposed` | `flag` (allowlisted key), boolean `value` — once per flag per launch |
 | PostHog `$screen` | fixed name: `home`, `settings`, or `tool.<known tool>` |
 | `feature_operation_started` | `feature` (`clean` or `optimize`), `dry_run` boolean, `elevated` boolean |
 | `feature_operation_completed` | `feature` (`clean` or `optimize`), fixed `result` (`succeeded`, `failed`, `authorization_cancelled`, or `cancelled`), `duration_bucket`; failed completions may add `failure_category` (`boundary_changed`, `privileged_launch_refused`, or `engine_nonzero`) |
@@ -186,9 +234,9 @@ All of that disk work runs on the background telemetry queue.
 ### Deliberately deferred
 
 `fda_state`, uninstall/purge detail, and MCP subprocess events are not wired.
-PostHog feature flags are also deferred to a separate change so flags can be
-cached, telemetry-gated, and restricted to non-safety-critical UI/rollout
-choices. Burrow will not build a custom pixel recorder for macOS.
+PostHog feature flags now exist under the strict model above (issue #322);
+new flags must be added to the allowlist with an OFF default and a
+TELEMETRY.md row. Burrow will not build a custom pixel recorder for macOS.
 
 ## Turning it off
 
