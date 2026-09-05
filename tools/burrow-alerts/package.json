@@ -15,10 +15,15 @@
     "check:card": "bun run check.ts --test-card",
     "digest": "bun run check.ts --digest",
     "tracer": "bun run tracer.ts",
-    "install-launchd": "./launchd/install.sh"
+    "install-launchd": "./launchd/install.sh",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@photon-ai/imessage-kit": "3.0.0",
     "spectrum-ts": "9.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.14",
+    "typescript": "7.0.2"
   }
 }

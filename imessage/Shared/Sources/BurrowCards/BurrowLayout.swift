@@ -27,6 +27,17 @@ public struct BurrowAction: Codable, Equatable {
     public var label: String
     public var systemImage: String?
     public var deepLinkURL: String
+
+    /// Card JSON may select a supported Burrow pane, never an arbitrary app URL.
+    public var burrowURL: URL? {
+        guard let components = URLComponents(string: deepLinkURL),
+              components.scheme == "burrow", components.host == "action",
+              components.queryItems?.count == 1,
+              components.queryItems?.first?.name == "id",
+              components.queryItems?.first?.value == id,
+              ["clean", "inspect"].contains(id) else { return nil }
+        return components.url
+    }
 }
 
 /// The recursive node tree. `type` is the discriminator, matching the TS union.
@@ -124,15 +135,18 @@ extension BurrowNode: Codable {
 // MARK: - Transport (base64url `?p=` payload, matching burrowlayout.ts)
 
 public enum BurrowTransport {
-    public enum Error: Swift.Error { case missingPayload, badBase64, encodeFailed }
+    public enum Error: Swift.Error { case missingPayload, badBase64, encodeFailed, unsupportedPayload }
 
     public static func decode(url: URL) throws -> BurrowLayout {
         guard let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let p = comps.queryItems?.first(where: { $0.name == "p" })?.value else {
             throw Error.missingPayload
         }
+        guard p.utf8.count <= 90_000 else { throw Error.unsupportedPayload }
         guard let data = Data(base64URLEncoded: p) else { throw Error.badBase64 }
-        return try JSONDecoder().decode(BurrowLayout.self, from: data)
+        let layout = try JSONDecoder().decode(BurrowLayout.self, from: data)
+        guard layout.version == 1 else { throw Error.unsupportedPayload }
+        return layout
     }
 
     /// Encode a layout into `base?p=<base64url>` — the inverse of the sidecar's
@@ -141,6 +155,7 @@ public enum BurrowTransport {
         let data = try JSONEncoder().encode(layout)
         var comps = URLComponents(url: base, resolvingAgainstBaseURL: false)
         var items = comps?.queryItems ?? []
+        items.removeAll { $0.name == "p" }
         items.append(URLQueryItem(name: "p", value: data.base64URLEncodedString()))
         comps?.queryItems = items
         guard let url = comps?.url else { throw Error.encodeFailed }

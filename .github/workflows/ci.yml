@@ -38,6 +38,15 @@ jobs:
       - name: Install xcodegen
         run: brew install xcodegen
 
+      - name: Prepare and test iMessage sidecar
+        run: |
+          bash scripts/fetch-sidecar-bun.sh "$RUNNER_TEMP/sidecar-bun"
+          echo "BUN_BIN=$RUNNER_TEMP/sidecar-bun/bun" >> "$GITHUB_ENV"
+          cd ../tools/burrow-alerts
+          "$RUNNER_TEMP/sidecar-bun/bun" install --frozen-lockfile --ignore-scripts
+          "$RUNNER_TEMP/sidecar-bun/bun" run typecheck
+          "$RUNNER_TEMP/sidecar-bun/bun" test
+
       # Sentry is a vendored local framework (not SPM — its binary download
       # hangs xcodebuild). Fetch it before generating the project, or xcodegen
       # references a missing framework. (Job working-directory is macos/.)

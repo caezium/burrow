@@ -17,7 +17,7 @@
   "llm": { "provider": "claude-cli" },
 
   "_card": "OPTIONAL (cloud only): render disk alerts as an iMessage mini-app card (rich bubble + lock-screen summary + tap-to-open URL) instead of plain text. Needs a real iMessage extension's identifiers; without one, recipients see the summary + app name and the tap may no-op. Falls back to text automatically. Remove this block to keep plain-text alerts.",
-  "_card_example": { "appName": "Burrow", "extensionBundleId": "dev.caezium.Burrow.imessage", "teamId": "ABCDE12345", "url": "https://burrow.henryzh.dev", "appStoreId": 0 },
+  "_card_example": { "appName": "Burrow", "extensionBundleId": "dev.caezium.Burrow.cards.extension", "teamId": "ABCDE12345", "url": "https://burrow.henryzh.dev", "appStoreId": 0 },
 
   "disk": { "high": 90, "low": 85, "cooldownSeconds": 21600, "hogsTimeoutMs": 25000 },
   "cpu": { "high": 90, "low": 70, "windowMinutes": 10, "minSamples": 3, "cooldownSeconds": 3600 }

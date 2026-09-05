@@ -26,6 +26,14 @@ test("encode/decode round-trips the layout through a base64url ?p= URL (Photon t
   expect(back).toEqual(l);
 });
 
+test("card URLs replace old payloads and keep fragments out of the query", () => {
+  const layout = diskLayout({ usedPercent: 91, freeBytes: 20e9 });
+  const encoded = encodeLayoutURL("https://example.com/card?p=stale&mode=small#details", layout);
+  expect(new URL(encoded).hash).toBe("#details");
+  expect(new URL(encoded).searchParams.getAll("p")).toHaveLength(1);
+  expect(decodeLayoutURL(encoded)).toEqual(layout);
+});
+
 function findNode(n: any, pred: (n: any) => boolean): any {
   if (pred(n)) return n;
   for (const c of n.children ?? []) {

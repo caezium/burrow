@@ -8,7 +8,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { writeFileSync, chmodSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { LLMConfig } from "./llm.ts";
@@ -45,9 +45,11 @@ export function assembleConfig(parts: SetupParts): BurrowConfig {
 
 // Photon egress is direct here; strip the shell proxy so the CLI reaches it.
 const NOPROXY = { ...process.env, HTTP_PROXY: "", HTTPS_PROXY: "", ALL_PROXY: "", http_proxy: "", https_proxy: "", all_proxy: "", NO_PROXY: "*", no_proxy: "*" };
-const photon = (args: string[]) => spawnSync("photon", args, { env: NOPROXY, encoding: "utf8" });
+const photon = (args: string[]) => spawnSync("photon", args, { env: NOPROXY, encoding: "utf8", timeout: 30_000 });
 
 function runSetup() {
+  const recipient = process.env.BURROW_ALERT_TO ?? "";
+  assembleConfig({ recipient }); // Validate before creating a remote project.
   console.log(onboardingText());
   console.log("\n──────────────────────────────────────────\n");
 
@@ -55,9 +57,9 @@ function runSetup() {
   const who = photon(["whoami"]);
   if (who.status !== 0) {
     console.log("Log in to Photon (a device code will appear — approve it in your browser):\n");
-    const login = photon(["login", "--no-browser"]);
-    process.stdout.write(login.stdout ?? "");
-    if (login.status !== 0) { console.error("Photon login failed:", login.stderr); process.exit(1); }
+    // The owner must see the device code while login is waiting for approval.
+    const login = spawnSync("photon", ["login", "--no-browser"], { env: NOPROXY, stdio: "inherit", timeout: 300_000 });
+    if (login.status !== 0) { console.error("Photon login failed"); process.exit(1); }
   }
 
   // 2) Create the project + read its secret.
@@ -67,14 +69,14 @@ function runSetup() {
   const secret = JSON.parse(photon(["projects", "secret", "--project", projectId, "--json"]).stdout).projectSecret as string;
 
   // 3) Register the owner number + surface the assigned line to text once (opt-in).
-  const recipient = process.env.BURROW_ALERT_TO ?? "";
   const user = photon(["spectrum", "users", "add", "--project", projectId, "--phone", recipient, "--first-name", "Owner", "--last-name", "Burrow", "--email", "owner@example.com", "--invite", "--json"]);
   const assigned = user.status === 0 ? JSON.parse(user.stdout).assignedPhoneNumber : "(see dashboard)";
 
   // 4) Write config (LLM stays claude-cli unless env overrides).
   const cfg = assembleConfig({ recipient, projectId, projectSecret: secret });
   const out = join(dirname(fileURLToPath(import.meta.url)), "..", "config.local.json");
-  writeFileSync(out, JSON.stringify(cfg, null, 2) + "\n");
+  writeFileSync(out, JSON.stringify(cfg, null, 2) + "\n", { mode: 0o600 });
+  chmodSync(out, 0o600); // Existing manually-created config files may have been 0644.
 
   console.log(`\n✅ Wrote ${out}\n`);
   console.log(`One-time opt-in: from your iPhone, text anything to ${assigned}. Then:\n  bun run check.ts --test\n`);

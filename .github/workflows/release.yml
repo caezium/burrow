@@ -88,6 +88,15 @@ jobs:
       - name: Install xcodegen
         run: brew install xcodegen
 
+      - name: Prepare and test iMessage sidecar
+        run: |
+          bash macos/scripts/fetch-sidecar-bun.sh "$RUNNER_TEMP/sidecar-bun"
+          echo "BUN_BIN=$RUNNER_TEMP/sidecar-bun/bun" >> "$GITHUB_ENV"
+          cd tools/burrow-alerts
+          "$RUNNER_TEMP/sidecar-bun/bun" install --frozen-lockfile --ignore-scripts
+          "$RUNNER_TEMP/sidecar-bun/bun" run typecheck
+          "$RUNNER_TEMP/sidecar-bun/bun" test
+
       - name: Build (Release)
         id: build
         timeout-minutes: 38
@@ -181,6 +190,7 @@ jobs:
                     if file -b "$f" | grep -q 'Mach-O'; then codesign --force --sign - "$f"; fi
                   done
             fi
+            codesign --force --preserve-metadata=entitlements --sign - "$APP/Contents/Resources/sidecar/bin/bun"
             codesign --force --sign - --entitlements macos/Resources/Burrow.entitlements "$APP"
             codesign --verify --strict --verbose=2 "$APP"
             echo "signed=false" >> "$GITHUB_OUTPUT"
@@ -220,6 +230,9 @@ jobs:
                   fi
                 done
           fi
+          # Bun needs its JIT entitlements as well as the release identity.
+          codesign --force --options runtime --timestamp --preserve-metadata=entitlements \
+            --sign "$SIGN_IDENTITY" "$APP/Contents/Resources/sidecar/bin/bun"
           # Hardened runtime + secure timestamp are required for notarization.
           codesign --force --options runtime --timestamp \
             --entitlements macos/Resources/Burrow.entitlements \

@@ -49,7 +49,7 @@ final class IMessageSidecarTests: XCTestCase {
 
     func testArgs() {
         XCTAssertEqual(SidecarLaunch.agentArgs(entry: "/s/agent.ts"), ["run", "/s/agent.ts"])
-        XCTAssertEqual(SidecarLaunch.checkArgs(entry: "/s/check.ts"), ["run", "/s/check.ts"])
+        XCTAssertEqual(SidecarLaunch.checkArgs(entry: "/s/check.ts"), ["run", "/s/check.ts", "--scheduled"])
         XCTAssertEqual(SidecarLaunch.checkArgs(entry: "/s/check.ts", digest: true), ["run", "/s/check.ts", "--digest"])
     }
 
@@ -57,5 +57,17 @@ final class IMessageSidecarTests: XCTestCase {
         XCTAssertTrue(cfg().hasDelivery)
         var c = cfg(); c.projectSecret = ""
         XCTAssertFalse(c.hasDelivery)
+    }
+
+    func testEnvironmentClearsStaleCredentialsAndFindsLocalClaude() {
+        let env = SidecarLaunch.environment(cfg(agent: false), burrowBin: "/x", base: [
+            "BURROW_LLM_KEY": "old-key", "BURROW_LLM_PROVIDER": "anthropic", "USE_JAN": "1", "PATH": "/usr/bin:/bin",
+        ])
+        XCTAssertNil(env["BURROW_LLM_KEY"])
+        XCTAssertNil(env["BURROW_LLM_PROVIDER"])
+        XCTAssertNil(env["USE_JAN"])
+        XCTAssertTrue(env["PATH"]!.contains("/.local/bin"))
+        XCTAssertTrue(env["BURROW_ALERT_STATE_DIR"]!.contains("Library/Application Support/Burrow/iMessage"))
+        XCTAssertNotNil(env["BURROW_PARENT_PID"])
     }
 }

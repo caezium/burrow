@@ -24,8 +24,11 @@ if [[ "${1:-}" == "--uninstall" ]]; then
 fi
 
 if [[ ! -f "$DIR/config.local.json" ]]; then
-  echo "⚠️  $DIR/config.local.json not found — the jobs won't have a recipient/creds." >&2
+  echo "error: $DIR/config.local.json not found — configure delivery before installing jobs." >&2
+  exit 1
 fi
+[[ -x "$BUN" ]] || { echo "error: Bun runtime not found at $BUN" >&2; exit 1; }
+command -v python3 >/dev/null || { echo "error: Python 3 is required to generate launchd plists." >&2; exit 1; }
 
 mkdir -p "$AGENTS" "$DIR/logs"
 unload   # clean slate
@@ -33,7 +36,19 @@ unload   # clean slate
 for TPL in "$DIR"/launchd/*.plist.template; do
   L="$(basename "$TPL" .plist.template)"
   OUT="$AGENTS/$L.plist"
-  sed -e "s#__BUN__#$BUN#g" -e "s#__DIR__#$DIR#g" "$TPL" > "$OUT"
+  python3 - "$TPL" "$OUT" "$BUN" "$DIR" <<'PYPLIST'
+import plistlib, sys
+source, target, bun, directory = sys.argv[1:]
+with open(source, "rb") as stream:
+    data = plistlib.load(stream)
+def replace(value):
+    if isinstance(value, str): return value.replace("__BUN__", bun).replace("__DIR__", directory)
+    if isinstance(value, list): return [replace(item) for item in value]
+    if isinstance(value, dict): return {key: replace(item) for key, item in value.items()}
+    return value
+with open(target, "wb") as stream:
+    plistlib.dump(replace(data), stream)
+PYPLIST
   plutil -lint "$OUT" >/dev/null
   launchctl bootstrap "gui/$(id -u)" "$OUT"
   echo "loaded $L"

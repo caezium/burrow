@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { makeOpenAICompatBrain, makeClaudeCliBrain, selectProvider } from "./llm.ts";
+import { makeOpenAICompatBrain, makeClaudeCliBrain, selectProvider, defaultRunCli } from "./llm.ts";
 
 // A fake OpenAI-compatible /chat/completions endpoint that returns queued
 // responses in order, so we can drive the brain deterministically.
@@ -59,11 +59,30 @@ test("claude-cli brain shells claude with the burrow mcp config and returns its 
   const a = await brain.ask("how's my disk?", { system: "be brief", tools: [], exec: async () => "" });
 
   expect(a).toBe("6 GB free (via claude).");
+  expect(seen.args.slice(seen.args.indexOf("--tools"), seen.args.indexOf("--tools") + 2)).toEqual(["--tools", ""]);
+  expect(seen.args).toEqual(expect.arrayContaining(["--permission-mode", "dontAsk", "--setting-sources", "", "--no-session-persistence"]));
   expect(seen.args).toEqual(expect.arrayContaining([
     "-p", "how's my disk?", "--mcp-config", "/x/burrow-mcp.json",
     "--strict-mcp-config", "--allowedTools", "mcp__burrow__burrow_snapshot",
     "--append-system-prompt", "be brief",
   ]));
+});
+
+test("both API providers abort a stalled request", async () => {
+  for (const provider of ["openai", "anthropic"] as const) {
+    const fetchImpl = ((_url: unknown, init: RequestInit) => new Promise((_resolve, reject) => {
+      init.signal!.addEventListener("abort", () => reject(init.signal!.reason));
+    })) as typeof fetch;
+    const brain = selectProvider({ provider, apiKey: "fake", model: "fake" }, { fetchImpl, timeoutMs: 10 });
+    await expect(brain.ask("test", { system: "test", tools: [], exec: async () => "" })).rejects.toThrow("timed out");
+  }
+});
+
+test("CLI drains stderr and surfaces failure or timeout without running a real model", async () => {
+  const run = defaultRunCli(false, process.execPath, 1_000);
+  expect(await run(["-e", "process.stderr.write('x'.repeat(200000)); console.log('answer')"])).toBe("answer");
+  await expect(run(["-e", "process.exit(3)"])).rejects.toThrow("exited (3)");
+  await expect(defaultRunCli(false, process.execPath, 30)(["-e", "setInterval(() => {}, 1000)"])).rejects.toThrow("timed out");
 });
 
 test("anthropic brain returns text and can run a tool round", async () => {

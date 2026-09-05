@@ -93,8 +93,9 @@ const toBase64Url = (json: string) => Buffer.from(json, "utf8").toString("base64
 const fromBase64Url = (p: string) => Buffer.from(p, "base64url").toString("utf8");
 
 export function encodeLayoutURL(baseUrl: string, layout: BurrowLayout): string {
-  const sep = baseUrl.includes("?") ? "&" : "?";
-  return `${baseUrl}${sep}p=${toBase64Url(JSON.stringify(layout))}`;
+  const url = new URL(baseUrl);
+  url.searchParams.set("p", toBase64Url(JSON.stringify(layout)));
+  return url.toString();
 }
 
 export function decodeLayoutURL(url: string): BurrowLayout {

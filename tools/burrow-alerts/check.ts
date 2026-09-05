@@ -19,7 +19,9 @@ import { dirname, join } from "node:path";
 import {
   BurrowMCP, getSnapshot, getForecast, getSustainedCpu, getTopHogs, getReport,
 } from "./src/burrow.ts";
-import { AlertStore, step, type ThresholdRule } from "./src/alertengine.ts";
+import { AlertStore, step, digestDue, type ThresholdRule } from "./src/alertengine.ts";
+import { resolveDelivery, stateDirectory } from "./src/config.ts";
+import { installShutdown, stopChildren } from "./src/lifecycle.ts";
 import { formatDiskAlert, formatCpuAlert, formatDigest } from "./src/format.ts";
 import { sendText, sendCard, useCloud, type SendConfig } from "./src/sender.ts";
 import { diskCard, diskCardFrom, type MiniAppInput } from "./src/card.ts";
@@ -49,13 +51,8 @@ function loadConfig(): Config {
 }
 
 const CFG = loadConfig();
-const send: SendConfig = {
-  recipient: process.env.BURROW_ALERT_TO ?? CFG.recipient,
-  projectId: process.env.PHOTON_PROJECT_ID ?? CFG.projectId,
-  projectSecret: process.env.PHOTON_PROJECT_SECRET ?? CFG.projectSecret,
-  forceLocal: CFG.forceLocal || process.argv.includes("--local"),
-  card: CFG.card,
-};
+const send = resolveDelivery(process.env, CFG, process.argv.includes("--local"));
+const STATE_PATH = join(stateDirectory(), "alerts.state.json");
 
 // Defaults mirror Burrow's own thresholds (Doctor: <10% free = warn; ThresholdAlerts: CPU 90).
 const DISK = { high: 90, low: 85, cooldownSeconds: 6 * 3600, hogsTimeoutMs: 25_000, ...CFG.disk };
@@ -68,7 +65,7 @@ async function deliver(label: string, body: string, card?: MiniAppInput) {
   const asCard = Boolean(card && send.card && useCloud(send)); // cards are cloud-only
   console.log(`\n----- ${label}${asCard ? " (card)" : ""} -----\n${body}\n${"-".repeat(label.length + 12)}`);
   if (DRY_RUN) { console.log("[dry-run] not sending"); return; }
-  if (!send.recipient) { console.log("[skip] no recipient configured"); return; }
+  if (!send.recipient) throw new Error("no recipient configured");
   if (asCard) await sendCard(send, card!, body);   // text is the fallback
   else await sendText(send, body);
   console.log(`[sent ✅] ${label} via spectrum-ts (${useCloud(send) ? "cloud" : "local"})`);
@@ -83,14 +80,14 @@ async function runDigest(mcp: BurrowMCP) {
 }
 
 async function runChecks(mcp: BurrowMCP) {
-  const store = new AlertStore(join(HERE, "alerts.state.json"));
+  const store = new AlertStore(STATE_PATH);
   const ts = now();
 
   // 1) Fast signals up front — all read Burrow's DB and return quickly. We do
   //    them before any slow `analyze`, which would block this serial connection.
   const snap = await getSnapshot(mcp);
   const forecast = await getForecast(mcp).catch(() => null);
-  const cpu = await getSustainedCpu(mcp, CPU.windowMinutes, 5);
+  const cpu = await getSustainedCpu(mcp, CPU.windowMinutes, 100);
 
   // 2) Evaluate rules and stage next states. We do NOT persist state until after
   //    sends succeed, so a mid-run kill re-alerts rather than swallowing.
@@ -125,12 +122,14 @@ async function runChecks(mcp: BurrowMCP) {
 
   const needSamples = Math.max(CPU.minSamples, Math.ceil(cpu.sampleCount * 0.5));
   const worst = cpu.processes.filter((p) => p.samples >= needSamples).sort((a, b) => b.avg_cpu - a.avg_cpu)[0];
-  if (worst) {
-    const rule: ThresholdRule = { id: `cpu:${worst.name}`, high: CPU.high, low: CPU.low, cooldownSeconds: CPU.cooldownSeconds };
-    const { state, fired } = step(rule, worst.avg_cpu, ts, store.get(rule.id));
+  if (cpu.sampleCount >= CPU.minSamples) {
+    // Track the sustained-load episode itself. A process can recover, exit or
+    // leave the ranked list; per-name states would otherwise remain firing forever.
+    const rule: ThresholdRule = { id: "cpu:sustained", high: CPU.high, low: CPU.low, cooldownSeconds: CPU.cooldownSeconds };
+    const { state, fired } = step(rule, worst?.avg_cpu ?? 0, ts, store.get(rule.id));
     staged.push({ id: rule.id, state });
-    console.log(`[cpu] worst="${worst.name}" avg ${worst.avg_cpu.toFixed(0)}% over ${CPU.windowMinutes}m (samples ${worst.samples}/${cpu.sampleCount}, need ${needSamples}) fired=${fired}`);
-    if (fired) sends.push({ id: rule.id, label: "cpu alert", produce: async () => ({ text: formatCpuAlert({ name: worst.name, peak_cpu: worst.avg_cpu }, CPU.windowMinutes) }) });
+    if (worst) console.log(`[cpu] worst="${worst.name}" avg ${worst.avg_cpu.toFixed(0)}% over ${CPU.windowMinutes}m fired=${fired}`);
+    if (fired && worst) sends.push({ id: rule.id, label: "cpu alert", produce: async () => ({ text: formatCpuAlert({ name: worst.name, peak_cpu: worst.avg_cpu }, CPU.windowMinutes) }) });
   } else {
     console.log(`[cpu] no process sustained ≥${CPU.high}% over ${CPU.windowMinutes}m (sampleCount ${cpu.sampleCount})`);
   }
@@ -160,6 +159,10 @@ async function runChecks(mcp: BurrowMCP) {
 }
 
 async function main() {
+  installShutdown();
+  // Bounds SDK connection/send shutdown too, including standalone launchd runs.
+  setTimeout(() => { void stopChildren().finally(() => process.exit(1)); }, 180_000).unref();
+  if (!DRY_RUN && !send.recipient) throw new Error("no recipient configured");
   // Delivery-only smoke test (setup wizard's "Send test message"). No MCP needed.
   if (TEST) {
     await deliver("test", "✅ Burrow is connected. You'll get disk, CPU, and weekly-cleanup alerts here.");
@@ -177,13 +180,26 @@ async function main() {
   const mcp = new BurrowMCP();
   try {
     if (DIGEST) await runDigest(mcp);
-    else await runChecks(mcp);
+    else {
+      await runChecks(mcp);
+      if (process.argv.includes("--scheduled") && !DRY_RUN) {
+        const store = new AlertStore(STATE_PATH);
+        const last = store.get("weekly_digest").lastFiredTS;
+        // The first run establishes the schedule; enabling the feature doesn't
+        // send an unsolicited historical digest immediately.
+        if (last !== null && digestDue(last, new Date())) await runDigest(mcp);
+        if (last === null || digestDue(last, new Date())) {
+          store.set("weekly_digest", { firing: false, lastFiredTS: now() });
+          store.save();
+        }
+      }
+    }
   } finally {
     await mcp.close();
   }
 }
 
-main().catch((err) => {
+if (import.meta.main) main().catch((err) => {
   console.error("[check] failed:", err?.message ?? err);
   process.exit(1);
 });

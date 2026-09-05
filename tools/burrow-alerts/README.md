@@ -15,7 +15,7 @@ so it never spams.
 
 Debounce is a port of Burrow's own `AlertEngine`: hysteresis (fire at `high`,
 re-arm only below `low`) + cooldown, so you get one nudge per *episode*, not per
-sample. State persists in `alerts.state.json` across runs.
+sample. State persists in `~/Library/Application Support/Burrow/iMessage/alerts.state.json` across runs (`BURROW_ALERT_STATE_DIR` overrides this for isolated runs).
 
 ## Delivery — Photon spectrum-ts
 
@@ -76,7 +76,7 @@ Then text the Burrow line (e.g. "how's my disk?" / "what's eating CPU?").
 - **Safety:** only answers YOUR number (also the reply-loop guard); tools are
   **read-only**, enforced twice (allowlist to the model + refused in the exec);
   rate-limited (6/min), single-flight, 800-char reply cap; prompt ignores
-  instructions embedded in messages; metadata-only audit log (`logs/agent.audit.jsonl`).
+  instructions embedded in messages; metadata-only audit log (`~/Library/Application Support/Burrow/iMessage/logs/agent.audit.jsonl`).
 
 ## Setup & tests
 
@@ -100,3 +100,18 @@ local `claude` CLI); alerts alone need no key.
 - `src/sender.ts` — spectrum-ts cloud/local send
 - `tracer.ts` — the original one-shot disk tracer (kept for quick manual tests)
 - `FRICTION.md` — QA log of Photon SDK friction hit while building this
+
+## Bundled app development
+
+Prepare the pinned universal runtime before building the Mac app:
+
+```sh
+bash macos/scripts/fetch-sidecar-bun.sh /tmp/burrow-sidecar-bun
+export BUN_BIN=/tmp/burrow-sidecar-bun/bun
+```
+
+Run those commands from the repository root. Builds fail if the runtime, locked dependencies, or a target CPU architecture is missing. The bundle keeps Bun's JIT entitlements and runtime assets; mutable state and audit logs stay in Application Support. CI tests the sidecar before building and release signing includes Bun.
+
+The native supervisor runs checks every ten minutes and a weekly digest after Sunday 09:00 local time, catching up after sleep. It avoids overlapping checks and terminates both the agent and active check on quit. Settings still take effect on relaunch.
+
+The assistant accepts incoming owner DMs only. The local Claude provider disables built-in tools, user/project settings, hooks, and session persistence, and connects to a read-only MCP proxy that rejects every tool outside the same allowlist used by API providers. It follows the running app's `BURROW_BIN`, including nonstandard install paths. `bun test` uses fake processes and network responses; `bash macos/scripts/test-sidecar.sh` tests the native supervisor with local shell fixtures. Neither command sends messages.

@@ -25,7 +25,7 @@ export type MiniAppLayout = {
   trailingCaption?: string;
   trailingSubcaption?: string;
   /** Bubble image bytes (JPEG — Photon rejects PNG). Attached at send time. */
-  image?: Uint8Array;
+  image?: Uint8Array<ArrayBuffer>;
   imageTitle?: string;
   imageSubtitle?: string;
   summary?: string;

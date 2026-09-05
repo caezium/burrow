@@ -9,6 +9,7 @@
  */
 
 import type { MiniAppInput } from "./card.ts";
+import { isPhoneHandle } from "./safety.ts";
 
 export type SendConfig = {
   recipient: string;
@@ -29,6 +30,7 @@ const dmGuid = (addr: string) => `any;-;${addr}`;
 
 export function toE164(phone: string): string {
   const raw = phone.trim();
+  if (!isPhoneHandle(raw)) return raw;
   const digits = raw.replace(/\D/g, "");
   if (raw.startsWith("+")) return `+${digits}`;
   if (digits.length === 10) return `+1${digits}`;
@@ -66,7 +68,7 @@ export async function sendText(cfg: SendConfig, body: string): Promise<void> {
  * Load the bundled Burrow bubble image (JPEG). Best-effort — a missing asset
  * just means the card ships without an image (captions/summary still render).
  */
-async function bubbleImage(): Promise<Uint8Array | undefined> {
+async function bubbleImage(): Promise<Uint8Array<ArrayBuffer> | undefined> {
   try {
     const path = new URL("../assets/burrow-card.jpg", import.meta.url);
     return await Bun.file(path).bytes();

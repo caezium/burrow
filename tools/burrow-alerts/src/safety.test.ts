@@ -1,5 +1,21 @@
 import { test, expect } from "bun:test";
-import { isAuthorized, capReply, RateLimiter } from "./safety.ts";
+import { isAuthorized, isOwnerQuestion, capReply, RateLimiter } from "./safety.ts";
+import { toE164 } from "./sender.ts";
+
+test("numeric email handles cannot impersonate the owner or turn into phone recipients", () => {
+  expect(isAuthorized("15551234567@attacker.example", "+15551234567")).toBe(false);
+  expect(isAuthorized("owner42@attacker.example", "owner42@example.com")).toBe(false);
+  expect(isAuthorized("OWNER42@EXAMPLE.COM", "owner42@example.com")).toBe(true);
+  expect(toE164("5551234567@example.com")).toBe("5551234567@example.com");
+});
+
+test("only incoming owner DMs can cause a health reply", () => {
+  const message = { direction: "inbound", sender: { id: "+15551234567" }, space: { type: "dm" }, content: { type: "text", text: "disk?" } };
+  expect(isOwnerQuestion(message, "+15551234567")).toBe(true);
+  expect(isOwnerQuestion({ ...message, direction: "outbound" }, "+15551234567")).toBe(false);
+  expect(isOwnerQuestion({ ...message, space: { type: "group" } }, "+15551234567")).toBe(false);
+  expect(isOwnerQuestion({ ...message, direction: undefined }, "+15551234567")).toBe(false);
+});
 
 test("RateLimiter allows up to max per window, blocks beyond, and recovers", () => {
   const rl = new RateLimiter(2, 1000); // 2 per 1000ms; time injected

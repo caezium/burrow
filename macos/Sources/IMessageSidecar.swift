@@ -16,6 +16,7 @@
 //
 
 import Foundation
+import Darwin
 
 /// A snapshot of the user's iMessage settings, passed to the sidecar as env.
 struct SidecarConfig: Equatable {
@@ -51,10 +52,19 @@ enum SidecarLaunch {
     /// current environment (PATH etc.) in production; empty in tests.
     static func environment(_ c: SidecarConfig, burrowBin: String, base: [String: String] = [:]) -> [String: String] {
         var env = base
+        for key in ["PHOTON_PROJECT_ID", "PHOTON_PROJECT_SECRET", "BURROW_LLM_PROVIDER", "BURROW_LLM_MODEL", "BURROW_LLM_BASEURL", "BURROW_LLM_KEY", "USE_JAN"] {
+            env.removeValue(forKey: key)
+        }
         env["BURROW_ALERT_TO"] = c.ownerPhone
         if !c.projectId.isEmpty { env["PHOTON_PROJECT_ID"] = c.projectId }
         if !c.projectSecret.isEmpty { env["PHOTON_PROJECT_SECRET"] = c.projectSecret }
         env["BURROW_BIN"] = burrowBin
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        env["BURROW_ALERT_STATE_DIR"] = home.appendingPathComponent("Library/Application Support/Burrow/iMessage").path
+        env["BURROW_PARENT_PID"] = String(Foundation.ProcessInfo.processInfo.processIdentifier)
+        // Finder launches don't inherit the user's shell PATH.
+        let knownPaths = ["/usr/bin", "/bin", "/usr/sbin", "/sbin", "/opt/homebrew/bin", "/usr/local/bin", home.appendingPathComponent(".local/bin").path, home.appendingPathComponent(".bun/bin").path]
+        env["PATH"] = (knownPaths + (base["PATH"] ?? "").split(separator: ":").map(String.init)).filter { $0.hasPrefix("/") }.joined(separator: ":")
         // Photon egress is direct; keep any local proxy out of the sidecar.
         env["NO_PROXY"] = "*"; env["no_proxy"] = "*"
         env["LOG_LEVEL"] = "silent"
@@ -69,7 +79,7 @@ enum SidecarLaunch {
 
     static func agentArgs(entry: String) -> [String] { ["run", entry] }
     static func checkArgs(entry: String, digest: Bool = false) -> [String] {
-        digest ? ["run", entry, "--digest"] : ["run", entry]
+        digest ? ["run", entry, "--digest"] : ["run", entry, "--scheduled"]
     }
 }
 
@@ -86,7 +96,10 @@ struct SidecarPaths {
         guard let res = bundle.resourceURL else { return nil }
         let dir = res.appendingPathComponent("sidecar", isDirectory: true)
         let bun = dir.appendingPathComponent("bin/bun")
-        guard FileManager.default.isExecutableFile(atPath: bun.path) else { return nil }
+        guard FileManager.default.isExecutableFile(atPath: bun.path),
+              ["agent.ts", "check.ts", "node_modules/spectrum-ts/package.json"].allSatisfy({
+                  FileManager.default.fileExists(atPath: dir.appendingPathComponent($0).path)
+              }) else { return nil }
         return SidecarPaths(
             dir: dir,
             bun: bun,
@@ -99,33 +112,52 @@ struct SidecarPaths {
 final class IMessageSidecar {
     private let queue = DispatchQueue(label: "dev.caezium.Burrow.imessage")
     private var agent: Process?
+    private var check: Process?
     private var checkTimer: DispatchSourceTimer?
-    private var stopped = false
+    private var stopped = true
+    private var generation = UUID()
 
-    private let checkInterval: TimeInterval = 600      // 10 min
+    private let configuration: () -> SidecarConfig
+    private let pathsProvider: () -> SidecarPaths?
+    private let checkInterval: TimeInterval
+    private let initialDelay: TimeInterval
+    private let checkTimeout: TimeInterval
     private let restartDelay: TimeInterval = 5
+
+    init(configuration: @escaping () -> SidecarConfig = SidecarConfig.fromStore,
+         paths: @escaping () -> SidecarPaths? = { SidecarPaths.bundled() },
+         checkInterval: TimeInterval = 600, initialDelay: TimeInterval = 60,
+         checkTimeout: TimeInterval = 180) {
+        self.configuration = configuration; self.pathsProvider = paths
+        self.checkInterval = checkInterval; self.initialDelay = initialDelay
+        self.checkTimeout = checkTimeout
+    }
 
     func start() {
         queue.async { [weak self] in
-            guard let self else { return }
-            self.stopped = false
-            let cfg = SidecarConfig.fromStore()
-            guard cfg.hasDelivery, let paths = SidecarPaths.bundled() else {
+            guard let self, self.stopped else { return }
+            let cfg = self.configuration()
+            guard cfg.hasDelivery, let paths = self.pathsProvider() else {
                 NSLog("[iMessage] not starting: missing delivery config or bundled sidecar")
                 return
             }
+            self.stopped = false
+            self.generation = UUID()
             self.armCheckTimer(paths: paths, cfg: cfg)
             if cfg.agentEnabled { self.spawnAgent(paths: paths, cfg: cfg) }
         }
     }
 
     func stop() {
-        queue.async { [weak self] in
-            guard let self else { return }
+        // applicationWillTerminate must signal both children before it returns.
+        queue.sync {
             self.stopped = true
+            self.generation = UUID()
             self.checkTimer?.cancel(); self.checkTimer = nil
-            self.agent?.terminationHandler = nil
-            self.agent?.terminate(); self.agent = nil
+            for child in [self.agent, self.check].compactMap({ $0 }) {
+                self.terminate(child)
+            }
+            self.agent = nil; self.check = nil
         }
     }
 
@@ -142,28 +174,64 @@ final class IMessageSidecar {
     }
 
     private func spawnAgent(paths: SidecarPaths, cfg: SidecarConfig) {
+        guard !stopped, agent == nil else { return }
+        let currentGeneration = generation
         let p = makeProcess(paths, cfg, args: SidecarLaunch.agentArgs(entry: paths.agentEntry.path))
-        p.terminationHandler = { [weak self] _ in
+        p.terminationHandler = { [weak self] exited in
             guard let self else { return }
-            self.queue.asyncAfter(deadline: .now() + self.restartDelay) {
-                guard !self.stopped else { return }
-                NSLog("[iMessage] agent exited — restarting")
-                self.spawnAgent(paths: paths, cfg: cfg)   // restart-on-crash
+            self.queue.async {
+                guard self.agent === exited else { return }
+                self.agent = nil
+                self.scheduleRestart(paths: paths, cfg: cfg, generation: currentGeneration)
             }
         }
-        do { try p.run(); agent = p } catch { NSLog("[iMessage] agent failed to launch: \(error)") }
+        do { try p.run(); agent = p } catch {
+            NSLog("[iMessage] agent failed to launch: \(error)")
+            scheduleRestart(paths: paths, cfg: cfg, generation: currentGeneration)
+        }
+    }
+
+    private func scheduleRestart(paths: SidecarPaths, cfg: SidecarConfig, generation: UUID) {
+        queue.asyncAfter(deadline: .now() + restartDelay) { [weak self] in
+            guard let self, !self.stopped, self.generation == generation else { return }
+            self.spawnAgent(paths: paths, cfg: cfg)
+        }
+    }
+
+    private func terminate(_ process: Process) {
+        process.terminationHandler = nil
+        guard process.isRunning else { return }
+        process.terminate()
+        queue.asyncAfter(deadline: .now() + 2) {
+            if process.isRunning { kill(process.processIdentifier, SIGKILL) }
+        }
     }
 
     private func armCheckTimer(paths: SidecarPaths, cfg: SidecarConfig) {
         let t = DispatchSource.makeTimerSource(queue: queue)
-        t.schedule(deadline: .now() + 60, repeating: checkInterval)   // first tick +60s
+        t.schedule(deadline: .now() + initialDelay, repeating: checkInterval)
         t.setEventHandler { [weak self] in self?.runCheckOnce(paths: paths, cfg: cfg) }
         checkTimer = t
         t.resume()
     }
 
     private func runCheckOnce(paths: SidecarPaths, cfg: SidecarConfig) {
+        guard !stopped, check == nil else { return }
         let p = makeProcess(paths, cfg, args: SidecarLaunch.checkArgs(entry: paths.checkEntry.path))
-        do { try p.run() } catch { NSLog("[iMessage] check failed to launch: \(error)") }
+        p.terminationHandler = { [weak self] exited in
+            guard let self else { return }
+            self.queue.async { if self.check === exited { self.check = nil } }
+        }
+        do {
+            try p.run(); check = p
+            queue.asyncAfter(deadline: .now() + checkTimeout) { [weak self] in
+                guard let self, self.check === p, p.isRunning else { return }
+                // Keep the slot occupied until the timed-out process really exits.
+                p.terminate()
+                self.queue.asyncAfter(deadline: .now() + 2) {
+                    if p.isRunning { kill(p.processIdentifier, SIGKILL) }
+                }
+            }
+        } catch { NSLog("[iMessage] check failed to launch: \(error)") }
     }
 }

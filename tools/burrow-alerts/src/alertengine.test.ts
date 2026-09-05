@@ -1,5 +1,29 @@
 import { test, expect } from "bun:test";
-import { step, type ThresholdRule, type AlertState } from "./alertengine.ts";
+import { step, digestDue, AlertStore, type ThresholdRule, type AlertState } from "./alertengine.ts";
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+test("weekly digest runs after Sunday 09:00 and catches up after sleep only once", () => {
+  const sent = new Date(2026, 8, 5, 10).getTime() / 1000;
+  expect(digestDue(sent, new Date(2026, 8, 6, 8, 59))).toBe(false);
+  expect(digestDue(sent, new Date(2026, 8, 6, 9))).toBe(true);
+  expect(digestDue(sent, new Date(2026, 8, 7, 14))).toBe(true);
+  expect(digestDue(new Date(2026, 8, 7, 14).getTime() / 1000, new Date(2026, 8, 8, 10))).toBe(false);
+});
+
+test("malformed state cannot break checks; saved debounce survives another invocation", () => {
+  const dir = mkdtempSync(join(tmpdir(), "burrow-state-test-"));
+  try {
+    const path = join(dir, "alerts.state.json");
+    writeFileSync(path, "null");
+    const store = new AlertStore(path);
+    expect(store.get("disk")).toEqual({ firing: false, lastFiredTS: null });
+    store.set("disk", { firing: true, lastFiredTS: 123 }); store.save();
+    expect(new AlertStore(path).get("disk")).toEqual({ firing: true, lastFiredTS: 123 });
+    expect(JSON.parse(readFileSync(path, "utf8")).disk.firing).toBe(true);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
 
 const rule: ThresholdRule = { id: "disk", high: 90, low: 85, cooldownSeconds: 100 };
 

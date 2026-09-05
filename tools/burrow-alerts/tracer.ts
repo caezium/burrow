@@ -21,6 +21,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFileSync } from "node:fs";
+import { toE164 } from "./src/sender.ts";
 
 const pexec = promisify(execFile);
 
@@ -36,7 +37,7 @@ function loadConfig(): Config {
 }
 const CFG = loadConfig();
 
-const MO = "/opt/homebrew/bin/mo";
+const MO = process.env.MO_BIN || "mo";
 const THRESHOLD = Number(process.env.THRESHOLD ?? CFG.threshold ?? 90); // disk used% that fires
 const DRY_RUN = process.argv.includes("--dry-run");
 const CONNECT_TEST = process.argv.includes("--connect-test");
@@ -51,7 +52,7 @@ type Disk = { mount: string; used: number; total: number; used_percent: number }
 type AnalyzeEntry = { name: string; path: string; size: number; is_dir: boolean };
 
 async function moStatus(): Promise<{ disks: Disk[] }> {
-  const { stdout } = await pexec(MO, ["status", "--json"], { maxBuffer: 64 << 20 });
+  const { stdout } = await pexec(MO, ["status", "--json"], { maxBuffer: 64 << 20, timeout: 15_000, killSignal: "SIGKILL" });
   const j = JSON.parse(stdout);
   return j.snapshot ?? j; // MCP wraps under .snapshot; bare `mo` does not
 }
@@ -99,15 +100,6 @@ function formatAlert(root: Disk, hogs: AnalyzeEntry[]): string {
 }
 
 // ---- delivery (Photon spectrum-ts, LOCAL mode) -----------------------------
-
-function toE164(phone: string): string {
-  const raw = phone.trim();
-  const digits = raw.replace(/\D/g, "");
-  if (raw.startsWith("+")) return `+${digits}`;
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return raw; // email or already-odd handle: pass through untouched
-}
 
 // DM chat-guid spectrum-ts uses to resolve a space for a bare address
 // (packages/imessage/src/remote/ids.ts: `any;-;<addr>`). imessage-kit's
@@ -192,7 +184,7 @@ async function main() {
   console.log("[tracer] sent ✅");
 }
 
-main().catch((err) => {
+if (import.meta.main) main().catch((err) => {
   console.error("[tracer] failed:", err?.message ?? err);
   process.exit(1);
 });

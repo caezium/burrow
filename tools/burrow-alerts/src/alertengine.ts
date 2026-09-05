@@ -9,7 +9,7 @@
  * launchd invocations (each run is a fresh process).
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, renameSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
 
 export type ThresholdRule = {
@@ -56,9 +56,16 @@ export class AlertStore {
   constructor(path: string) {
     this.path = path;
     try {
-      this.data = JSON.parse(readFileSync(path, "utf8"));
+      const parsed: unknown = JSON.parse(readFileSync(path, "utf8"));
+      this.data = Object.create(null);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        for (const [key, value] of Object.entries(parsed)) {
+          if (value && typeof value.firing === "boolean"
+            && (value.lastFiredTS === null || Number.isFinite(value.lastFiredTS))) this.data[key] = value;
+        }
+      }
     } catch {
-      this.data = {};
+      this.data = Object.create(null);
     }
   }
 
@@ -71,7 +78,20 @@ export class AlertStore {
   }
 
   save() {
-    mkdirSync(dirname(this.path), { recursive: true });
-    writeFileSync(this.path, JSON.stringify(this.data, null, 2) + "\n");
+    mkdirSync(dirname(this.path), { recursive: true, mode: 0o700 });
+    const temporary = `${this.path}.${process.pid}.tmp`;
+    try {
+      writeFileSync(temporary, JSON.stringify(this.data, null, 2) + "\n", { mode: 0o600 });
+      renameSync(temporary, this.path);
+    } finally { rmSync(temporary, { force: true }); }
   }
+}
+
+/** Sunday at 09:00 local time, with catch-up after sleep or app downtime. */
+export function digestDue(lastSentSeconds: number, now: Date): boolean {
+  const boundary = new Date(now);
+  boundary.setDate(boundary.getDate() - boundary.getDay());
+  boundary.setHours(9, 0, 0, 0);
+  if (boundary > now) boundary.setDate(boundary.getDate() - 7);
+  return lastSentSeconds * 1000 < boundary.getTime();
 }

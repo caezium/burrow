@@ -6,6 +6,7 @@
  */
 
 import { spawn } from "node:child_process";
+import { trackChild, terminateChild, fetchJson } from "./lifecycle.ts";
 
 export type ToolSpec = { name: string; description: string; schema: object };
 export type ToolExec = (name: string, args: any) => Promise<string>;
@@ -17,6 +18,7 @@ export interface Brain {
 export type OpenAICompatCfg = { baseUrl: string; apiKey: string; model: string };
 type Deps = {
   fetchImpl?: typeof fetch;
+  timeoutMs?: number;
   // App-level context for the claude-cli provider (not part of user LLMConfig).
   cli?: { mcpConfigPath: string; allowedTools: string[]; runCli?: (args: string[]) => Promise<string>; useJan?: boolean };
 };
@@ -62,17 +64,26 @@ export function selectProvider(cfg: LLMConfig, deps: Deps = {}): Brain {
 export type ClaudeCliCfg = { model?: string; mcpConfigPath: string; allowedTools: string[]; useJan?: boolean };
 type CliDeps = { runCli?: (args: string[]) => Promise<string> };
 
-function defaultRunCli(useJan: boolean): (args: string[]) => Promise<string> {
+export function defaultRunCli(useJan: boolean, command = "claude", timeoutMs = 180_000): (args: string[]) => Promise<string> {
   return (args) =>
-    new Promise((resolve) => {
+    new Promise((resolve, reject) => {
       const env = { ...process.env };
       if (!useJan) { delete env.ANTHROPIC_BASE_URL; delete env.ANTHROPIC_AUTH_TOKEN; }
-      const child = spawn("claude", args, { stdio: ["ignore", "pipe", "pipe"], env });
+      const child = trackChild(spawn(command, args, { stdio: ["ignore", "pipe", "pipe"], env, detached: true }));
       let out = "";
-      const timer = setTimeout(() => child.kill("SIGKILL"), 180_000);
-      child.stdout.on("data", (d) => (out += d));
-      child.on("close", () => { clearTimeout(timer); resolve(out.trim()); });
-      child.on("error", () => { clearTimeout(timer); resolve(""); });
+      const timer = setTimeout(() => {
+        void terminateChild(child);
+        reject(new Error("Claude CLI timed out"));
+      }, timeoutMs);
+      child.stdout!.setEncoding("utf8");
+      child.stdout!.on("data", (d: string) => {
+        if (out.length + d.length > 1_000_000) {
+          clearTimeout(timer); void terminateChild(child); reject(new Error("Claude CLI output exceeded limit"));
+        } else out += d;
+      });
+      child.stderr!.resume(); // Never let diagnostics fill a pipe and block the answer.
+      child.on("close", (code) => { clearTimeout(timer); code === 0 ? resolve(out.trim()) : reject(new Error(`Claude CLI exited (${code})`)); });
+      child.on("error", (error) => { clearTimeout(timer); reject(error); });
     });
 }
 
@@ -85,6 +96,12 @@ export function makeClaudeCliBrain(cfg: ClaudeCliCfg, deps: CliDeps = {}): Brain
         "-p", question,
         "--mcp-config", cfg.mcpConfigPath,
         "--strict-mcp-config",
+        "--tools", "", // allowedTools grants permissions; it does not remove built-in tools.
+        "--permission-mode", "dontAsk",
+        "--setting-sources", "",
+        "--settings", JSON.stringify({ disableAllHooks: true }),
+        "--disable-slash-commands",
+        "--no-session-persistence",
         "--allowedTools", ...cfg.allowedTools,
         "--append-system-prompt", system,
         ...model,
@@ -106,7 +123,7 @@ export function makeAnthropicBrain(cfg: AnthropicCfg, deps: Deps = {}): Brain {
         : undefined;
 
       for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-        const res = await doFetch(url, {
+        const res = await fetchJson(doFetch, url, {
           method: "POST",
           headers: {
             "content-type": "application/json",
@@ -114,11 +131,11 @@ export function makeAnthropicBrain(cfg: AnthropicCfg, deps: Deps = {}): Brain {
             "anthropic-version": "2023-06-01",
           },
           body: JSON.stringify({ model: cfg.model, max_tokens: 1024, system, messages, tools: toolPayload }),
-        } as any);
+        }, deps.timeoutMs);
         // Without this an auth/rate-limit/5xx returns a body with no `content`, the brain yields
         // "", and the agent texts the owner a BLANK bubble. Surface the failure instead.
         if (!(res as any).ok) return `I couldn't reach the model (HTTP ${(res as any).status}).`;
-        const json = await (res as any).json();
+        const json = res.body;
         const content: any[] = json.content ?? [];
 
         if (json.stop_reason === "tool_use") {
@@ -154,14 +171,14 @@ export function makeOpenAICompatBrain(cfg: OpenAICompatCfg, deps: Deps = {}): Br
         : undefined;
 
       for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-        const res = await doFetch(`${cfg.baseUrl}/chat/completions`, {
+        const res = await fetchJson(doFetch, `${cfg.baseUrl}/chat/completions`, {
           method: "POST",
           headers: { "content-type": "application/json", authorization: `Bearer ${cfg.apiKey}` },
           body: JSON.stringify({ model: cfg.model, messages, tools: toolPayload }),
-        } as any);
+        }, deps.timeoutMs);
         // See the Anthropic brain: a non-2xx here otherwise becomes an empty reply → blank iMessage.
         if (!(res as any).ok) return `I couldn't reach the model (HTTP ${(res as any).status}).`;
-        const json = await (res as any).json();
+        const json = res.body;
         const msg = json.choices?.[0]?.message ?? {};
 
         const toolCalls = msg.tool_calls ?? [];

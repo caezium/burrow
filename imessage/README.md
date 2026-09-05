@@ -53,7 +53,7 @@ Point `tools/burrow-alerts` at this extension:
 // config.local.json
 "card": {
   "appName": "Burrow",
-  "extensionBundleId": "dev.caezium.Burrow.imessage",
+  "extensionBundleId": "dev.caezium.Burrow.cards.extension",
   "teamId": "<your Apple Team ID>",
   "url": "https://burrow.henryzh.dev/card"   // base; sidecar appends ?p=<layout>
 }
@@ -67,7 +67,7 @@ The sidecar builds a `BurrowLayout` (`src/burrowlayout.ts`), base64url-encodes i
 
 `vstack` · `hstack` · `section` · `text` · `statusBadge` · `progressBar` · `gauge` · `keyValueRow`
 
-Actions are `{ id, label, systemImage?, deepLinkURL }` — `burrow://action?id=…` buttons that insert a reply into the thread.
+Actions are `{ id, label, systemImage?, deepLinkURL }`. Only the known `burrow://action?id=clean` and `id=inspect` routes are accepted. These open a local Burrow app when available; they cannot launch an app on another device. On an iPhone without a handler, the extension explains that the owner should open Burrow on the Mac.
 
 ## Acknowledgments
 

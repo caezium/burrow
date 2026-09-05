@@ -79,7 +79,14 @@ final class MessagesViewController: MSMessagesAppViewController {
     }
 
     private func open(_ action: BurrowAction) {
-        guard let url = URL(string: action.deepLinkURL) else { return }
-        extensionContext?.open(url, completionHandler: nil)
+        guard let url = action.burrowURL else { return }
+        extensionContext?.open(url) { [weak self] opened in
+            guard !opened else { return }
+            DispatchQueue.main.async {
+                let alert = UIAlertController(title: "Open Burrow on your Mac", message: "Review your Mac's health and cleanup options in Burrow on that Mac.", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                self?.present(alert, animated: true)
+            }
+        }
     }
 }

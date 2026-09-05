@@ -13,6 +13,7 @@
  */
 
 import { spawn, type ChildProcess } from "node:child_process";
+import { trackChild, terminateChild } from "./lifecycle.ts";
 
 const BURROW_BIN =
   process.env.BURROW_BIN ?? "/Applications/Burrow.app/Contents/MacOS/Burrow";
@@ -34,8 +35,8 @@ export class BurrowMCP {
   private dead = false;
   private deadError: Error | null = null;
 
-  constructor() {
-    this.proc = spawn(BURROW_BIN, ["--mcp"], { stdio: ["pipe", "pipe", "ignore"] });
+  constructor(command = BURROW_BIN, args = ["--mcp"]) {
+    this.proc = trackChild(spawn(command, args, { stdio: ["pipe", "pipe", "ignore"], detached: true }));
     // A missing/moved Burrow.app makes spawn emit 'error' on the child. With no listener Node
     // RE-THROWS it as an uncaught exception — bypassing every `.catch`/await and, in the
     // long-lived agent (one BurrowMCP per message), turning a fresh Mac without Burrow into a
@@ -43,10 +44,13 @@ export class BurrowMCP {
     // rejection on `ready`/pending calls instead.
     this.proc.on("error", (e) => this.die(e instanceof Error ? e : new Error(String(e))));
     this.proc.on("exit", (code, signal) => {
-      if (code !== 0) this.die(new Error(`burrow --mcp exited early (code ${code ?? "null"}, signal ${signal ?? "null"})`));
+      this.die(new Error(`burrow --mcp exited (code ${code ?? "null"}, signal ${signal ?? "null"})`));
     });
-    this.proc.stdout!.on("data", (d) => this.onData(String(d)));
+    this.proc.stdin!.on("error", (error) => this.die(error));
+    this.proc.stdout!.setEncoding("utf8");
+    this.proc.stdout!.on("data", (d: string) => this.onData(d));
     this.ready = this.init();
+    void this.ready.catch(() => {}); // A failed idle session is observed by its next call.
   }
 
   /** Tear down on a fatal child failure: reject every in-flight call (and `ready`, one of them)
@@ -74,6 +78,11 @@ export class BurrowMCP {
 
   private onData(chunk: string) {
     this.buf += chunk;
+    if (this.buf.length > 8_000_000) {
+      this.die(new Error("MCP response exceeded limit"));
+      void terminateChild(this.proc);
+      return;
+    }
     let i: number;
     while ((i = this.buf.indexOf("\n")) >= 0) {
       const line = this.buf.slice(0, i);
@@ -119,6 +128,7 @@ export class BurrowMCP {
     await this.ready;
     const res = await this.rpc("tools/call", { name, arguments: args }, timeoutMs);
     const text = res?.content?.[0]?.text;
+    if (res?.isError) throw new Error(`${name}: ${typeof text === "string" ? text : "tool failed"}`);
     if (typeof text !== "string") throw new Error(`${name}: no text content`);
     return text;
   }
@@ -129,8 +139,8 @@ export class BurrowMCP {
   }
 
   async close() {
-    try { this.proc.stdin!.end(); } catch {}
-    this.proc.kill();
+    this.die(new Error("MCP session closed"));
+    await terminateChild(this.proc);
   }
 }
 

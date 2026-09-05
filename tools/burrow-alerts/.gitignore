@@ -1,6 +1,4 @@
 node_modules/
-bun.lock
-bun.lockb
 *.state.json
 config.local.json
 .scguard/
