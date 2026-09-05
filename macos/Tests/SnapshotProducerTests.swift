@@ -183,6 +183,21 @@ final class SnapshotProducerEngineTests: XCTestCase {
         func statusJSON() throws -> String { json() }
     }
 
+    final class HeldWork {
+        private let lock = NSLock()
+        private var pending: [() -> Void] = []
+        var count: Int { lock.lock(); defer { lock.unlock() }; return pending.count }
+        func submit(_ body: @escaping () -> Void) {
+            lock.lock(); pending.append(body); lock.unlock()
+        }
+        func runNext() {
+            lock.lock()
+            let body = pending.isEmpty ? nil : pending.removeFirst()
+            lock.unlock()
+            body?()
+        }
+    }
+
     /// Canned `mo status --json` with the Apple-Silicon holes: disk 0/0 and
     /// gpu -1. `seq` varies collected_at so each sample lands on its own ts.
     private func holeyJSON(seq: Int) -> String {
@@ -383,5 +398,54 @@ final class SnapshotProducerEngineTests: XCTestCase {
         XCTAssertEqual(persistedCount(), 1,
                        "only the start() sample — no timers survive stop()")
         XCTAssertTrue(p.live.samples.isEmpty)
+    }
+
+    func testWatchUsesTheSampleQueueAndDropsFramesQueuedBeforeStop() {
+        let clock = ManualClock(start: Date(timeIntervalSince1970: 0))
+        let work = HeldWork()
+        var continuation: AsyncStream<ProcessEvent>.Continuation!
+        let stream = AsyncStream<ProcessEvent> { continuation = $0 }
+        defer { continuation.finish() }
+        let p = SnapshotProducer(deps: .init(
+            status: CannedStatus(json: { self.holeyJSON(seq: 1) }),
+            hardware: FakeCounters(), clock: clock, sink: DBSnapshotSink(db: db),
+            snapshotInterval: { 60 }, work: work.submit, statusWatch: { stream }))
+        p.setForeground(true)
+        p.start()
+        work.runNext() // seed and open the watch
+        let frame = holeyJSON(seq: 10).replacingOccurrences(of: "\"health_score\":90", with: "\"health_score\":71")
+        continuation.yield(.line(frame))
+        waitUntil("a frame is received") { work.count > 0 || p.live.lastSnapshot?.healthScore == 71 }
+        XCTAssertEqual(p.live.lastSnapshot?.healthScore, 90,
+                       "stream frames must wait behind in-flight poll work before touching rate trackers or persistence")
+        XCTAssertEqual(persistedCount(), 1)
+        XCTAssertEqual(work.count, 1)
+        work.runNext()
+        XCTAssertEqual(p.live.lastSnapshot?.healthScore, 71)
+        XCTAssertEqual(persistedCount(), 2)
+
+        continuation.yield(.line(frame.replacingOccurrences(of: ":71", with: ":72")))
+        waitUntil("a second frame is received") { work.count > 0 || p.live.lastSnapshot?.healthScore == 72 }
+        p.stop()
+        work.runNext()
+        XCTAssertEqual(p.live.lastSnapshot?.healthScore, 71, "stopping invalidates pending stream work")
+        XCTAssertEqual(persistedCount(), 2)
+    }
+
+    func testStoppingBeforeTheInitialWorkRunsDoesNotStartTheEngine() {
+        let work = HeldWork()
+        var polls = 0
+        var watches = 0
+        let p = SnapshotProducer(deps: .init(
+            status: CannedStatus(json: { polls += 1; return self.holeyJSON(seq: 1) }),
+            hardware: FakeCounters(), clock: ManualClock(start: Date()), sink: DBSnapshotSink(db: db),
+            snapshotInterval: { 60 }, work: work.submit,
+            statusWatch: { watches += 1; return nil }))
+        p.start()
+        p.stop()
+        work.runNext()
+        XCTAssertEqual(polls, 0)
+        XCTAssertEqual(watches, 0)
+        XCTAssertEqual(persistedCount(), 0)
     }
 }

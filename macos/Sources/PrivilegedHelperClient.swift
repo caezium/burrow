@@ -25,7 +25,7 @@
 //    authorization, never reuses an operation ID, and never pre-authorizes.
 //  * The client cannot describe a command. It picks a `HelperOperation`, and
 //    the daemon derives argv from the enum.
-//  * A helper whose build doesn't match this app is not used at all.
+//  * The helper must match this app's build and required security capabilities.
 //
 
 import Foundation
@@ -72,7 +72,7 @@ enum PrivilegeRoute: Equatable {
 
     /// The routing rule. The helper is used only when ALL of these hold:
     ///   * the daemon is registered and enabled;
-    ///   * its build matches this app's;
+    ///   * its build and protocol match this app, with the required capabilities;
     ///   * the work is either a reviewed cleanup plan, or argv that maps onto
     ///     one of the typed engine operations.
     ///
@@ -139,8 +139,6 @@ final class PrivilegedHelperClient: @unchecked Sendable {
     }
 
     private let service = SMAppService.daemon(plistName: HelperNames.daemonPlist)
-    private let lock = NSLock()
-    private var cachedSkew: HelperVersionSkew.Skew?
 
     // MARK: Registration
 
@@ -157,14 +155,12 @@ final class PrivilegedHelperClient: @unchecked Sendable {
     /// buys convenience, never standing privilege.
     func register() throws {
         try service.register()
-        lock.lock(); cachedSkew = nil; lock.unlock()
     }
 
     /// Remove the daemon. Used by Settings, and by the uninstall path so
     /// Burrow never leaves a root daemon behind.
     func unregister() throws {
         try service.unregister()
-        lock.lock(); cachedSkew = nil; lock.unlock()
     }
 
     // MARK: Connection
@@ -176,39 +172,35 @@ final class PrivilegedHelperClient: @unchecked Sendable {
         return connection
     }
 
-    /// The installed helper's build, or "" if it can't be reached. Blocking —
-    /// call off the main thread.
-    func helperBuild(timeout: TimeInterval = 5) -> String {
+    /// The running helper's protocol declaration, or nil if it is older than
+    /// this handshake or cannot be reached. Blocking; call off the main thread.
+    private func helperStatus(timeout: TimeInterval = 5) -> Data? {
         let connection = makeConnection()
         connection.resume()
         defer { connection.invalidate() }
-
-        let semaphore = DispatchSemaphore(value: 0)
-        var result = ""
-        let proxy = connection.remoteObjectProxyWithErrorHandler { _ in semaphore.signal() }
-        (proxy as? BurrowHelperProtocol)?.helperBuild { build in
-            result = build
-            semaphore.signal()
-        }
-        _ = semaphore.wait(timeout: .now() + timeout)
-        return result
+        return helperStatus(on: connection, timeout: timeout)
     }
 
-    /// Whether the installed helper matches this app. Cached per process
-    /// because it only changes across an update or a re-registration, both of
-    /// which clear it.
-    func versionSkew() -> HelperVersionSkew.Skew {
-        lock.lock()
-        if let cachedSkew { lock.unlock(); return cachedSkew }
-        lock.unlock()
+    private func helperStatus(on connection: NSXPCConnection,
+                              timeout: TimeInterval = 5) -> Data? {
+        let response = HelperStatusReply()
+        let proxy = connection.remoteObjectProxyWithErrorHandler { _ in response.finish(nil) }
+        guard let helper = proxy as? BurrowHelperProtocol else { return nil }
+        helper.helperStatus { data in
+            response.finish(data)
+        }
+        return response.wait(timeout: timeout)
+    }
 
-        let reported = helperBuild()
+    /// Recheck the running daemon instead of caching compatibility across its
+    /// lifetime: launchd can restart it without restarting this app.
+    func versionSkew() -> HelperVersionSkew.Skew {
+        let reported = helperStatus()
+        let skew = HelperVersionSkew.evaluate(appBuild: Self.appBuild, statusData: reported)
         helperClientLog.notice("""
-            helper reported build \(reported.isEmpty ? "<unreachable>" : reported, privacy: .public), \
-            app is \(Self.appBuild, privacy: .public)
+            helper contract \(String(describing: skew), privacy: .public), \
+            app build \(Self.appBuild, privacy: .public)
             """)
-        let skew = HelperVersionSkew.evaluate(appBuild: Self.appBuild, helperBuild: reported)
-        lock.lock(); cachedSkew = skew; lock.unlock()
         return skew
     }
 
@@ -242,6 +234,7 @@ final class PrivilegedHelperClient: @unchecked Sendable {
     func run(operation: HelperOperation,
              interface: String? = nil,
              reviewedPaths: [String] = [],
+             reviewedSelection: HelperReviewedSelection? = nil,
              invokingUser suppliedIdentity: InvokingUserIdentity? = nil,
              onLine: @escaping (String) -> Void) -> ElevatedOutcome {
         // Resolve while still running as the caller and before showing an auth
@@ -280,6 +273,7 @@ final class PrivilegedHelperClient: @unchecked Sendable {
         return withExtendedLifetime(granted) {
             send(payload: granted.externalForm, operation: operation,
                  interface: interface, reviewedPaths: reviewedPaths,
+                 reviewedSelection: reviewedSelection,
                  invokingUser: invokingUser, onLine: onLine)
         }
     }
@@ -301,7 +295,7 @@ final class PrivilegedHelperClient: @unchecked Sendable {
         return (outcome, joined)
     }
 
-    /// Whether the helper is installed, approved, and build-matched — i.e.
+    /// Whether the helper is installed, approved, and contract-compatible — i.e.
     /// whether a caller should prefer it over its existing elevation.
     var isUsable: Bool {
         registrationStatus == .enabled && versionSkew() == .matched
@@ -313,7 +307,8 @@ final class PrivilegedHelperClient: @unchecked Sendable {
     private func send(payload authorization: Data,
                       operation: HelperOperation,
                       interface: String?,
-                      reviewedPaths: [String],
+                       reviewedPaths: [String],
+                       reviewedSelection: HelperReviewedSelection?,
                       invokingUser: InvokingUserIdentity,
                       onLine: @escaping (String) -> Void) -> ElevatedOutcome {
         let request = HelperRequest(operation: operation,
@@ -323,7 +318,8 @@ final class PrivilegedHelperClient: @unchecked Sendable {
                                         uid: UInt32(invokingUser.uid),
                                         canonicalHome: invokingUser.canonicalHome),
                                     networkInterface: interface,
-                                    reviewedPaths: reviewedPaths)
+                                    reviewedPaths: reviewedPaths,
+                                    reviewedSelection: reviewedSelection)
         guard let payload = try? JSONEncoder().encode(request) else { return .launchFailed }
 
         let connection = makeConnection()
@@ -332,6 +328,16 @@ final class PrivilegedHelperClient: @unchecked Sendable {
         connection.exportedObject = sink
         connection.resume()
         defer { connection.invalidate() }
+
+        // Routing ran before the authentication prompt. Bind compatibility to
+        // the connection that will execute, too: the daemon may have restarted
+        // while the user was authenticating. An old same-build helper ignores
+        // unknown request fields, so sending it the selection would be unsafe.
+        guard HelperVersionSkew.evaluate(appBuild: Self.appBuild,
+                                          statusData: helperStatus(on: connection)) == .matched else {
+            helperClientLog.notice("helper contract changed before execution; request refused")
+            return .launchFailed
+        }
 
         let semaphore = DispatchSemaphore(value: 0)
         var outcome: ElevatedOutcome = .launchFailed
@@ -357,6 +363,34 @@ final class PrivilegedHelperClient: @unchecked Sendable {
         // what the osascript path could never offer.
         semaphore.wait()
         return outcome
+    }
+}
+
+/// An XPC reply may arrive after a timeout or alongside an error callback.
+/// Publish only the first result under a lock so late replies cannot race the
+/// caller's read or turn an already-refused handshake into a match.
+private final class HelperStatusReply: @unchecked Sendable {
+    private let lock = NSLock()
+    private let semaphore = DispatchSemaphore(value: 0)
+    private var finished = false
+    private var data: Data?
+
+    func finish(_ data: Data?) {
+        lock.lock()
+        guard !finished else { lock.unlock(); return }
+        finished = true
+        self.data = data
+        lock.unlock()
+        semaphore.signal()
+    }
+
+    func wait(timeout: TimeInterval) -> Data? {
+        guard semaphore.wait(timeout: .now() + timeout) == .success else {
+            finish(nil)
+            return nil
+        }
+        lock.lock(); defer { lock.unlock() }
+        return data
     }
 }
 
@@ -405,7 +439,8 @@ struct HelperAwareProcessPort: ProcessPort {
                         reviewedPaths = []
                     }
                     let outcome = client.run(operation: operation,
-                                             reviewedPaths: reviewedPaths,
+                                              reviewedPaths: reviewedPaths,
+                                              reviewedSelection: spec.cleanupPlan?.helperSelection,
                                              invokingUser: spec.invokingUser) { line in
                         sawOutput = true
                         continuation.yield(.line(line))

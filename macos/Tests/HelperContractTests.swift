@@ -674,7 +674,10 @@ final class HelperReviewedRequestTests: XCTestCase {
 
     private func request(_ operation: HelperOperation, paths: [String]) -> HelperRequest {
         HelperRequest(operation: operation, operationID: UUID().uuidString,
-                      clientBuild: "1", invokingUser: claim(), reviewedPaths: paths)
+                      clientBuild: "1", invokingUser: claim(), reviewedPaths: paths,
+                      reviewedSelection: operation.needsReviewedPaths
+                          ? HelperReviewedSelection(expiresAt: Date().addingTimeInterval(300), roots: [], items: [])
+                          : nil)
     }
 
     func testReviewedPathsRoundTripAcrossTheWire() throws {
@@ -687,6 +690,13 @@ final class HelperReviewedRequestTests: XCTestCase {
     func testCleanReviewedRequiresAtLeastOnePath() {
         XCTAssertEqual(request(.cleanReviewed, paths: []).validate(expectedBuild: "1"),
                        .invalidReviewedPaths)
+    }
+
+    func testCleanReviewedRefusesPathsWithoutOriginalIdentities() {
+        let unpinned = HelperRequest(operation: .cleanReviewed, operationID: UUID().uuidString,
+                                    clientBuild: "1", invokingUser: claim(),
+                                    reviewedPaths: ["/Users/henry/Library/Caches/a"])
+        XCTAssertEqual(unpinned.validate(expectedBuild: "1"), .invalidReviewedPaths)
     }
 
     /// Paths on an operation that takes none means the caller and the contract

@@ -90,6 +90,59 @@ final class CleanListTests: XCTestCase {
         XCTAssertTrue(list.categories.isEmpty)
     }
 
+    private func enginePreview(_ ext: String) throws -> [String] {
+        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .appendingPathComponent("Fixtures/clean-preview.\(ext)")
+        return try String(contentsOf: url, encoding: .utf8).components(separatedBy: "\n")
+    }
+
+    func testEnginePreview_capturedStreamAndEnvelopeKeepExactPathsAndBytes() throws {
+        for ext in ["ndjson", "json"] {
+            let lines = try enginePreview(ext)
+            let report = CleanDryReport.reduce(lines, bundledEngine: true) {
+                XCTFail("The bundled engine must never load an old clean-list.txt")
+                return CleanList.parse(Self.fixture)
+            }
+            let list = try XCTUnwrap(report.list)
+            let items = list.categories.flatMap(\.items)
+            XCTAssertEqual(items.map { URL(fileURLWithPath: $0.path).lastPathComponent },
+                           ["review one", "review #two"])
+            XCTAssertEqual(items.map(\.sizeBytes), [1234, 5678],
+                           "Review uses exact bytes, not rounded size_human strings")
+            XCTAssertEqual(list.summaryItemCount, 2)
+            XCTAssertEqual(CleanSelection(list: list, locked: [:]).selectedBytes, 6912)
+        }
+    }
+
+    func testEnginePreview_incompleteStreamCannotFallBackToAnOldList() throws {
+        let lines = try enginePreview("ndjson").filter { !$0.contains("\"done\"") }
+        let report = CleanDryReport.reduce(lines, bundledEngine: true) {
+            XCTFail("An incomplete engine scan cannot authorize a stale legacy preview")
+            return CleanList.parse(Self.fixture)
+        }
+        XCTAssertNil(report.list)
+    }
+
+    func testEnginePreview_emptyAndFailedScansNeverLoadAnOldList() {
+        let responses = [
+            #"{"event":"done","dry_run":true,"would_free_bytes":0,"would_free_human":"0B","count":0}"#,
+            #"{"ok":false,"command":"clean","error":{"kind":"error","message":"scan failed"}}"#,
+        ]
+        for response in responses {
+            let report = CleanDryReport.reduce([response], bundledEngine: true) {
+                XCTFail("Engine results are never substituted with an old preview")
+                return CleanList.parse(Self.fixture)
+            }
+            XCTAssertTrue(report.list?.categories.isEmpty ?? true)
+        }
+    }
+
+    func testLegacyPreview_stillReadsTheLegacyList() {
+        let expected = CleanList.parse(Self.fixture)
+        let report = CleanDryReport.reduce([], bundledEngine: false, legacyList: { expected })
+        XCTAssertEqual(report.list, expected)
+    }
+
     func testParseSize_units() {
         XCTAssertEqual(CleanList.parseSize("4KB"), 4 * 1024)
         XCTAssertEqual(CleanList.parseSize("978KB"), 978 * 1024)

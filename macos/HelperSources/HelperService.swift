@@ -567,6 +567,10 @@ final class HelperService: NSObject, BurrowHelperProtocol {
         reply(Self.build)
     }
 
+    func helperStatus(withReply reply: @escaping (Data) -> Void) {
+        reply((try? JSONEncoder().encode(HelperStatus.current(build: Self.build))) ?? Data())
+    }
+
     func cancelOperation(operationID: String, withReply reply: @escaping (Bool) -> Void) {
         // Cancellation stops work; it never starts any, so it needs no
         // authorization of its own. But it is still bound to the invoking
@@ -627,6 +631,9 @@ final class HelperService: NSObject, BurrowHelperProtocol {
         // the invoking user's own trees.
         var reviewedPaths: [String] = []
         if request.operation.needsReviewedPaths {
+            guard request.reviewedSelection?.matches(paths: request.reviewedPaths) == true else {
+                return respond(.exited(ElevatedExitCode.boundaryCheckFailed))
+            }
             let decision = HelperReviewedPathPolicy.validate(
                 paths: request.reviewedPaths,
                 roots: HelperReviewedCleanup.approvedRoots(for: invokingUser),
@@ -687,6 +694,9 @@ final class HelperService: NSObject, BurrowHelperProtocol {
         // of the run.
         var reviewedPlanFile: URL?
         if request.operation.needsReviewedPaths {
+            guard request.reviewedSelection?.matches(paths: reviewedPaths) == true else {
+                return respond(.exited(ElevatedExitCode.boundaryCheckFailed))
+            }
             do {
                 reviewedPlanFile = try HelperReviewedCleanup.writePlanFile(paths: reviewedPaths)
             } catch {

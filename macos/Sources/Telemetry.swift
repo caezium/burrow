@@ -127,12 +127,16 @@ enum Telemetry {
     /// Records a fixed-name product event. Properties are sanitized before any
     /// background work; callers must bucket sizes/counts/durations first.
     static func capture(_ event: String, _ props: [String: Any] = [:]) {
-        guard DiagnosticPrivacy.isSafeIdentifier(event), isEnabled else { return }
+        guard isAllowedEventName(event), isEnabled else { return }
         let sanitized = DiagnosticPrivacy.sanitize(props)
         guard let delivery = activeDeliveryConfiguration() else { return }
 
         CrashReporter.breadcrumb(event, category: "product", data: sanitized)
         enqueue(.event(event, sanitized), using: delivery)
+    }
+
+    static func isAllowedEventName(_ event: String) -> Bool {
+        event == "$feature_flag_called" || DiagnosticPrivacy.isSafeIdentifier(event)
     }
 
     /// Semantic navigation only. `$screen` contains a fixed pane name, never a
@@ -161,6 +165,7 @@ enum Telemetry {
         guard previous != enabled else { return }
 
         isEnabled = enabled
+        if !enabled { FeatureFlags.apply([:], persistTo: nil) }
         CrashReporter.setEnabled(enabled)
         guard let delivery = configuredDelivery() else { return }
 

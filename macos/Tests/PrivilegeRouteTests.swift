@@ -191,4 +191,63 @@ final class PrivilegeRouteTests: XCTestCase {
                                              skew: .matched),
                        .osascript)
     }
+
+    // MARK: - Running-helper handshake
+
+    func testHandshake_currentDaemonAllowsReviewedCleanup() throws {
+        let status = HelperStatus.current(build: "26")
+        let data = try JSONEncoder().encode(status)
+        XCTAssertEqual(try JSONDecoder().decode(HelperStatus.self, from: data), status)
+        XCTAssertEqual(reviewedRoute(statusData: data), .helper(.cleanReviewed))
+    }
+
+    func testHandshake_sameBuildWithoutReviewedSelectionCapabilityFallsBack() throws {
+        let status = HelperStatus(build: "26",
+                                  protocolVersion: HelperStatus.currentProtocolVersion,
+                                  capabilities: [])
+        XCTAssertEqual(reviewedRoute(statusData: try JSONEncoder().encode(status)), .osascript)
+    }
+
+    func testHandshake_oldOrUnavailableDaemonNeverPassesOnItsBuildAlone() {
+        // Missing selector/error/timeout gives nil; the old build-only reply
+        // is also insufficient even when its number is exactly the app's.
+        for reply in [nil, Data("26".utf8), Data("\"26\"".utf8), Data(#"{"build":"26"}"#.utf8)] {
+            XCTAssertEqual(reviewedRoute(statusData: reply), .osascript)
+        }
+    }
+
+    func testHandshake_missingMalformedOrUnknownProtocolFallsBack() throws {
+        for version in [0, HelperStatus.currentProtocolVersion + 1] {
+            let status = HelperStatus(build: "26", protocolVersion: version,
+                                      capabilities: [HelperStatus.reviewedSelectionCapability])
+            XCTAssertEqual(reviewedRoute(statusData: try JSONEncoder().encode(status)), .osascript)
+        }
+        for reply in ["", "{", #"{"build":"26","capabilities":["reviewed-selection-v1"]}"#,
+                      #"{"build":"26","protocolVersion":1}"#,
+                      #"{"build":"26","protocolVersion":"1","capabilities":["reviewed-selection-v1"]}"#] {
+            XCTAssertEqual(reviewedRoute(statusData: Data(reply.utf8)), .osascript)
+        }
+    }
+
+    func testHandshake_requiredCapabilityDoesNotRelaxTheBuildCheck() throws {
+        for helperBuild in ["", "25", "27"] {
+            let data = try JSONEncoder().encode(HelperStatus.current(build: helperBuild))
+            XCTAssertEqual(reviewedRoute(statusData: data), .osascript)
+        }
+        let matching = try JSONEncoder().encode(HelperStatus.current(build: "26"))
+        XCTAssertEqual(HelperVersionSkew.evaluate(appBuild: "", statusData: matching), .mismatched)
+    }
+
+    func testHandshake_additiveCapabilitiesKeepTheCurrentContractCompatible() throws {
+        let status = HelperStatus(build: "26",
+                                  protocolVersion: HelperStatus.currentProtocolVersion,
+                                  capabilities: [HelperStatus.reviewedSelectionCapability, "future-optional-check"])
+        XCTAssertEqual(reviewedRoute(statusData: try JSONEncoder().encode(status)), .helper(.cleanReviewed))
+    }
+
+    private func reviewedRoute(statusData: Data?) -> PrivilegeRoute {
+        PrivilegeRoute.decide(arguments: [], registration: .enabled,
+                              skew: HelperVersionSkew.evaluate(appBuild: "26", statusData: statusData),
+                              hasReviewedCleanup: true)
+    }
 }

@@ -97,6 +97,27 @@ class NeutralizeTests(unittest.TestCase):
         # A span cannot cross a blank line, so this one never opened.
         self.assertQuoted("start `stray tick\n\nnew para @user here", "@user")
 
+    def test_unmatched_backtick_cannot_pair_with_an_inserted_quote(self):
+        self.assertEqual(neutralize("fix `formatter @user"),
+                         "fix &grave;formatter `@user`")
+
+    def test_escaped_backtick_does_not_hide_a_live_mention(self):
+        self.assertEqual(neutralize(r"escaped \`literal @user` end"),
+                         r"escaped \&grave;literal `@user`&grave; end")
+
+    def test_invalid_backtick_fence_info_does_not_hide_a_mention(self):
+        self.assertEqual(neutralize("```lang`invalid\n@user\n```"),
+                         "&grave;&grave;&grave;lang&grave;invalid\n`@user`\n&grave;&grave;&grave;")
+
+    def test_indented_fence_does_not_capture_an_unindented_mention(self):
+        self.assertQuoted("    ```\n@user\n    ```", "@user")
+
+    def test_code_span_does_not_cross_a_markdown_block_boundary(self):
+        for boundary in ("# heading", "> quote", "- item", "1. item", "<div>"):
+            with self.subTest(boundary=boundary):
+                self.assertQuoted(f"`before\n{boundary} @user\n`after", "@user")
+        self.assertQuoted("`before\n---\n@user\n`after", "@user")
+
     # --- quoting too much ----------------------------------------------------
 
     def test_fenced_blocks_are_left_alone(self):
@@ -115,6 +136,9 @@ class NeutralizeTests(unittest.TestCase):
 
     def test_equal_delimiter_run_is_a_span(self):
         self.assertUnchanged("``code @user`` more")
+
+    def test_code_span_with_a_shorter_internal_run_is_left_whole(self):
+        self.assertUnchanged("``code `literal @user`` more")
 
     def test_compare_urls_and_doc_anchors_stay_clickable(self):
         self.assertUnchanged("https://github.com/tw93/Mole/compare/v1...v2 and https://x.dev/d#s")

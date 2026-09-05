@@ -182,8 +182,7 @@ function Invoke-MoleCommand {
     if (-not (Test-Path $scriptPath)) {
         Write-MoleError "Unknown command: $CommandName"
         Write-Host ""
-        Write-Host "Run 'mo --help' for available commands"
-        return
+        throw "Bundled Mole command is missing: $CommandName"
     }
 
     # Execute the command script with arguments using splatting

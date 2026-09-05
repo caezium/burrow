@@ -43,6 +43,11 @@ jobs:
       - name: Restore
         run: dotnet restore .\BurrowWin.sln
 
+      - name: Test Mole runtime contracts
+        # The bundled shim uses Windows PowerShell 5.1.
+        shell: powershell
+        run: .\scripts\test-mole-runtime.ps1
+
       - name: Build app
         run: dotnet build .\BurrowWin.csproj -c Release -p:Platform=x64 -nr:false -v:minimal
 
@@ -62,3 +67,7 @@ jobs:
 
       - name: Publish dry run
         run: dotnet publish .\BurrowWin.csproj -c Release -p:Platform=x64 -r win-x64 --self-contained false -o .\artifacts\ci-publish -v:minimal
+
+      - name: Verify published Mole runtime
+        shell: pwsh
+        run: .\scripts\verify-mole-runtime.ps1 -EngineRoot .\artifacts\ci-publish\Assets\Mole

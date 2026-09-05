@@ -65,7 +65,7 @@ enum SweepOperations {
                              reduce: { lines in
                                  let (groups, summary) = BurrowStreamReport.reduce(lines, title: title)
                                  let bytes = lines.reduce(Int64(0)) { $0 + BurrowStreamReport.streamedBytes($1) }
-                                 return (groups, summary, bytes)
+                                 return CleanDryReport(groups: groups, summary: summary, liveBytes: bytes, list: nil)
                              },
                              hudLine: { BurrowStreamReport.hudLine($0) })
     }
@@ -212,9 +212,9 @@ struct SweepView: View {
                     Spacer()
                     Button { confirmRemoval(count: items.count, bytes: foundBytes) } label: {
                         Text(String(format: NSLocalizedString("Move to Trash · %@", comment: "confirm pill"), Fmt.bytes(foundBytes)))
-                            .font(Brand.sans(13, .semibold)).foregroundStyle(.black)
+                            .font(Brand.sans(13, .semibold)).foregroundStyle(Brand.onInverse)
                             .padding(.horizontal, 20).padding(.vertical, 10)
-                            .background(Capsule().fill(Color.white))
+                            .background(Capsule().fill(Brand.inverse))
                     }
                     .buttonStyle(.plain)
                 }

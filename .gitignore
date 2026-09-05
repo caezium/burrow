@@ -6,6 +6,9 @@ Burrow.xcodeproj/
 .vs/
 .vscode/
 bin/
+!/windows/Assets/Mole/bin/
+/windows/Assets/Mole/bin/*
+!/windows/Assets/Mole/bin/*.ps1
 obj/
 artifacts/
 TestResults/

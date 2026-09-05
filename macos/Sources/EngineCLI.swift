@@ -174,14 +174,8 @@ enum EngineCLI {
             .map(shellQuote).joined(separator: " ")
         let run: String
         if let cleanupPlan {
-            // A reviewed clean: the plan's boundary checks (expiry, pinned
-            // identities of every root and entry) run first, and only then the
-            // engine over the plan file named in `args`. The checks and the
-            // paths both come from the plan, so the authorization and what it
-            // authorizes cannot drift apart. Running them inside the redirect
-            // means a refused check explains itself in the run log rather than
-            // vanishing into osascript's stderr.
-            run = cleanupPlan.guardedShell(running: engine)
+            run = cleanupPlan.guardedEngineShell(
+                commandPrefix: isolatedEnvironment + [command.executable.path])
         } else {
             run = engine
         }

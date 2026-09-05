@@ -196,6 +196,10 @@ Invoke-Step "Run tests" {
     dotnet test (Join-Path $root "Tests\BurrowWin.Tests\BurrowWin.Tests.csproj") -c $Configuration --no-build -v:minimal
 }
 
+Invoke-Step "Test Mole runtime contracts" {
+    & (Join-Path $PSScriptRoot "test-mole-runtime.ps1")
+}
+
 Invoke-Step "Publish portable payload" {
     dotnet publish (Join-Path $root "BurrowWin.csproj") `
         -c $Configuration `
@@ -205,6 +209,10 @@ Invoke-Step "Publish portable payload" {
         -o $stage `
         -nr:false `
         -v:minimal
+}
+
+Invoke-Step "Verify published Mole runtime" {
+    & (Join-Path $PSScriptRoot "verify-mole-runtime.ps1") -EngineRoot (Join-Path $stage "Assets\Mole")
 }
 
 Invoke-Step "Copy release documents" {

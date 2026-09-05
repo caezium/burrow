@@ -61,10 +61,10 @@ public sealed class WindowsPathSafetyPolicy : IWindowsPathSafetyPolicy
                 canonicalScopeRoot: canonicalRoot);
         }
 
-        var reparse = FindReparsePoint(canonicalRoot, canonicalRoot, includeAncestorsAboveScope: false);
+        var reparse = FindReparsePoint(canonicalRoot);
         return reparse is null
             ? new PathSafetyResult(true, "safe_scope", "The approved scope root is safe.", canonicalRoot, canonicalRoot, scopeInfo)
-            : PathSafetyResult.Reject("reparse_scope", $"The approved scope is a reparse point: {reparse}", canonicalScopeRoot: canonicalRoot);
+            : PathSafetyResult.Reject("reparse_scope", $"An approved scope path component is a reparse point: {reparse}", canonicalScopeRoot: canonicalRoot);
     }
 
     public PathSafetyResult Validate(string path, string approvedScopeRoot)
@@ -135,7 +135,7 @@ public sealed class WindowsPathSafetyPolicy : IWindowsPathSafetyPolicy
             return PathSafetyResult.Reject("protected_root", "The target is inside a protected Windows or application root.", canonicalPath, canonicalRoot);
         }
 
-        var reparse = FindReparsePoint(canonicalRoot, canonicalPath, includeAncestorsAboveScope: false);
+        var reparse = FindReparsePoint(canonicalPath);
         if (reparse is not null)
         {
             return PathSafetyResult.Reject("reparse_point", $"A target path component is a reparse point: {reparse}", canonicalPath, canonicalRoot);
@@ -195,17 +195,19 @@ public sealed class WindowsPathSafetyPolicy : IWindowsPathSafetyPolicy
         return null;
     }
 
-    private string? FindReparsePoint(string canonicalRoot, string canonicalPath, bool includeAncestorsAboveScope)
+    private string? FindReparsePoint(string canonicalPath)
     {
-        var current = includeAncestorsAboveScope ? Path.GetPathRoot(canonicalRoot) : canonicalRoot;
+        // A lexical scope can itself sit below a junction. Walk from the volume root so
+        // an alias above the scope cannot redirect a permitted target into a protected tree.
+        var current = Path.GetPathRoot(canonicalPath);
         if (string.IsNullOrWhiteSpace(current))
         {
-            return canonicalRoot;
+            return canonicalPath;
         }
 
-        if (!includeAncestorsAboveScope && _fileSystem.Inspect(canonicalRoot).IsReparsePoint)
+        if (_fileSystem.Inspect(current).IsReparsePoint)
         {
-            return canonicalRoot;
+            return current;
         }
 
         var relative = Path.GetRelativePath(current, canonicalPath);

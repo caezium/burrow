@@ -26,7 +26,20 @@ import AppKit
 
 /// Dry-run report: the themed groups + summary TaskReport always built,
 /// plus the live byte total the count-up hero renders.
-typealias CleanDryReport = (groups: [TaskGroup], summary: TaskSummary?, liveBytes: Int64)
+struct CleanDryReport {
+    let groups: [TaskGroup]
+    let summary: TaskSummary?
+    let liveBytes: Int64
+    let list: CleanList?
+
+    static func reduce(_ lines: [String], bundledEngine: Bool,
+                       legacyList: () -> CleanList? = CleanList.loadLive) -> Self {
+        let (groups, summary) = BurrowStreamReport.reduce(lines)
+        let bytes = lines.reduce(Int64(0)) { $0 + BurrowStreamReport.streamedBytes($1) }
+        return Self(groups: groups, summary: summary, liveBytes: bytes,
+                    list: bundledEngine ? CleanList.fromEngineOutput(lines) : legacyList())
+    }
+}
 
 struct CleanView: View {
     @StateObject private var dryFlow = OperationFlow<CleanDryReport>()
@@ -232,7 +245,9 @@ struct CleanView: View {
     }
 
     private var reviewAvailable: Bool {
-        if case .finished(.done(exit: 0)) = dryFlow.state { return CleanList.loadLive() != nil }
+        if case .finished(.done(exit: 0)) = dryFlow.state {
+            return dryFlow.report?.list?.categories.isEmpty == false
+        }
         return false
     }
 
@@ -254,7 +269,7 @@ struct CleanView: View {
     // MARK: - Review
 
     private func enterReview() {
-        guard let list = CleanList.loadLive() else { return }
+        guard let list = dryFlow.report?.list, !list.categories.isEmpty else { return }
         do {
             let user = try InvokingUserIdentity.current()
             reviewSnapshot = try CleanupSnapshot.capture(
@@ -460,17 +475,16 @@ struct CleanView: View {
     // MARK: - Dry-run plumbing
 
     private func dryOperation() -> ToolOperation<CleanDryReport> {
-        ToolOperation(label: NSLocalizedString("Scanning caches", comment: ""),
+        let bundledEngine = BurrowEngine.isAvailable
+        return ToolOperation(label: NSLocalizedString("Scanning caches", comment: ""),
                       arguments: ["clean", "--dry-run"],
                       gate: .fullDiskAccess(adminBypass: true),
                       // The bundled engine streams NDJSON here too (this scan goes through the
                       // same conductor `--stream` path as a real clean/optimize) — reduce with
                       // BurrowStreamReport, not the old human-text parseTaskReport, or every scan
                       // reads back "0 B found" with no summary and no forward path. See BurrowStreamReport.
-                      reduce: { lines in
-                          let (groups, summary) = BurrowStreamReport.reduce(lines)
-                          let bytes = lines.reduce(Int64(0)) { $0 + BurrowStreamReport.streamedBytes($1) }
-                          return (groups, summary, bytes)
+                       reduce: { lines in
+                           CleanDryReport.reduce(lines, bundledEngine: bundledEngine)
                       },
                       hudLine: { BurrowStreamReport.hudLine($0) },
                       // The scan is the step people walk away from — it can run

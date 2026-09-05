@@ -194,6 +194,19 @@ struct MCPRequestContext {
 /// server emits goes through one of these, so `resultType` and the server
 /// identity can't be forgotten on a new method.
 enum MCPResult {
+    /// Tools return their execution failures as structured JSON. Preserve
+    /// those details while exposing the same outcome to clients and audit.
+    static func reportsToolFailure(_ text: String) -> Bool {
+        guard let object = (try? JSONSerialization.jsonObject(with: Data(text.utf8))) as? [String: Any] else {
+            return false // Markdown and other successful text results.
+        }
+        if let error = object["error"], !(error is NSNull) { return true }
+        if JSONScalar.boolean(object["ok"]) == false
+            || JSONScalar.boolean(object["blocked"]) == true
+            || JSONScalar.boolean(object["timed_out"]) == true { return true }
+        return (object["exit_code"] as? Int).map { $0 != 0 } ?? false
+    }
+
     /// An ordinary, finished result.
     static func complete(_ body: [String: Any], serverVersion: String) -> [String: Any] {
         var out = body

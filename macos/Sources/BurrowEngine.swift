@@ -129,13 +129,14 @@ enum BurrowEngine {
             timeout: timeout)
         let result = try engine.capture(cmd)
 
+        guard !result.timedOut else {
+            throw BurrowEngineError.engine(kind: ErrorKind.processFailed.rawValue,
+                                           message: "burrow \(command) timed out")
+        }
+
         // A timeout or missing binary degrades to a nonzero exit with no stdout (the capture
         // runner never throws for those) — surface it before we try to parse an empty string.
         guard !result.stdout.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            if result.timedOut {
-                throw BurrowEngineError.engine(kind: ErrorKind.processFailed.rawValue,
-                                               message: "burrow \(command) timed out")
-            }
             throw BurrowEngineError.engine(kind: ErrorKind.processFailed.rawValue,
                                            message: "burrow \(command) produced no output (exit \(result.exitCode))")
         }
@@ -145,6 +146,10 @@ enum BurrowEngine {
             throw BurrowEngineError.engine(
                 kind: envelope.error?.kind ?? ErrorKind.error.rawValue,
                 message: envelope.error?.message ?? "burrow \(command) failed")
+        }
+        guard result.exitCode == 0 else {
+            throw BurrowEngineError.engine(kind: ErrorKind.processFailed.rawValue,
+                                           message: "burrow \(command) failed (exit \(result.exitCode))")
         }
         return envelope
     }

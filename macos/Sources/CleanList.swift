@@ -56,6 +56,68 @@ struct CleanList: Equatable {
         return parsed.categories.isEmpty ? nil : parsed
     }
 
+    /// The bundled engine publishes the preview on stdout and never writes the legacy list.
+    /// Require its completed dry run so an interrupted scan cannot authorize a cleanup.
+    static func fromEngineOutput(_ lines: [String]) -> CleanList? {
+        var categories: [Category] = []
+        var seen = Set<String>()
+        var summaryTotal: String?
+        var summaryCount: Int?
+        var completed = false
+
+        func add(path: String, bytes: Int64, sizeText: String?, category: String) -> Bool {
+            guard path.hasPrefix("/"), bytes >= 0 else { return false }
+            guard seen.insert(path).inserted else { return true }
+            let item = Item(path: path, sizeBytes: bytes,
+                            sizeText: sizeText ?? Fmt.bytes(bytes), itemCount: nil)
+            if let index = categories.firstIndex(where: { $0.name == category }) {
+                categories[index].items.append(item)
+            } else {
+                categories.append(Category(name: category, items: [item]))
+            }
+            return true
+        }
+
+        for line in lines {
+            guard let data = line.data(using: .utf8),
+                  let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
+            if let event = object["event"] as? String {
+                switch event {
+                case "would_remove":
+                    guard !completed, let path = object["path"] as? String,
+                          let bytes = object["bytes"] as? Int64,
+                          add(path: path, bytes: bytes, sizeText: nil,
+                              category: NSLocalizedString("Cleanup", comment: "")) else { return nil }
+                case "done":
+                    guard object["dry_run"] as? Bool == true else { return nil }
+                    completed = true
+                    summaryTotal = object["would_free_human"] as? String
+                    summaryCount = object["count"] as? Int
+                case "protected": break
+                default: return nil
+                }
+            } else if object["ok"] != nil {
+                guard object["ok"] as? Bool == true,
+                      object["command"] as? String == "clean",
+                      let payload = object["data"] as? [String: Any],
+                      payload["dry_run"] as? Bool == true,
+                      let items = payload["items"] as? [[String: Any]] else { return nil }
+                for item in items {
+                    guard let path = item["path"] as? String, let bytes = item["size"] as? Int64,
+                          add(path: path, bytes: bytes, sizeText: item["size_human"] as? String,
+                              category: item["label"] as? String ?? NSLocalizedString("Cleanup", comment: ""))
+                    else { return nil }
+                }
+                completed = true
+                summaryTotal = payload["total_human"] as? String
+                summaryCount = seen.count
+            }
+        }
+        guard completed else { return nil }
+        return CleanList(categories: categories, summaryTotalText: summaryTotal,
+                         summaryItemCount: summaryCount)
+    }
+
     static func parse(_ text: String) -> CleanList {
         var categories: [Category] = []
         var current: Category?

@@ -1,0 +1,3 @@
+{"event":"would_remove","path":"/var/folders/lf/s5zmgh292g7cp25p1s92xt140000gn/T/burrow-clean-preview-e38pl_m7/Library/Caches/review one","bytes":1234}
+{"event":"would_remove","path":"/var/folders/lf/s5zmgh292g7cp25p1s92xt140000gn/T/burrow-clean-preview-e38pl_m7/Library/Caches/review #two","bytes":5678}
+{"event":"done","dry_run":true,"would_free_bytes":6912,"would_free_human":"7KB","count":2}

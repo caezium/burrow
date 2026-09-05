@@ -23,6 +23,7 @@ final class MCPAuditTests: XCTestCase {
     }
 
     override func tearDown() {
+        catalog = nil
         db = nil
         try? FileManager.default.removeItem(at: tempDir)
         Store.d.removePersistentDomain(forName: StoreTests.scratchSuite)
@@ -41,5 +42,34 @@ final class MCPAuditTests: XCTestCase {
     func testReadTool_doesNotAudit() throws {
         _ = try catalog.call(name: "burrow_snapshot", arguments: [:])
         XCTAssertNil(db.findLatest(prefix: AgentAudit.prefix), "read tools take no action → no audit row")
+    }
+
+    func testBlockedActionIsRecordedAsUnsuccessful() throws {
+        Store.d = UserDefaults(suiteName: StoreTests.scratchSuite)!
+        Store.d.removePersistentDomain(forName: StoreTests.scratchSuite)
+        _ = try catalog.call(name: "burrow_clean", arguments: ["confirm": true])
+        let row = try XCTUnwrap(db.findLatest(prefix: AgentAudit.prefix))
+        let entry = try XCTUnwrap(AgentAudit.decode(row.json))
+        XCTAssertFalse(entry.ok, "a refused cleanup must not appear successful in Activity")
+    }
+
+    func testFailedEngineIsRecordedAsUnsuccessful() throws {
+        try ConductorBundleFixture.withConductor(present: false) {
+            _ = try catalog.call(name: "burrow_evict", arguments: ["paths": [tempDir.path]])
+        }
+        let row = try XCTUnwrap(db.findLatest(prefix: AgentAudit.prefix))
+        XCTAssertFalse(try XCTUnwrap(AgentAudit.decode(row.json)).ok)
+    }
+
+    func testInteractivePreviewAuditUsesTheActualMode() throws {
+        Store.d = UserDefaults(suiteName: StoreTests.scratchSuite)!
+        Store.d.removePersistentDomain(forName: StoreTests.scratchSuite)
+        Store.mcpActionsEnabled = true
+        try ConductorBundleFixture.withConductor(present: true, stub: ConductorBundleFixture.argvEchoStub) {
+            _ = try catalog.call(name: "burrow_purge", arguments: ["confirm": true])
+        }
+        let row = try XCTUnwrap(db.findLatest(prefix: AgentAudit.prefix))
+        XCTAssertTrue(try XCTUnwrap(AgentAudit.decode(row.json)).dryRun,
+                      "purge is preview-only over MCP even when confirm was requested")
     }
 }

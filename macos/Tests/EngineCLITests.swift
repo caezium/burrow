@@ -297,7 +297,7 @@ final class EngineCLITests: XCTestCase {
 
     /// A reviewed clean's script: the plan's boundary checks (expiry, then the pinned identity
     /// of every root and entry) come FIRST, and the engine over the plan file comes LAST — the
-    /// shell itself deletes nothing. A refused check exits `boundaryCheckFailed` before the
+    /// shell only removes its temporary plan. A refused check exits `boundaryCheckFailed` before the
     /// engine is spawned.
     func testElevatedScript_reviewedCleanRunsTheBoundaryChecksThenTheEngineOverThePlan() throws {
         let root = FileManager.default.temporaryDirectory
@@ -319,8 +319,10 @@ final class EngineCLITests: XCTestCase {
             command: fakeCommand("/tmp/mo"),
             args: ["clean", "--permanent", "--plan", "/Users/test/Library/Application Support/Burrow/clean-plans/x.plan", "--apply", "--stream"],
             cleanupPlan: plan)
-        let engine = "'/tmp/mo' 'clean' '--permanent' '--plan' '/Users/test/Library/Application Support/Burrow/clean-plans/x.plan' '--apply' '--stream'"
+        let engine = "'/tmp/mo' 'clean' '--apply' '--permanent' '--plan'"
         XCTAssertTrue(s.contains(engine), s)
+        XCTAssertTrue(s.contains("burrow_review_file"), "the engine consumes the elevated process's private plan")
+        XCTAssertFalse(s.contains("clean-plans/x.plan"), "the mutable GUI file is never read after authentication")
         XCTAssertFalse(s.contains("-delete"), "the script no longer deletes; the engine does, from the plan")
         let checkIndex = try XCTUnwrap(s.range(of: "/bin/date +%s")).lowerBound
         let identityIndex = try XCTUnwrap(s.range(of: "/usr/bin/stat -f '%d:%i:%u:%p' -- '\(item.path)'")).lowerBound

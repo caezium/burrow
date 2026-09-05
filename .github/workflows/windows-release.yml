@@ -137,23 +137,29 @@ jobs:
       - name: Restore
         run: dotnet restore .\BurrowWin.sln
 
+      - name: Test release commit
+        env:
+          BUILD_CONFIGURATION: ${{ github.event.inputs.configuration }}
+        run: dotnet test .\Tests\BurrowWin.Tests\BurrowWin.Tests.csproj -c "$env:BUILD_CONFIGURATION" --no-restore -v:minimal
+
+      - name: Test Mole runtime contracts
+        # The bundled shim uses Windows PowerShell 5.1.
+        shell: powershell
+        run: .\scripts\test-mole-runtime.ps1
+
       - name: Publish (telemetry keys baked from secrets)
-        run: dotnet publish .\BurrowWin.csproj -c ${{ github.event.inputs.configuration }} -p:Platform=x64 -r win-x64 --self-contained false -o .\artifacts\release-publish -v:minimal
+        env:
+          BUILD_CONFIGURATION: ${{ github.event.inputs.configuration }}
+        run: dotnet publish .\BurrowWin.csproj -c "$env:BUILD_CONFIGURATION" -p:Platform=x64 -r win-x64 --self-contained false -o .\artifacts\release-publish -v:minimal
 
       # A release artifact without the conductor ships with dead features while the run
       # stays green (the macOS 0.10.0 lesson) — hard-assert the publish output.
       - name: Verify the bundled conductor + engine made it into the publish
         shell: pwsh
         run: |
-          if (-not (Test-Path ".\artifacts\release-publish\Assets\burrow.exe")) {
-            Write-Host "::error::Assets\burrow.exe missing - the conductor did not bundle. Failing the release."
-            exit 1
-          }
-          if (-not (Test-Path ".\artifacts\release-publish\Assets\Mole\mole.ps1")) {
-            Write-Host "::error::Assets\Mole engine missing. Failing the release."
-            exit 1
-          }
-          Write-Host "conductor: present / engine: present"
+          .\scripts\verify-mole-runtime.ps1 `
+            -EngineRoot .\artifacts\release-publish\Assets\Mole `
+            -Conductor .\artifacts\release-publish\Assets\burrow.exe
 
       - name: Upload published app
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

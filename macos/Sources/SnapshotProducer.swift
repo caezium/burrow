@@ -275,6 +275,10 @@ final class SnapshotProducer {
     /// `deps.statusWatch` vends one (the bundled engine, or mo 1.44+), else
     /// poll. Runs on `deps.work` (off-main).
     private func beginSnapshots() {
+        lock.lock()
+        let shouldStart = running
+        lock.unlock()
+        guard shouldStart else { return }
         sampleNow()
         if let factory = deps.statusWatch, let stream = factory() {
             startStreaming(stream)
@@ -292,25 +296,33 @@ final class SnapshotProducer {
         lock.lock()
         guard running else { lock.unlock(); return }
         streaming = true
-        lock.unlock()
         streamTask = Task { [weak self] in
             for await event in stream {
                 guard let self else { return }
                 guard case .line(let json) = event else { continue }
-                let now = self.deps.clock.now
-                self.lock.lock()
-                let due = now.timeIntervalSince(self.lastStreamPersist) >= self.deps.snapshotInterval() - 0.5
-                if due { self.lastStreamPersist = now }
-                self.lock.unlock()
-                self.ingest(raw: json, persist: due)
+                // Polls and stream frames share the decoder, disk-rate
+                // baseline and persistence order, so all ingestion must
+                // run on the producer's serial work queue.
+                self.deps.work {
+                    self.lock.lock()
+                    guard self.running else { self.lock.unlock(); return }
+                    let now = self.deps.clock.now
+                    let due = now.timeIntervalSince(self.lastStreamPersist) >= self.deps.snapshotInterval() - 0.5
+                    if due { self.lastStreamPersist = now }
+                    self.lock.unlock()
+                    self.ingest(raw: json, persist: due)
+                }
             }
             guard let self else { return }
-            self.lock.lock()
-            self.streaming = false
-            let resume = self.running
-            self.lock.unlock()
-            if resume { self.armSnapshotTimer() }
+            self.deps.work {
+                self.lock.lock()
+                self.streaming = false
+                let resume = self.running
+                self.lock.unlock()
+                if resume { self.armSnapshotTimer() }
+            }
         }
+        lock.unlock()
     }
 
     func stop() {
@@ -319,8 +331,10 @@ final class SnapshotProducer {
         streaming = false
         snapTimer?.cancel(); snapTimer = nil
         liveTimer?.cancel(); liveTimer = nil
+        let task = streamTask
+        streamTask = nil
         lock.unlock()
-        streamTask?.cancel(); streamTask = nil   // cancellation terminates the mo child
+        task?.cancel()   // cancellation terminates the mo child
     }
 
     /// Switch between background and live (foreground) cadence. Turning it

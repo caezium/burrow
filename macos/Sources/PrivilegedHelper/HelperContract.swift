@@ -407,6 +407,25 @@ enum HelperInvokingUserResolver {
 
 // MARK: - Reviewed cleanup targets
 
+/// The original review identities survive the authentication dialog and the XPC boundary.
+/// The daemon still derives its allowed roots independently; these only narrow that authority.
+struct HelperReviewedSelection: Codable, Equatable, Sendable {
+    let expiresAt: Date
+    let roots: [PinnedFileIdentity]
+    let items: [PinnedFileIdentity]
+
+    func matches(paths: [String], now: Date = Date(),
+                 inspect: (PinnedFileIdentity) -> Bool = { $0.matchesCurrent() }) -> Bool {
+        guard now <= expiresAt, !roots.isEmpty,
+              roots.count <= HelperReviewedPathPolicy.maximumTargets,
+              !items.isEmpty, items.count <= HelperReviewedPathPolicy.maximumTargets,
+              items.count == paths.count,
+              Set(items.map(\.path)) == Set(paths),
+              roots.allSatisfy(inspect), items.allSatisfy(inspect) else { return false }
+        return true
+    }
+}
+
 /// One approved root, as the DAEMON derives it. The invoking user's home comes
 /// from getpwuid and the rest are fixed system cache locations; a client never
 /// contributes to this list.
@@ -563,19 +582,22 @@ struct HelperRequest: Codable, Equatable, Sendable {
     /// operation, and an operation that carries them when it shouldn't is
     /// refused rather than having them ignored.
     var reviewedPaths: [String] = []
+    var reviewedSelection: HelperReviewedSelection? = nil
 
     init(operation: HelperOperation,
          operationID: String,
          clientBuild: String,
          invokingUser: HelperInvokingUserClaim,
          networkInterface: String? = nil,
-         reviewedPaths: [String] = []) {
+          reviewedPaths: [String] = [],
+          reviewedSelection: HelperReviewedSelection? = nil) {
         self.operation = operation
         self.operationID = operationID
         self.clientBuild = clientBuild
         self.invokingUser = invokingUser
         self.networkInterface = networkInterface
         self.reviewedPaths = reviewedPaths
+        self.reviewedSelection = reviewedSelection
     }
 
     /// `nil` when the request is well formed. Runs on the PRIVILEGED side —
@@ -603,12 +625,13 @@ struct HelperRequest: Codable, Equatable, Sendable {
             // decided by HelperReviewedPathPolicy against the daemon's own
             // lstat — this check just refuses obvious nonsense early.
             guard !reviewedPaths.isEmpty,
-                  reviewedPaths.count <= HelperReviewedPathPolicy.maximumTargets
+                  reviewedPaths.count <= HelperReviewedPathPolicy.maximumTargets,
+                  reviewedSelection != nil
             else { return .invalidReviewedPaths }
         } else {
             // Paths on an operation that takes none means the caller and this
             // contract disagree about what is being asked for.
-            guard reviewedPaths.isEmpty else { return .invalidReviewedPaths }
+            guard reviewedPaths.isEmpty, reviewedSelection == nil else { return .invalidReviewedPaths }
         }
 
         if operation.needsInterface {
@@ -771,7 +794,25 @@ final class HelperReplayGuard: @unchecked Sendable {
 
 // MARK: - Version skew
 
-/// Whether the app and the installed helper are the same build.
+/// The security-relevant contract implemented by a running daemon. Keep the
+/// protocol independent of CFBundleVersion: development and repaired builds
+/// may share a number while an already-running helper still has older code.
+struct HelperStatus: Codable, Equatable, Sendable {
+    static let currentProtocolVersion = 1
+    static let reviewedSelectionCapability = "reviewed-selection-v1"
+
+    let build: String
+    let protocolVersion: Int
+    let capabilities: Set<String>
+
+    static func current(build: String) -> HelperStatus {
+        HelperStatus(build: build,
+                     protocolVersion: currentProtocolVersion,
+                     capabilities: [reviewedSelectionCapability])
+    }
+}
+
+/// Whether the app and the installed helper have a compatible contract.
 enum HelperVersionSkew {
     enum Skew: Equatable, Sendable {
         case matched
@@ -784,5 +825,16 @@ enum HelperVersionSkew {
     static func evaluate(appBuild: String, helperBuild: String) -> Skew {
         guard !appBuild.isEmpty, !helperBuild.isEmpty, appBuild == helperBuild else { return .mismatched }
         return .matched
+    }
+
+    /// Build-only replies, missing selectors, malformed data, and unknown
+    /// protocols all fail closed. Capabilities are additive within a protocol.
+    static func evaluate(appBuild: String, statusData: Data?) -> Skew {
+        guard let statusData,
+              let status = try? JSONDecoder().decode(HelperStatus.self, from: statusData),
+              status.protocolVersion == HelperStatus.currentProtocolVersion,
+              status.capabilities.contains(HelperStatus.reviewedSelectionCapability)
+        else { return .mismatched }
+        return evaluate(appBuild: appBuild, helperBuild: status.build)
     }
 }

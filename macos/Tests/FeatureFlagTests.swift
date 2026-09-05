@@ -76,6 +76,47 @@ final class FeatureFlagTests: XCTestCase {
         )
     }
 
+    func testRemoteJSONNumbersAreNotBooleans() throws {
+        for token in ["0", "1", "0.0", "1.0", "\"true\"", "null"] {
+            let data = Data("{\"about_release_notes_link\":\(token)}".utf8)
+            let raw = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+            XCTAssertEqual(FeatureFlags.sanitizeRemoteFlags(raw), [:], "Rejected token: \(token)")
+        }
+        let data = Data(#"{"about_release_notes_link":true}"#.utf8)
+        let raw = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertEqual(FeatureFlags.sanitizeRemoteFlags(raw), [.aboutReleaseNotesLink: true])
+    }
+
+    func testCacheRejectsKnownFlagsWithInvalidTypesAndBooleanVersion() throws {
+        let valid = try XCTUnwrap(FeatureFlags.encodeCache([.aboutReleaseNotesLink: true], fetchedAt: now))
+        let text = String(decoding: valid, as: UTF8.self)
+        for token in ["1", "0", "\"true\"", "null"] {
+            let invalid = text.replacingOccurrences(of: "\"about_release_notes_link\":true",
+                                                   with: "\"about_release_notes_link\":\(token)")
+            XCTAssertNotEqual(invalid, text)
+            XCTAssertNil(FeatureFlags.decodeCache(Data(invalid.utf8), now: now))
+        }
+        let booleanVersion = text.replacingOccurrences(of: "\"version\":1", with: "\"version\":true")
+        XCTAssertNil(FeatureFlags.decodeCache(Data(booleanVersion.utf8), now: now))
+    }
+
+    func testOptingOutImmediatelyRestoresBakedInDefaults() {
+        let oldDefaults = Store.d
+        let suiteName = "burrow-feature-flags-opt-out-\(UUID().uuidString)"
+        let scratch = UserDefaults(suiteName: suiteName)!
+        Store.d = scratch
+        defer {
+            Store.d = oldDefaults
+            scratch.removePersistentDomain(forName: suiteName)
+        }
+        Store.telemetryEnabled = true
+        FeatureFlags.apply([.aboutReleaseNotesLink: true], persistTo: nil)
+        XCTAssertTrue(FeatureFlags.isEnabled(.aboutReleaseNotesLink))
+        Telemetry.setEnabled(false)
+        XCTAssertFalse(FeatureFlags.isEnabled(.aboutReleaseNotesLink))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: cacheURL().path))
+    }
+
     // A malformed cache (bad JSON, wrong version, wrong types, missing or
     // stale timestamp) discards the whole file; only a strict, fresh shape
     // decodes. This keeps a corrupt or malicious file from ever overriding

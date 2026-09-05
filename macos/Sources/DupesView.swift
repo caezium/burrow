@@ -299,6 +299,7 @@ struct DupesView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel((path as NSString).lastPathComponent)
+            .disabled(model.deduping)
             .accessibilityValue(ticked ? NSLocalizedString("selected", comment: "") : NSLocalizedString("not selected", comment: ""))
 
             VStack(alignment: .leading, spacing: 1) {
@@ -353,7 +354,7 @@ struct DupesView: View {
                     .background(Capsule().fill(model.selection.isEmpty ? Brand.chipFill : Brand.inverse))
             }
             .buttonStyle(.plain)
-            .disabled(model.selection.isEmpty || model.deduping || model.scanning)
+            .disabled(model.selection.isEmpty || model.deduping || model.scanning || model.trashSnapshot == nil)
             if model.deduping { ProgressView().controlSize(.small) }
         }
         .padding(.horizontal, 18).padding(.bottom, 12)
@@ -362,8 +363,17 @@ struct DupesView: View {
     /// Clean's exact trash flow: alert with count+size -> FileManager.trashItem per path
     /// (recoverable) -> HUD + banner -> rescan for the post-move truth.
     private func trashTicked(_ report: DupesReport) {
+        guard !model.deduping, !model.scanning else { return }
         let paths = model.selection.selectedPaths(in: report)
         guard !paths.isEmpty else { return }
+        let plan: DupeTrashSnapshot.Plan
+        do {
+            guard let snapshot = model.trashSnapshot else { throw CleanupSnapshot.SnapshotError.staleOrChanged }
+            plan = try snapshot.plan(selectedPaths: paths)
+        } catch {
+            model.error = NSLocalizedString("The duplicate files changed. Scan again before moving copies to Trash.", comment: "")
+            return
+        }
         let total = model.selection.selectedBytes(in: report)
         let alert = NSAlert()
         alert.messageText = String(format: NSLocalizedString("Move %d duplicate copies (%@) to the Trash?", comment: ""),
@@ -372,21 +382,16 @@ struct DupesView: View {
         alert.addButton(withTitle: NSLocalizedString("Move to Trash", comment: ""))
         alert.addButton(withTitle: NSLocalizedString("Cancel", comment: ""))
         guard alert.runModalQuiet() == .alertFirstButtonReturn else { return }
+        guard model.beginTrashAction() else { return }
 
         let opID = UUID()
         OperationCenter.shared.begin(opID, label: NSLocalizedString("Moving duplicates to Trash", comment: ""),
                                      notifiesOnEnd: true)
         DispatchQueue.global(qos: .userInitiated).async {
-            var moved = 0, failed = 0
-            for path in paths {
-                do {
-                    try FileManager.default.trashItem(at: URL(fileURLWithPath: path), resultingItemURL: nil)
-                    moved += 1
-                } catch {
-                    failed += 1
-                }
-            }
+            let result = plan.moveToTrash()
+            let moved = result.moved, failed = result.failed
             DispatchQueue.main.async {
+                model.deduping = false
                 OperationCenter.shared.end(opID, success: failed == 0,
                                            detail: String(format: NSLocalizedString("%d moved · %d failed", comment: ""), moved, failed))
                 trashResult = failed == 0
@@ -438,6 +443,7 @@ final class DupesModel: ConductorScanModel<DupesReport> {
     @Published var selection = DupesSelection(report: DupesReport(groups: [], redundantBytes: 0))
     /// Which group cards are expanded (collapsed by default, like Clean's categories).
     @Published var openGroups: Set<String> = []
+    @Published private(set) var trashSnapshot: DupeTrashSnapshot?
 
     /// `dupes` needs a subcommand (`group|dedupe|remove|link`) — a bare path errors with "needs a
     /// subcommand" (`burrow-engine`'s `cli.rs::dupes`). `group` is the read-only report this scan
@@ -457,18 +463,37 @@ final class DupesModel: ConductorScanModel<DupesReport> {
 
     override func didLoad(_ report: DupesReport) {
         selection = DupesSelection(report: report)
+        trashSnapshot = nil
+        let reviewedFolder = folder
+        DispatchQueue.global(qos: .userInitiated).async {
+            let snapshot = reviewedFolder.flatMap {
+                try? DupeTrashSnapshot(report: report, root: URL(fileURLWithPath: $0))
+            }
+            Task { @MainActor in
+                guard !self.deduping, self.folder == reviewedFolder, self.report == report else { return }
+                self.trashSnapshot = snapshot
+            }
+        }
         openGroups = Set(report.groups.prefix(3).map(\.id)) // biggest wins start open
     }
 
     // MARK: Selection passthroughs (keep the view dumb)
 
     func toggle(_ path: String) {
-        guard let report else { return }
+        guard !deduping, let report else { return }
         selection.toggle(path, in: report)
     }
 
     func toggleGroup(_ group: DupeGroup) {
+        guard !deduping else { return }
         selection.toggleGroup(group)
+    }
+
+    func beginTrashAction() -> Bool {
+        guard !deduping, !scanning, trashSnapshot != nil else { return false }
+        deduping = true
+        trashSnapshot = nil
+        return true
     }
 
     // MARK: Dedupe (the non-destructive act)

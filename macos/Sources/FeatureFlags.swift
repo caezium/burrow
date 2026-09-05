@@ -97,7 +97,7 @@ enum FeatureFlags {
         guard let raw else { return [:] }
         var accepted: [Key: Bool] = [:]
         for key in Key.allCases {
-            if let value = raw[key.rawValue] as? Bool {
+            if let value = JSONScalar.boolean(raw[key.rawValue]) {
                 accepted[key] = value
             }
         }
@@ -127,6 +127,7 @@ enum FeatureFlags {
         guard let decoded = try? JSONSerialization.jsonObject(with: data),
               let object = decoded as? [String: Any],
               (object["version"] as? Int) == 1,
+              JSONScalar.boolean(object["version"]) == nil,
               let fetchedAt = (object["fetched_at"] as? String)
                   .flatMap(timestampFormatter.date(from:)),
               fetchedAt <= now,
@@ -135,9 +136,9 @@ enum FeatureFlags {
 
         var flags: [Key: Bool] = [:]
         for key in Key.allCases {
-            if let value = values[key.rawValue] as? Bool {
-                flags[key] = value
-            }
+            guard let rawValue = values[key.rawValue] else { continue }
+            guard let value = JSONScalar.boolean(rawValue) else { return nil }
+            flags[key] = value
         }
         return flags
     }

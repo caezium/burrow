@@ -334,7 +334,7 @@ final class MCPServer {
     /// would be a lie the schema can't back up.
     static func callToolBody(name: String, text: String, isError: Bool) -> [String: Any] {
         var body: [String: Any] = ["content": [["type": "text", "text": text]]]
-        if isError { body["isError"] = true }
+        if isError || MCPResult.reportsToolFailure(text) { body["isError"] = true }
         guard MCPToolMetadata.table[name]?.outputSchema != nil,
               let data = text.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {

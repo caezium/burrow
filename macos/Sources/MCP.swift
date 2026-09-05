@@ -431,9 +431,17 @@ struct ToolCatalog {
     func call(name: String, arguments: [String: Any]) throws -> String {
         let start = Date()
         do {
+            if Self.auditedTools.contains(name) {
+                for key in ["confirm", "permanent"] where arguments[key] != nil {
+                    guard JSONScalar.boolean(arguments[key]) != nil else {
+                        throw MCPToolError.badArguments("`\(key)` must be a JSON boolean")
+                    }
+                }
+            }
             let result = try dispatch(name: name, arguments: arguments)
             if Self.auditedTools.contains(name) {
-                recordAudit(tool: name, arguments: arguments, ok: true, summary: result, since: start)
+                recordAudit(tool: name, arguments: arguments, ok: !MCPResult.reportsToolFailure(result),
+                            summary: result, since: start)
             }
             return result
         } catch {
@@ -454,9 +462,10 @@ struct ToolCatalog {
     private func recordAudit(tool: String, arguments: [String: Any], ok: Bool, summary: String, since: Date) {
         let argsJSON = (try? JSONSerialization.data(withJSONObject: arguments, options: [.sortedKeys]))
             .flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+        let result = (try? JSONSerialization.jsonObject(with: Data(summary.utf8))) as? [String: Any]
         let entry = AgentAudit.Entry(
             tool: tool, client: "mcp",
-            dryRun: (arguments["confirm"] as? Bool) != true,
+            dryRun: JSONScalar.boolean(result?["dry_run"]) ?? (JSONScalar.boolean(arguments["confirm"]) != true),
             durationMs: Int(Date().timeIntervalSince(since) * 1000),
             ok: ok, summary: String(summary.prefix(200)), argsJSON: argsJSON)
         // db.insert is serialized (writeQueue) with a busy timeout, so this is

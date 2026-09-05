@@ -7,6 +7,19 @@ import XCTest
 @testable import Burrow
 
 final class TelemetryPolicyTests: XCTestCase {
+    func testFlagExposurePassesTheEventGateWithoutAllowingArbitraryReservedNames() {
+        XCTAssertTrue(Telemetry.isAllowedEventName("$feature_flag_called"))
+        XCTAssertTrue(Telemetry.isAllowedEventName("feature_operation_completed"))
+        XCTAssertFalse(Telemetry.isAllowedEventName("$identify"))
+        XCTAssertFalse(Telemetry.isAllowedEventName("$feature_flag_called/secret"))
+        XCTAssertFalse(Telemetry.isAllowedEventName("$feature_flag_called\n"))
+        let properties = DiagnosticPrivacy.sanitize([
+            "$feature_flag": "about_release_notes_link", "$feature_flag_response": true,
+        ])
+        XCTAssertEqual(properties["$feature_flag"] as? String, "about_release_notes_link")
+        XCTAssertEqual(properties["$feature_flag_response"] as? Bool, true)
+    }
+
     func testPostHogTransportRequiresHTTPS() {
         XCTAssertEqual(
             Telemetry.postHogEndpoint(host: "https://us.i.posthog.com")?.absoluteString,

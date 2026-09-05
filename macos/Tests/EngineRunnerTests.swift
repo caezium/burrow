@@ -175,6 +175,30 @@ final class EngineRunnerTests: XCTestCase {
         XCTAssertEqual(port.receivedTimeout, 10, "unspecified timeout preserves EngineCLI.run's 10s default")
     }
 
+    func testBundledCapture_rejectsFailedExitEvenWithSuccessOutput() throws {
+        try ConductorBundleFixture.withConductor(present: true) {
+            let port = FakeCapturePort()
+            port.result = MoleProcessResult(
+                stdout: #"{"ok":true,"command":"clean","data":{}}"#,
+                stderr: "cleanup failed after producing its report", exitCode: 1)
+            XCTAssertThrowsError(try BurrowEngine.capture("clean", engine: EngineRunner(processPort: port))) {
+                XCTAssertTrue($0.localizedDescription.contains("exit 1"))
+            }
+        }
+    }
+
+    func testBundledCapture_reportsTimeoutEvenAfterOutputWasWritten() throws {
+        try ConductorBundleFixture.withConductor(present: true) {
+            let port = FakeCapturePort()
+            port.result = MoleProcessResult(
+                stdout: #"{"ok":true,"command":"status","data":{}}"#,
+                stderr: "", exitCode: 15, timedOut: true)
+            XCTAssertThrowsError(try BurrowEngine.capture("status", engine: EngineRunner(processPort: port))) {
+                XCTAssertTrue($0.localizedDescription.contains("timed out"))
+            }
+        }
+    }
+
     /// End-to-end through the REAL capture port with a tiny system binary, the
     /// same local-substitutable style EngineCLITests uses for the runner.
     func testCapture_capturesEchoThroughTheRealPort() throws {

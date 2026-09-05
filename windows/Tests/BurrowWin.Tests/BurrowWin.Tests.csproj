@@ -12,6 +12,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -49,6 +50,7 @@
     <Compile Include="..\..\Services\DiskTreemapLayout.cs" Link="Production\Services\DiskTreemapLayout.cs" />
     <Compile Include="..\..\Services\HistoryRangeCatalog.cs" Link="Production\Services\HistoryRangeCatalog.cs" />
     <Compile Include="..\..\Services\GpuTelemetryBackoffProvider.cs" Link="Production\Services\GpuTelemetryBackoffProvider.cs" />
+    <Compile Include="..\..\Services\WindowsGpuPerformanceCounterProvider.cs" Link="Production\Services\WindowsGpuPerformanceCounterProvider.cs" />
     <Compile Include="..\..\Services\HttpServerSettingsPlanner.cs" Link="Production\Services\HttpServerSettingsPlanner.cs" />
     <Compile Include="..\..\Services\IDiskAnalyzerService.cs" Link="Production\Services\IDiskAnalyzerService.cs" />
     <Compile Include="..\..\Services\IInstalledApplicationService.cs" Link="Production\Services\IInstalledApplicationService.cs" />

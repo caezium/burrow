@@ -386,6 +386,57 @@ final class CleanupAuthorizationTests: XCTestCase {
                       "the shell itself touched nothing that was reviewed")
     }
 
+    func testElevatedEngineUsesTheImmutableReviewAndCleansUpItsPrivatePlan() throws {
+        let item = root.appendingPathComponent("reviewed ' cache")
+        let unreviewed = root.appendingPathComponent("unreviewed")
+        for directory in [item, unreviewed] {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        }
+        let snapshot = try CleanupSnapshot.capture(list: list([item.path]), approvedRootURLs: [root])
+        let plan = try snapshot.plan(selectedPaths: [item.path])
+        let guiPlan = try plan.writePlanFile(in: root.appendingPathComponent("gui-plans"))
+        try Data((unreviewed.path + "\n").utf8).write(to: guiPlan)
+
+        let captured = root.appendingPathComponent("captured-plan")
+        let location = root.appendingPathComponent("private-plan-path")
+        let permissions = root.appendingPathComponent("private-plan-mode")
+        let reader = root.appendingPathComponent("fake-engine.sh")
+        let script = """
+        /bin/cat "$5" > \(EngineCLI.shellQuote(captured.path))
+        /usr/bin/printf '%s' "$5" > \(EngineCLI.shellQuote(location.path))
+        /usr/bin/stat -f '%Lp' "$5" > \(EngineCLI.shellQuote(permissions.path))
+        """
+        try Data(script.utf8).write(to: reader)
+        let shell = plan.guardedEngineShell(commandPrefix: ["/bin/sh", reader.path])
+        XCTAssertEqual(try runCleanupShell(shell), 0)
+        XCTAssertEqual(try String(contentsOf: captured), try CleanPlanFile.render(paths: [item.path]))
+        XCTAssertEqual(try String(contentsOf: permissions).trimmingCharacters(in: .whitespacesAndNewlines), "600")
+        let privatePath = try String(contentsOf: location)
+        XCTAssertNotEqual(privatePath, guiPlan.path)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: privatePath))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: (privatePath as NSString).deletingLastPathComponent))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: item.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: unreviewed.path))
+    }
+
+    func testHelperSelectionRetainsIdentityAndExpiryAcrossAuthentication() throws {
+        let item = root.appendingPathComponent("reviewed")
+        try FileManager.default.createDirectory(at: item, withIntermediateDirectories: false)
+        let snapshot = try CleanupSnapshot.capture(list: list([item.path]), approvedRootURLs: [root])
+        let plan = try snapshot.plan(selectedPaths: [item.path])
+        let selection = try JSONDecoder().decode(HelperReviewedSelection.self,
+                                                from: JSONEncoder().encode(plan.helperSelection))
+        XCTAssertTrue(selection.matches(paths: [item.path]))
+        XCTAssertFalse(selection.matches(paths: [item.path], now: plan.expiresAt.addingTimeInterval(1)))
+        XCTAssertFalse(selection.matches(paths: [root.appendingPathComponent("unticked").path]))
+
+        let moved = root.appendingPathComponent("original")
+        try FileManager.default.moveItem(at: item, to: moved)
+        try FileManager.default.createDirectory(at: item, withIntermediateDirectories: false)
+        XCTAssertFalse(selection.matches(paths: [item.path]),
+                       "The helper must refuse an inode substituted while authentication was open")
+    }
+
     func testGuardedShellRefusesBeforeTheEngineWhenTheReviewedInodeWasSwapped() throws {
         let item = root.appendingPathComponent("swapped")
         let moved = root.appendingPathComponent("moved-away")

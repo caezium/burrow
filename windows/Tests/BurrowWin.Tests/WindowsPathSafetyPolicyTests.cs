@@ -155,6 +155,36 @@ public sealed class WindowsPathSafetyPolicyTests : IDisposable
     }
 
     [Fact]
+    public void ValidateScopeRoot_RejectsReparsePointAboveApprovedScope()
+    {
+        var junction = Path.Combine(_root, "junction");
+        var scope = Path.Combine(junction, "Downloads");
+        _fileSystem.Set(junction, DeletionItemType.Directory, FileAttributes.ReparsePoint);
+        _fileSystem.Set(scope, DeletionItemType.Directory);
+
+        var result = Policy().ValidateScopeRoot(scope);
+
+        Assert.False(result.IsSafe);
+        Assert.Equal("reparse_scope", result.ReasonCode);
+    }
+
+    [Fact]
+    public void Validate_RejectsReparsePointAboveApprovedScope()
+    {
+        var junction = Path.Combine(_root, "junction");
+        var scope = Path.Combine(junction, "Downloads");
+        var target = Path.Combine(scope, "old-installer.exe");
+        _fileSystem.Set(junction, DeletionItemType.Directory, FileAttributes.ReparsePoint);
+        _fileSystem.Set(scope, DeletionItemType.Directory);
+        _fileSystem.Set(target, DeletionItemType.File, sizeBytes: 10);
+
+        var result = Policy().Validate(target, scope);
+
+        Assert.False(result.IsSafe);
+        Assert.Equal("reparse_point", result.ReasonCode);
+    }
+
+    [Fact]
     public void Validate_RejectsReparseTarget()
     {
         var target = Path.Combine(_root, "linked.txt");

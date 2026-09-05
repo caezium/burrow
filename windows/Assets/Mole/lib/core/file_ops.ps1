@@ -26,6 +26,44 @@ $script:TotalItems = 0
 # Safety Validation Functions
 # ============================================================================
 
+function Test-NoReparsePointAncestor {
+    <#
+    .SYNOPSIS
+        Reject filesystem links at the target or anywhere above it.
+    .DESCRIPTION
+        Lexical allowlists cannot detect a cache path redirected by a junction.
+        Inspect every component through the filesystem root, including parents
+        above the allowed cleanup root, and fail closed if inspection fails.
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Path)) { return $false }
+
+    try {
+        $currentPath = [System.IO.Path]::GetFullPath($Path)
+        while (-not [string]::IsNullOrEmpty($currentPath)) {
+            $item = Get-Item -LiteralPath $currentPath -Force -ErrorAction Stop
+            if ($null -eq $item -or $null -eq $item.Attributes) {
+                Write-Debug "Could not inspect path component: $currentPath"
+                return $false
+            }
+            if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                Write-Debug "Reparse point rejected: $currentPath"
+                return $false
+            }
+            $currentPath = [System.IO.Path]::GetDirectoryName($currentPath)
+        }
+        return $true
+    }
+    catch {
+        Write-Debug "Could not inspect path ancestry: $Path - $_"
+        return $false
+    }
+}
+
 function Test-SafePath {
     <#
     .SYNOPSIS
@@ -67,6 +105,10 @@ function Test-SafePath {
 
     if (-not (Test-AllowedCleanupRoot -Path $fullPath)) {
         Write-Debug "Path outside allowed cleanup roots rejected: $fullPath"
+        return $false
+    }
+
+    if (-not (Test-NoReparsePointAncestor -Path $fullPath)) {
         return $false
     }
     

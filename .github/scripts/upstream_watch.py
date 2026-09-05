@@ -52,11 +52,17 @@ DRY_RUN = False
 # not across a blank line. An e-mail address is passed through whole, which is
 # what stops us mangling a local part that ends in punctuation (ops+@x.com,
 # o'brien'@x.com) without having to guess at every character one may end with.
-FENCE = r"^[ \t]*(?P<fence>(?P<fchar>[`~])(?P=fchar){2,})[^\n]*$"
-CODE_SPAN = r"(?P<tick>`+)(?:[^`\n]|\n(?![ \t]*\n))*(?P=tick)(?!`)"
+FENCE = r"^ {0,3}(?P<fence>(?P<fchar>[`~])(?P=fchar){2,})(?P<info>[^\n]*)$"
+# An escaped backtick is text, and a span can contain runs of a different length.
+# Conservatively treating a backslash-adjacent opener as text is safe because
+# _neutralize_span also removes its delimiter role before quoting references.
+BLOCK_BREAK = (r"\n[ \t]*(?:\n|>|#{1,6}(?:[ \t]|\n)|[-=]+[ \t]*(?:\n|\Z)"
+               r"|`{3,}|~{3,}|<|(?:[-+*]|\d+[.)])[ \t])")
+CODE_SPAN = (r"(?<![\\`\t])(?<!    )(?P<tick>`+)(?!`)"
+             r"(?:(?!(?P=tick)(?!`)|" + BLOCK_BREAK + r")[\s\S])*?(?P=tick)(?!`)")
 EMAIL = r"(?<![@\w])[\w.!#$%&'*+/=?^{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9-]+)+"
 PROTECTED_RE = re.compile(
-    r"(?ms)" + FENCE + r".*?(?:^[ \t]*(?P=fence)(?P=fchar)*[ \t]*$|\Z)"
+    r"(?ms)" + FENCE + r".*?(?:^ {0,3}(?P=fence)(?P=fchar)*[ \t]*$|\Z)"
     r"|" + CODE_SPAN + r"|" + EMAIL
 )
 MENTION_RE = re.compile(r"(?<![\w`/@])@([A-Za-z0-9][A-Za-z0-9-]{0,38}(?:/[A-Za-z0-9._-]+)?)")
@@ -68,6 +74,12 @@ MD_ISSUE_LINK_RE = re.compile(r"\[[^\]]*\]\(\s*" + ISSUE_URL + r"""\s*(?:"[^"]*"
 
 
 def _neutralize_span(s):
+    # Unmatched/escaped source delimiters must not pair with the backticks we
+    # insert below. For example, `stray @user otherwise turns into `stray `@user`,
+    # which leaves the handle OUTSIDE the only code span GitHub recognizes.
+    # A named entity also stays harmless when an upstream backslash escapes its
+    # ampersand; a numeric &#96; would then become a live reference to issue #96.
+    s = s.replace("`", "&grave;")
     s = MD_ISSUE_LINK_RE.sub(lambda m: f"`{m.group(1)}#{m.group(2)}`", s)
     s = ISSUE_URL_RE.sub(lambda m: f"`{m.group(1)}#{m.group(2)}`", s)
     s = MENTION_RE.sub(lambda m: f"`@{m.group(1)}`", s)
@@ -86,7 +98,12 @@ def neutralize(text):
     for m in PROTECTED_RE.finditer(text):
         # Already code -- GitHub neither links nor notifies in there.
         out.append(_neutralize_span(text[pos:m.start()]))
-        out.append(m.group(0))
+        # CommonMark forbids backticks in a backtick fence's info string. Such
+        # a line is ordinary text even when a later line looks like its close.
+        if m.group("fchar") == "`" and "`" in m.group("info"):
+            out.append(_neutralize_span(m.group(0)))
+        else:
+            out.append(m.group(0))
         pos = m.end()
     out.append(_neutralize_span(text[pos:]))
     return "".join(out)

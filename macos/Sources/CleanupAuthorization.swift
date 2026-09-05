@@ -91,6 +91,11 @@ struct CleanupExecutionPlan: Sendable, Equatable {
         }
     }
 
+    var helperSelection: HelperReviewedSelection {
+        HelperReviewedSelection(expiresAt: expiresAt, roots: approvedRoots,
+                                items: items.map(\.identity))
+    }
+
     /// The shell-quoted form of `orderedReviewedPaths()`, for the delete loop.
     /// The shell the osascript route runs for a reviewed clean: every boundary check first —
     /// the review's expiry, then the pinned identity of each approved root and each reviewed
@@ -100,7 +105,7 @@ struct CleanupExecutionPlan: Sendable, Equatable {
     /// whose entries were swapped, or that went stale, runs nothing.
     ///
     /// The deletion itself is the ENGINE's now, through its own rails, from the plan file; this
-    /// shell no longer deletes anything. That is deliberate: one set of deletion rails (the
+    /// shell never removes reviewed paths. That is deliberate: one set of deletion rails (the
     /// engine's, unit-tested there) instead of a `find -delete` loop here whose safety
     /// properties had to be re-proven in this repository.
     func guardedShell(running command: String) -> String {
@@ -108,6 +113,28 @@ struct CleanupExecutionPlan: Sendable, Equatable {
             $0 + " || exit \(ElevatedExitCode.boundaryCheckFailed)"
         }
         return (checks + [command]).joined(separator: "; ")
+    }
+
+    /// Materialize the authorized paths after elevation, in a fresh owner-only directory.
+    /// A user-writable GUI plan file can change while the password dialog is open.
+    func guardedEngineShell(commandPrefix: [String]) -> String {
+        guard let body = try? CleanPlanFile.render(paths: orderedReviewedPaths()) else {
+            return "exit \(ElevatedExitCode.boundaryCheckFailed)"
+        }
+        let prefix = (commandPrefix + ["clean", "--apply", "--permanent", "--plan"])
+            .map(EngineCLI.shellQuote).joined(separator: " ")
+        let statements = [
+            "umask 077",
+            "burrow_review_dir=$(/usr/bin/mktemp -d /private/var/tmp/burrow-reviewed.XXXXXXXX) || exit \(ElevatedExitCode.boundaryCheckFailed)",
+            "burrow_review_file=\"$burrow_review_dir/paths.plan\"",
+            "cleanup_burrow_review() { /bin/rm -f -- \"$burrow_review_file\"; /bin/rmdir -- \"$burrow_review_dir\"; }",
+            "trap cleanup_burrow_review EXIT",
+            "/usr/bin/printf '%s' \(EngineCLI.shellQuote(body)) > \"$burrow_review_file\" || exit \(ElevatedExitCode.boundaryCheckFailed)",
+            "\(prefix) \"$burrow_review_file\" '--stream'",
+            "burrow_review_status=$?",
+            "exit \"$burrow_review_status\"",
+        ]
+        return guardedShell(running: "( " + statements.joined(separator: "; ") + " )")
     }
 
     /// Write this plan's reviewed paths as an engine plan file into `directory` (the app's

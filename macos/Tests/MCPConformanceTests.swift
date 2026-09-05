@@ -405,6 +405,22 @@ final class MCPConformanceTests: XCTestCase {
                        MCPProtocol.ErrorCode.invalidParams)
     }
 
+    func testCancellingAQueuedTaskPreventsItsWorkFromStarting() {
+        let queue = DispatchQueue(label: "burrow.test.queued-mcp")
+        queue.suspend()
+        let store = MCPTaskStore(queue: queue)
+        var executions = 0
+        let record = store.start(label: "queued action", progressToken: nil) { _ in
+            executions += 1
+            return .success(["content": []])
+        }
+        XCTAssertTrue(store.cancel(record.taskId))
+        queue.resume()
+        queue.sync {}
+        XCTAssertEqual(executions, 0, "a cancelled queued action must never start its engine command")
+        XCTAssertEqual(store.get(record.taskId)?.status, MCPTaskStore.Status.cancelled)
+    }
+
     func testProgressNotification_onlyWithAProgressToken() throws {
         let store = MCPTaskStore()
         var notes: [[String: Any]] = []
@@ -506,6 +522,19 @@ final class MCPConformanceTests: XCTestCase {
         XCTAssertEqual(structured["blocked"] as? Bool, true)
         XCTAssertEqual(structured["ran"] as? Bool, false)
         XCTAssertNotNil(structured["reason"] as? String, "the refusal has to say why")
+        XCTAssertEqual(r["isError"] as? Bool, true, "clients must see a tool failure when the action is blocked")
+    }
+
+    func testFailedToolPayloadsAreMarkedAsErrorsForSyncAndTaskResults() {
+        for payload in [#"{"error":"engine unavailable"}"#, #"{"exit_code":1,"output":"denied"}"#,
+                        #"{"ok":false,"error":{"message":"refused"}}"#, #"{"timed_out":true}"#] {
+            let result = MCPServer.callToolBody(name: "burrow_evict", text: payload, isError: false)
+            XCTAssertEqual(result["isError"] as? Bool, true, payload)
+            XCTAssertNotNil(result["structuredContent"], "failure details must stay available")
+        }
+        let success = MCPServer.callToolBody(name: "burrow_evict", text: #"{"dry_run":true,"items":[]}"#,
+                                            isError: false)
+        XCTAssertNil(success["isError"])
     }
 
     func testMRTRAnswer_cannotUnlockAnUninstall() throws {

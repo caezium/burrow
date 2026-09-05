@@ -4,7 +4,7 @@
 //
 //  The XPC surface, and the names both sides must agree on.
 //
-//  The protocol is deliberately tiny. Three methods, and the only one that
+//  The protocol is deliberately tiny, and the only method that
 //  does privileged work takes an opaque request blob plus an authorization
 //  blob — both of which the daemon decodes and validates itself. There is no
 //  method that takes a command, a path, or an argument list, so the XPC
@@ -51,6 +51,13 @@ enum HelperNames {
     /// own build and refuses to use a helper that doesn't match, since a
     /// registered daemon outlives the app that installed it.
     func helperBuild(withReply reply: @escaping (String) -> Void)
+
+    /// A JSON-encoded `HelperStatus`, including the wire protocol and the
+    /// security checks this daemon implements. A build number alone cannot
+    /// distinguish a running helper from another binary built with that same
+    /// number. Clients must require this handshake before sending work; old
+    /// daemons without this selector fall back to the guarded osascript path.
+    func helperStatus(withReply reply: @escaping (Data) -> Void)
 
     /// Ask the daemon to terminate a running operation.
     ///

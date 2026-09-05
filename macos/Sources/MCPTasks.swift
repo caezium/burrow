@@ -103,6 +103,10 @@ final class MCPTaskStore {
 
         self.queue.async { [weak self] in
             guard let self else { return }
+            self.lock.lock()
+            let shouldRun = self.records[taskId].map { !$0.cancelRequested && !Status.terminal.contains($0.status) } ?? false
+            self.lock.unlock()
+            guard shouldRun else { return }
             let started = Date()
             let progress: (String) -> Void = { [weak self] message in
                 guard let self else { return }
