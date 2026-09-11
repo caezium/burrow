@@ -109,6 +109,15 @@ final class OperationFlowTests: XCTestCase {
         }
         XCTAssertEqual(
             FeatureOperationFailurePolicy.category(
+                forExitCode: ElevatedExitCode.requestRefused,
+                elevated: true,
+                isCleanup: false
+            ),
+            .privilegedRequestRefused,
+            "a helper refusal is its own signal, not a launch failure and not an engine exit"
+        )
+        XCTAssertEqual(
+            FeatureOperationFailurePolicy.category(
                 forExitCode: 1,
                 elevated: true,
                 isCleanup: false
@@ -314,6 +323,28 @@ final class OperationFlowTests: XCTestCase {
         XCTAssertTrue(message.contains("Rescan"), message)
         XCTAssertNil(flow.report, "a refused cleanup must not render the preview's summary")
         XCTAssertEqual(center.ops.first?.phase, .failed)
+    }
+
+    /// The helper refusing a request (issue #425: the daemon's identity gate
+    /// said no before authorization) is NOT "Burrow could not verify the
+    /// program". The helper route puts its reason in the transcript and exits
+    /// with the refusal code; the flow must render that as a refusal and keep
+    /// the reason where the user can read it.
+    func testHelperRefusalReadsAsARefusal_notAsProgramVerification() async throws {
+        let reason = HelperRequestRejection.invalidInvokingUser.userExplanation
+        let flow = makeFlow(FakeProcessPort(script: [
+            .line(reason), .exited(ElevatedExitCode.requestRefused),
+        ]))
+        flow.start(Self.cleanOp(elevated: true))
+        await settle(flow)
+
+        guard case .finished(.failed(let message)) = flow.state else {
+            return XCTFail("a refused request must not become done")
+        }
+        XCTAssertTrue(message.contains("Nothing ran"), message)
+        XCTAssertTrue(message.contains("refused"), message)
+        XCTAssertFalse(message.contains("verify the program"), message)
+        XCTAssertTrue(flow.rawLog.contains(reason), "the daemon's reason must reach the run log")
     }
 
     /// A cleanup that ran and could not remove everything is a DIFFERENT

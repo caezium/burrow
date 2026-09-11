@@ -405,6 +405,50 @@ enum HelperInvokingUserResolver {
     }
 }
 
+// MARK: - Account lookup retry
+
+/// How the daemon repeats its own `getpwuid_r` call when it comes back empty.
+///
+/// libinfo answers "no such user" for two different situations: the uid has
+/// no record, and opendirectoryd did not answer. Its `ds` module gives up
+/// after two XPC attempts and returns NULL for any transport error other than
+/// a closed pipe, and `getpwuid_r` then reports success with no record — the
+/// same shape as a genuinely unknown uid. A freshly spawned root daemon whose
+/// first act is that lookup hits the second situation often enough that the
+/// first request of every helper session was refused as an identity mismatch
+/// while the retry seconds later sailed through (issue #425).
+///
+/// So an empty answer is retried, briefly and a bounded number of times. That
+/// relaxes nothing: every attempt asks the same authoritative source, and the
+/// record it returns still has to pass every check in
+/// `HelperInvokingUserResolver`. A uid that truly has no account costs the
+/// whole schedule and is then refused exactly as before.
+enum HelperAccountLookupRetry {
+    /// The pause before each retry, in seconds; the first attempt is
+    /// immediate. Sub-second at first because the race is over as soon as
+    /// opendirectoryd answers, growing so a slow directory still gets a fair
+    /// chance — just under four seconds in all, which is the longest a client
+    /// can be held for a uid that does not exist.
+    static let delays: [TimeInterval] = [0.1, 0.25, 0.5, 1.0, 2.0]
+
+    /// Calls `attempt` until it returns a record, pausing per `delays` between
+    /// calls. `sleep` is injected so the schedule is testable without waiting
+    /// for it. Returns the record and the attempt that produced it; nil once
+    /// the schedule is exhausted.
+    static func lookup<Account>(delays: [TimeInterval] = delays,
+                                sleep: (TimeInterval) -> Void,
+                                attempt: () -> Account?) -> (account: Account, attempts: Int)? {
+        var pending = delays[...]
+        var attempts = 0
+        while true {
+            attempts += 1
+            if let account = attempt() { return (account, attempts) }
+            guard let delay = pending.popFirst() else { return nil }
+            sleep(delay)
+        }
+    }
+}
+
 // MARK: - Reviewed cleanup targets
 
 /// The original review identities survive the authentication dialog and the XPC boundary.
@@ -522,7 +566,7 @@ enum HelperReviewedPathPolicy {
 /// Why a request never reached the authorization step. Named so the GUI can
 /// explain the refusal instead of showing a bare failure, and so a rejection
 /// is never confused with "the command ran and failed".
-enum HelperRequestRejection: String, Codable, Equatable, Sendable {
+enum HelperRequestRejection: String, Codable, Equatable, Sendable, CaseIterable {
     /// The payload wasn't decodable as a request at all.
     case malformedPayload
     /// The operation ID wasn't a UUID (see `HelperRequest.operationID`).

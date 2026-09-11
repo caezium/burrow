@@ -41,6 +41,12 @@ enum ElevatedOutcome: Equatable {
     /// The osascript spawn itself failed to launch (no usable `mo`, Process
     /// threw). Distinct from a command that ran and failed.
     case launchFailed
+    /// The privileged helper refused the request before authorization, and
+    /// named why. Only the helper route produces this — osascript has no
+    /// request to refuse — but it lives in the shared taxonomy so the GUI
+    /// renders a refusal as a refusal instead of folding it into
+    /// `launchFailed` and blaming program verification (issue #425).
+    case refused(HelperRequestRejection)
 }
 
 extension ElevatedOutcome {
@@ -52,6 +58,7 @@ extension ElevatedOutcome {
         case .exited(let code): return code
         case .authCancelled: return 1
         case .launchFailed: return 127
+        case .refused: return ElevatedExitCode.requestRefused
         }
     }
 }
@@ -186,7 +193,8 @@ enum ElevatedEngineRun {
                     // launch-refused exit; surface it as the failure rather than as engine output.
                     if code == ElevatedExitCode.executableRefused
                         || code == ElevatedExitCode.logSinkUnavailable
-                        || code == ElevatedExitCode.launchFailed {
+                        || code == ElevatedExitCode.launchFailed
+                        || code == ElevatedExitCode.requestRefused {
                         outcome = .launchFailed(reason: transcript)
                     } else {
                         outcome = .captured(Captured(stdout: transcript, stderr: "", exitCode: code))

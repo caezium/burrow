@@ -50,11 +50,48 @@ extension HelperResponse.Outcome {
     ///
     /// `authorizationDenied` folds into `.authCancelled` because from the
     /// user's side both mean "you weren't authenticated, so nothing ran".
+    ///
+    /// A rejection keeps its reason. Folding it into `.launchFailed` made
+    /// every refusal — a build mismatch, a stale reviewed list, an identity
+    /// check that failed — read as "Burrow could not verify the program",
+    /// which was never what had happened.
     var elevatedOutcome: ElevatedOutcome {
         switch self {
         case .exited(let code): return .exited(code)
         case .authorizationCancelled, .authorizationDenied: return .authCancelled
-        case .rejected, .engineUnavailable: return .launchFailed
+        case .rejected(let reason): return .refused(reason)
+        case .engineUnavailable: return .launchFailed
+        }
+    }
+}
+
+extension HelperRequestRejection {
+    /// One sentence for the run log. The daemon names the check that refused
+    /// the request; this turns that name into something a person can act on.
+    /// Every sentence says that nothing ran, because a refusal happens before
+    /// authorization, let alone execution.
+    var userExplanation: String {
+        switch self {
+        case .invalidInvokingUser:
+            return NSLocalizedString(
+                "The privileged helper could not confirm which account asked for this, so nothing ran. Try again.",
+                comment: "")
+        case .buildMismatch:
+            return NSLocalizedString(
+                "The privileged helper is from a different Burrow version, so nothing ran. Reinstall it from Settings ▸ Advanced.",
+                comment: "")
+        case .invalidReviewedPaths:
+            return NSLocalizedString(
+                "The privileged helper refused one of the reviewed items, so nothing was cleaned. Rescan before trying again.",
+                comment: "")
+        case .invalidInterface:
+            return NSLocalizedString(
+                "The privileged helper did not recognize the network interface, so nothing ran.",
+                comment: "")
+        case .malformedPayload, .malformedOperationID, .replayedOperationID:
+            return NSLocalizedString(
+                "The privileged helper refused the request as malformed, so nothing ran. Try again.",
+                comment: "")
         }
     }
 }
@@ -352,6 +389,12 @@ final class PrivilegedHelperClient: @unchecked Sendable {
         (proxy as? BurrowHelperProtocol)?.execute(requestData: payload,
                                                   authorization: authorization) { data in
             if let response = try? JSONDecoder().decode(HelperResponse.self, from: data) {
+                if case .rejected(let reason) = response.outcome {
+                    // The daemon writes its own trail to /Library/Logs; this
+                    // puts the reason in the app's log beside the routing
+                    // lines, so one `log show` tells the whole story.
+                    helperClientLog.notice("daemon refused the request: \(reason.rawValue, privacy: .public)")
+                }
                 outcome = response.outcome.elevatedOutcome
             }
             semaphore.signal()
@@ -450,6 +493,14 @@ struct HelperAwareProcessPort: ProcessPort {
                         continuation.yield(.exited(code))
                     case .authCancelled:
                         continuation.yield(.authCancelled)
+                    case .refused(let reason):
+                        // The daemon named the check that refused the request.
+                        // Put the reason in the transcript — the same empty-
+                        // transcript hazard as `.launchFailed` below — and
+                        // exit with the code the flow renders as a refusal,
+                        // not as a program that failed verification.
+                        continuation.yield(.line(reason.userExplanation))
+                        continuation.yield(.exited(ElevatedExitCode.requestRefused))
                     case .launchFailed:
                         // Nothing ran. The report parser reduces an EMPTY
                         // transcript to a cheerful "Done — caches cleared",

@@ -52,6 +52,11 @@ protocol ProcessPort: Sendable {
 enum FeatureOperationFailureCategory: String, Equatable {
     case boundaryChanged = "boundary_changed"
     case privilegedLaunchRefused = "privileged_launch_refused"
+    /// The helper daemon refused the request before authorization. Its own
+    /// category because a run of these is a helper problem, not an engine or
+    /// launch one — the failure rate issue #425 describes would have shown up
+    /// here.
+    case privilegedRequestRefused = "privileged_request_refused"
     case engineNonzero = "engine_nonzero"
 }
 
@@ -69,6 +74,8 @@ enum FeatureOperationFailurePolicy {
              ElevatedExitCode.executableRefused,
              ElevatedExitCode.launchFailed:
             return .privilegedLaunchRefused
+        case ElevatedExitCode.requestRefused:
+            return .privilegedRequestRefused
         default:
             return .engineNonzero
         }
@@ -453,6 +460,13 @@ final class OperationFlow<Report: Sendable>: ObservableObject {
              ElevatedExitCode.launchFailed:
             return NSLocalizedString(
                 "Nothing ran: Burrow could not verify the program it was about to run as an administrator.",
+                comment: "")
+        case ElevatedExitCode.requestRefused:
+            // The helper named its reason and the transcript carries it
+            // (`HelperRequestRejection.userExplanation`); this line points
+            // there rather than guessing.
+            return NSLocalizedString(
+                "Nothing ran: the privileged helper refused the request. The run log says why.",
                 comment: "")
         default:
             return isCleanup

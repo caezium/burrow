@@ -158,6 +158,54 @@ final class HelperContractTests: XCTestCase {
             }
     }
 
+    // MARK: - Account lookup retry (issue #425)
+    //
+    // libinfo reports "opendirectoryd did not answer" exactly like "no such
+    // uid", and a freshly spawned daemon hits the former on its very first
+    // lookup. The daemon therefore asks again on an empty answer — briefly,
+    // a bounded number of times, and without weakening any check.
+
+    func testAccountLookupRetry_aFirstHitCostsNoWaiting() {
+        var slept: [TimeInterval] = []
+        let found = HelperAccountLookupRetry.lookup(sleep: { slept.append($0) }) { "record" }
+        XCTAssertEqual(found?.account, "record")
+        XCTAssertEqual(found?.attempts, 1)
+        XCTAssertEqual(slept, [], "the common case must not pay for the rare one")
+    }
+
+    func testAccountLookupRetry_absorbsAnEmptyAnswerAndReportsTheAttempt() {
+        var slept: [TimeInterval] = []
+        var answers: [String?] = [nil, nil, "record"]
+        let found = HelperAccountLookupRetry.lookup(sleep: { slept.append($0) }) { answers.removeFirst() }
+        XCTAssertEqual(found?.account, "record")
+        XCTAssertEqual(found?.attempts, 3, "the count is what the daemon logs, so it must be the real one")
+        XCTAssertEqual(slept, Array(HelperAccountLookupRetry.delays.prefix(2)),
+                       "one pause per miss, in schedule order")
+    }
+
+    func testAccountLookupRetry_givesUpAfterTheScheduleAndNotBefore() {
+        var slept: [TimeInterval] = []
+        var calls = 0
+        let found: (account: String, attempts: Int)? =
+            HelperAccountLookupRetry.lookup(sleep: { slept.append($0) }) { calls += 1; return nil }
+        XCTAssertNil(found, "a uid with no record is still refused")
+        XCTAssertEqual(calls, HelperAccountLookupRetry.delays.count + 1,
+                       "every scheduled retry is used before the daemon refuses")
+        XCTAssertEqual(slept, HelperAccountLookupRetry.delays)
+    }
+
+    func testAccountLookupRetry_scheduleIsShortEnoughToHoldAClientFor() {
+        // The client blocks on the XPC reply for the whole schedule when the
+        // uid genuinely has no account. Seconds, not the half-minute a
+        // 1/2/4/8/16 backoff would cost, and never a first pause that makes
+        // the healthy race wait longer than it needs to.
+        let total = HelperAccountLookupRetry.delays.reduce(0, +)
+        XCTAssertLessThan(total, 5)
+        XCTAssertLessThanOrEqual(HelperAccountLookupRetry.delays.first ?? 1, 0.25)
+        XCTAssertEqual(HelperAccountLookupRetry.delays, HelperAccountLookupRetry.delays.sorted(),
+                       "back off, never in")
+    }
+
     // MARK: - The closed operation set
     //
     // The approved scope is exactly: privileged scan, clean, optimize, the
@@ -540,6 +588,31 @@ final class HelperContractTests: XCTestCase {
         XCTAssertEqual(HelperResponse.Outcome.authorizationCancelled.elevatedOutcome, .authCancelled)
         XCTAssertEqual(HelperResponse.Outcome.engineUnavailable.elevatedOutcome, .launchFailed)
         XCTAssertEqual(HelperResponse.Outcome.authorizationDenied.elevatedOutcome, .authCancelled)
+    }
+
+    /// A refusal is not a launch failure. Folding the two together is how a
+    /// daemon-side identity check surfaced as "Burrow could not verify the
+    /// program it was about to run" (issue #425); the reason must survive the
+    /// bridge so the GUI can say what actually happened.
+    func testResponse_aRejectionKeepsItsReasonAcrossTheBridge() {
+        for reason in HelperRequestRejection.allCases {
+            XCTAssertEqual(HelperResponse.Outcome.rejected(reason).elevatedOutcome, .refused(reason))
+            XCTAssertNotEqual(HelperResponse.Outcome.rejected(reason).elevatedOutcome, .launchFailed)
+        }
+    }
+
+    /// Every rejection the daemon can name has a sentence for the run log,
+    /// and every sentence says nothing ran — a refusal happens before
+    /// authorization, so there is never a partial result to hedge about.
+    func testEveryRejectionExplainsItselfAndSaysNothingRan() {
+        for reason in HelperRequestRejection.allCases {
+            let text = reason.userExplanation
+            XCTAssertFalse(text.isEmpty, "\(reason) has no explanation")
+            XCTAssertTrue(text.contains("nothing ran") || text.contains("nothing was cleaned"),
+                          "\(reason): \(text)")
+        }
+        XCTAssertTrue(HelperRequestRejection.invalidReviewedPaths.userExplanation.contains("Rescan"),
+                      "a stale reviewed list is fixed by rescanning, and the text must say so")
     }
 }
 
