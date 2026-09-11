@@ -879,3 +879,25 @@
 "Extra Large" = "Très grande";
 "Scales text and icons across the whole app and the menu-bar popup — no relaunch needed. The menu-bar item itself keeps its own per-widget text size, set under Menu Bar." = "Met à l'échelle le texte et les icônes dans toute l'app et dans le panneau de la barre des menus — sans relancer. L'élément de la barre des menus conserve sa propre taille de texte, réglée par widget dans « Barre des menus ».";
 "Release Notes" = "Notes de version";
+
+// Software › Updates (#424): Mac apps / Homebrew split, brew problems, batch controls
+"Mac apps" = "Apps Mac";
+"Checking app versions contacts Apple and vendor servers." = "La vérification des versions contacte les serveurs d'Apple et des éditeurs.";
+"Listed from Homebrew's local index — Refresh contacts Homebrew's update feeds." = "Liste issue de l'index local de Homebrew — « Actualiser » contacte les flux de mise à jour de Homebrew.";
+"Homebrew is no longer available." = "Homebrew n'est plus disponible.";
+"Homebrew exited with status %d. Retry after resolving its message." = "Homebrew s'est terminé avec le statut %d. Résolvez son message, puis réessayez.";
+"Homebrew didn't respond in time." = "Homebrew n'a pas répondu à temps.";
+"Homebrew exited with status %d." = "Homebrew s'est terminé avec le statut %d.";
+"Homebrew couldn't refresh: %@" = "Homebrew n'a pas pu s'actualiser : %@";
+"Homebrew couldn't list outdated packages: %@" = "Homebrew n'a pas pu lister les paquets obsolètes : %@";
+"Stop after current" = "Arrêter après l'élément en cours";
+"Stopping after current…" = "Arrêt après l'élément en cours…";
+"Checking…" = "Vérification…";
+"%d of %d update steps processed" = "%1$d étapes de mise à jour sur %2$d traitées";
+"%d update checks failed. Known versions were preserved." = "%d vérifications de mise à jour ont échoué. Les versions connues ont été conservées.";
+"Retry" = "Réessayer";
+"Open updater" = "Ouvrir l'outil de mise à jour";
+"Open App Store" = "Ouvrir l'App Store";
+"Install & Restart" = "Installer et redémarrer";
+"Not Yet" = "Pas maintenant";
+"Release notes" = "Notes de version";

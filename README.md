@@ -144,7 +144,7 @@ stdio bridge, CI, tests, and unsigned release packaging.
 | **Purge** | Reclaim space from dev projects: `node_modules`, build dirs, `target/`, `__pycache__`, and more — preview streams in, one confirmation, everything found goes to the Trash. | `mo purge` |
 | **Installers** | Find and remove leftover `.dmg`/`.pkg` installer files in bulk. | `mo installer` |
 | **Optimize** | One-tap safe maintenance: rebuild caches, repair metadata, flush DNS, restart Dock/Finder. | `mo optimize` |
-| **Software** | Installed-app list with search/sort (size, name, recent, source) and multi-select uninstall; a Homebrew **Updates** tab. | `mo uninstall --list`, `brew outdated` |
+| **Software** | Installed-app list with search/sort (size, name, recent, source) and multi-select uninstall; an **Updates** tab with a Mac apps / Homebrew picker, each half with its own check and update-all. | `mo uninstall --list`, `brew outdated` |
 | **Analyze** | Squarified treemap of your disk; drill into any folder, reveal in Finder. | `mo analyze --json` |
 
 Every scan offers a **no-risk preview** (`--dry-run`) first, a clear
@@ -428,7 +428,8 @@ duplicate finding. The honest privacy picture:
 - **Local-only surfaces:** the MCP/HTTP surfaces bind to loopback only
   (`127.0.0.1`) and history is stored locally. On Windows, the HTTP REST toggle
   disables REST endpoints but keeps the local `/mcp` bridge route available for
-  stdio MCP clients. The macOS Updates tab runs `brew outdated`, the same check
+  stdio MCP clients. The macOS Updates tab reads Homebrew's local index when it
+  opens and runs `brew update` only when you click Refresh, the same fetch
   `brew` does for itself.
 - **Distribution signatures:** new official macOS tags fail unless Developer ID
   signing, notarization, and the signed Sparkle ZIP/feed checks pass; local

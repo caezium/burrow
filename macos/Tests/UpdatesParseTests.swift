@@ -33,4 +33,19 @@ final class UpdatesParseTests: XCTestCase {
         XCTAssertTrue(UpdatesModel.parseOutdated("not json").isEmpty)
         XCTAssertTrue(UpdatesModel.parseOutdated("").isEmpty)
     }
+
+    /// A failed brew run used to vanish into an empty list (#424); the one
+    /// line the pane shows comes from here.
+    func testBrewProblemMessage_prefersDeadlineThenLastStderrLineThenStatus() {
+        XCTAssertEqual(
+            UpdatesModel.brewProblemMessage(.init(out: "", err: "Error: x", code: 1, timedOut: true)),
+            "Homebrew didn't respond in time.")
+        XCTAssertEqual(
+            UpdatesModel.brewProblemMessage(.init(
+                out: "", err: "==> Updating Homebrew...\nError: Failure while executing; `git fetch` exited with 128.\n   \n", code: 1)),
+            "Error: Failure while executing; `git fetch` exited with 128.")
+        XCTAssertEqual(
+            UpdatesModel.brewProblemMessage(.init(out: "", err: "", code: 2)),
+            "Homebrew exited with status 2.")
+    }
 }

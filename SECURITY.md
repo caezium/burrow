@@ -235,11 +235,15 @@ This is the part people rightly scrutinize in cleaners. Burrow's model:
     through the same opt-out telemetry switch, without request URLs or a
     Sparkle device profile. Turn the toggle off to make checks fully manual; the
     menu and Settings buttons still work.
-  - The Software → **Updates** tab runs `brew outdated`, which contacts
-    Homebrew's update feeds — the same check `brew` does for itself. It reads
-    version info; it sends nothing about you. App version checks (Sparkle
-    appcasts, App Store lookups) still happen only when you click "Check for
-    updates".
+  - The Software → **Updates** tab lists Homebrew's outdated formulae and
+    casks from Homebrew's local index when it opens (`brew outdated` with
+    auto-update off), which needs no network. Clicking **Refresh** runs
+    `brew update`, which contacts Homebrew's update feeds — the same fetch
+    `brew` does for itself. It reads version info; it sends nothing about
+    you. Burrow runs `brew` with the `HOMEBREW_*` variables from your login
+    shell, so a configured mirror is honored, and imports nothing else from
+    that shell. App version checks (Sparkle appcasts, App Store lookups)
+    still happen only when you click "Check for updates".
   - The engine inside `Burrow.app` never self-updates because changing a file
     inside the bundle would invalidate its Developer ID seal. It updates only
     with a signed Burrow release. Source builds using an external engine keep
