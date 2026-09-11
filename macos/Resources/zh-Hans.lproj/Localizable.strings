@@ -879,3 +879,11 @@
 "Extra Large" = "特大";
 "Scales text and icons across the whole app and the menu-bar popup — no relaunch needed. The menu-bar item itself keeps its own per-widget text size, set under Menu Bar." = "缩放整个应用与菜单栏弹窗中的文字和图标，无需重新启动。菜单栏项目自身的文字大小仍在“菜单栏”设置中按组件单独调整。";
 "Release Notes" = "发行说明";
+
+/* Privileged helper refusals (#425) */
+"The privileged helper could not confirm which account asked for this, so nothing ran. Try again." = "特权辅助程序无法确认是哪个账户发出的请求，因此没有执行任何操作。请重试。";
+"The privileged helper is from a different Burrow version, so nothing ran. Reinstall it from Settings ▸ Advanced." = "特权辅助程序来自另一个 Burrow 版本，因此没有执行任何操作。请在“设置 ▸ 高级”中重新安装。";
+"The privileged helper refused one of the reviewed items, so nothing was cleaned. Rescan before trying again." = "特权辅助程序拒绝了其中一个已审核项目，因此什么都没有清理。请重新扫描后再试。";
+"The privileged helper did not recognize the network interface, so nothing ran." = "特权辅助程序无法识别该网络接口，因此没有执行任何操作。";
+"The privileged helper refused the request as malformed, so nothing ran. Try again." = "特权辅助程序认为请求格式无效并已拒绝，因此没有执行任何操作。请重试。";
+"Nothing ran: the privileged helper refused the request. The run log says why." = "未执行任何操作：特权辅助程序拒绝了请求。运行日志中说明了原因。";

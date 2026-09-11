@@ -879,3 +879,11 @@
 "Extra Large" = "特大";
 "Scales text and icons across the whole app and the menu-bar popup — no relaunch needed. The menu-bar item itself keeps its own per-widget text size, set under Menu Bar." = "アプリ全体とメニューバーのポップアップの文字とアイコンを拡大縮小します。再起動は不要です。メニューバー項目自体の文字サイズは「メニューバー」でウィジェットごとに個別に設定します。";
 "Release Notes" = "リリースノート";
+
+/* Privileged helper refusals (#425) */
+"The privileged helper could not confirm which account asked for this, so nothing ran. Try again." = "特権ヘルパーがどのアカウントからの要求か確認できなかったため、何も実行していません。もう一度お試しください。";
+"The privileged helper is from a different Burrow version, so nothing ran. Reinstall it from Settings ▸ Advanced." = "特権ヘルパーが別のバージョンの Burrow のものであるため、何も実行していません。「設定 ▸ 詳細」から再インストールしてください。";
+"The privileged helper refused one of the reviewed items, so nothing was cleaned. Rescan before trying again." = "特権ヘルパーが確認済み項目の 1 つを拒否したため、何もクリーンしていません。再スキャンしてからやり直してください。";
+"The privileged helper did not recognize the network interface, so nothing ran." = "特権ヘルパーがネットワークインターフェイスを認識できなかったため、何も実行していません。";
+"The privileged helper refused the request as malformed, so nothing ran. Try again." = "特権ヘルパーが要求を不正な形式として拒否したため、何も実行していません。もう一度お試しください。";
+"Nothing ran: the privileged helper refused the request. The run log says why." = "何も実行していません: 特権ヘルパーが要求を拒否しました。理由は実行ログに記録されています。";

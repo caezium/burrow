@@ -879,3 +879,11 @@
 "Extra Large" = "Très grande";
 "Scales text and icons across the whole app and the menu-bar popup — no relaunch needed. The menu-bar item itself keeps its own per-widget text size, set under Menu Bar." = "Met à l'échelle le texte et les icônes dans toute l'app et dans le panneau de la barre des menus — sans relancer. L'élément de la barre des menus conserve sa propre taille de texte, réglée par widget dans « Barre des menus ».";
 "Release Notes" = "Notes de version";
+
+/* Privileged helper refusals (#425) */
+"The privileged helper could not confirm which account asked for this, so nothing ran. Try again." = "L'assistant privilégié n'a pas pu confirmer quel compte a fait la demande ; rien n'a été exécuté. Réessaie.";
+"The privileged helper is from a different Burrow version, so nothing ran. Reinstall it from Settings ▸ Advanced." = "L'assistant privilégié provient d'une autre version de Burrow ; rien n'a été exécuté. Réinstalle-le depuis Réglages ▸ Avancé.";
+"The privileged helper refused one of the reviewed items, so nothing was cleaned. Rescan before trying again." = "L'assistant privilégié a refusé l'un des éléments vérifiés ; rien n'a été nettoyé. Relance l'analyse avant de réessayer.";
+"The privileged helper did not recognize the network interface, so nothing ran." = "L'assistant privilégié n'a pas reconnu l'interface réseau ; rien n'a été exécuté.";
+"The privileged helper refused the request as malformed, so nothing ran. Try again." = "L'assistant privilégié a refusé la demande, jugée mal formée ; rien n'a été exécuté. Réessaie.";
+"Nothing ran: the privileged helper refused the request. The run log says why." = "Rien n'a été exécuté : l'assistant privilégié a refusé la demande. Le journal d'exécution en indique la raison.";

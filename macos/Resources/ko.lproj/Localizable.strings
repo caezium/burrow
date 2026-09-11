@@ -879,3 +879,11 @@
 "Extra Large" = "아주 크게";
 "Scales text and icons across the whole app and the menu-bar popup — no relaunch needed. The menu-bar item itself keeps its own per-widget text size, set under Menu Bar." = "앱 전체와 메뉴 막대 팝업의 텍스트와 아이콘 크기를 조절합니다. 재실행이 필요 없습니다. 메뉴 막대 항목 자체의 텍스트 크기는 '메뉴 막대'에서 위젯별로 따로 설정합니다.";
 "Release Notes" = "릴리스 노트";
+
+/* Privileged helper refusals (#425) */
+"The privileged helper could not confirm which account asked for this, so nothing ran. Try again." = "권한 있는 도우미가 어느 계정의 요청인지 확인하지 못해 아무것도 실행하지 않았습니다. 다시 시도하세요.";
+"The privileged helper is from a different Burrow version, so nothing ran. Reinstall it from Settings ▸ Advanced." = "권한 있는 도우미가 다른 버전의 Burrow에서 설치된 것이어서 아무것도 실행하지 않았습니다. '설정 ▸ 고급'에서 다시 설치하세요.";
+"The privileged helper refused one of the reviewed items, so nothing was cleaned. Rescan before trying again." = "권한 있는 도우미가 검토한 항목 중 하나를 거부해 아무것도 정리하지 않았습니다. 다시 검사한 뒤 시도하세요.";
+"The privileged helper did not recognize the network interface, so nothing ran." = "권한 있는 도우미가 네트워크 인터페이스를 인식하지 못해 아무것도 실행하지 않았습니다.";
+"The privileged helper refused the request as malformed, so nothing ran. Try again." = "권한 있는 도우미가 요청 형식이 잘못되었다고 거부해 아무것도 실행하지 않았습니다. 다시 시도하세요.";
+"Nothing ran: the privileged helper refused the request. The run log says why." = "아무것도 실행하지 않았습니다: 권한 있는 도우미가 요청을 거부했습니다. 이유는 실행 로그에 있습니다.";
