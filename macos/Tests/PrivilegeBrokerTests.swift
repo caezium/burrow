@@ -103,6 +103,10 @@ final class PrivilegeBrokerTests: XCTestCase {
         XCTAssertEqual(ElevatedOutcome.exited(3).exitCode, 3)
         XCTAssertNotEqual(ElevatedOutcome.authCancelled.exitCode, 0, "a dismissed prompt is a failure to callers")
         XCTAssertEqual(ElevatedOutcome.launchFailed.exitCode, 127, "matches the old 'no trusted mo' sentinel")
+        XCTAssertEqual(ElevatedOutcome.refused(.invalidInvokingUser).exitCode, ElevatedExitCode.requestRefused)
+        XCTAssertNotEqual(ElevatedOutcome.refused(.buildMismatch).exitCode, 0, "a refusal is a failure to callers")
+        XCTAssertNotEqual(ElevatedOutcome.refused(.buildMismatch).exitCode, ElevatedExitCode.launchFailed,
+                          "a refused request must not be rendered as a program that failed verification")
     }
 
     // MARK: - osascript spec quoting through the broker (injection cases)

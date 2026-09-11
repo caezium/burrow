@@ -102,6 +102,27 @@ enum HelperDaemonIdentityResolver {
     }
 
     private static func account(for uid: uid_t) throws -> HelperInvokingUserAccount {
+        // An empty answer is not yet a fact on a fresh process — see
+        // `HelperAccountLookupRetry` for why libinfo's "no such user" also
+        // covers "the directory did not answer" — so it is asked again.
+        let found = HelperAccountLookupRetry.lookup(
+            sleep: { Thread.sleep(forTimeInterval: $0) },
+            attempt: { record(for: uid) })
+        guard let found else {
+            helperTrace("account lookup for uid \(uid) returned no record after \(HelperAccountLookupRetry.delays.count + 1) attempts")
+            throw HelperInvokingUserResolutionError.missingAccount
+        }
+        if found.attempts > 1 {
+            // Worth a line even though the request goes on: this is the race
+            // being absorbed, and the count says how close it came to refusal.
+            helperTrace("account lookup for uid \(uid) succeeded on attempt \(found.attempts)")
+        }
+        return found.account
+    }
+
+    /// One `getpwuid_r` call. nil means the call produced no record, whatever
+    /// the reason; the caller decides whether to ask again.
+    private static func record(for uid: uid_t) -> HelperInvokingUserAccount? {
         var record = passwd()
         var result: UnsafeMutablePointer<passwd>?
         let configured = sysconf(_SC_GETPW_R_SIZE_MAX)
@@ -112,7 +133,7 @@ enum HelperDaemonIdentityResolver {
         }
         guard status == 0, result != nil,
               let name = record.pw_name, let home = record.pw_dir else {
-            throw HelperInvokingUserResolutionError.missingAccount
+            return nil
         }
         return HelperInvokingUserAccount(uid: UInt32(record.pw_uid),
                                          username: String(cString: name),
@@ -534,7 +555,21 @@ final class HelperService: NSObject, BurrowHelperProtocol {
         super.init()
     }
 
-    var isIdle: Bool { !runner.hasWork }
+    /// Nothing running and no request between arrival and execution. The
+    /// second half matters because the identity gate can pause for a few
+    /// seconds: a request that lands in the last seconds of the idle window
+    /// must not have the daemon exit underneath it. This is the timer's
+    /// reading of the clock only; the decision to exit is `commitIdleExit`.
+    var isIdle: Bool { !runner.hasWork && !gate.hasRequestsInFlight }
+
+    /// Commit to exiting, or refuse because something arrived. Decided under
+    /// the same lock `execute` admits requests with, so nothing can be
+    /// admitted between a true answer and the `exit` that follows it.
+    func commitIdleExit() -> Bool {
+        gate.closeIfIdle(stillBusy: { runner.hasWork })
+    }
+
+    private let gate = HelperAdmissionGate()
 
     /// Every network interface that actually exists on this machine.
     ///
@@ -584,6 +619,18 @@ final class HelperService: NSObject, BurrowHelperProtocol {
     }
 
     func execute(requestData: Data, authorization: Data, withReply reply: @escaping (Data) -> Void) {
+        guard gate.admit() else {
+            // The idle timer committed to exit under this same lock a moment
+            // ago, so this process is going away and must not start an
+            // identity lookup it cannot finish. No reply: the client's
+            // connection-error handler reports it exactly as a daemon that
+            // had already exited would, and launchd starts a fresh one on the
+            // next connection.
+            helperTrace("request refused: daemon is exiting")
+            return
+        }
+        defer { gate.release() }
+
         func respond(_ outcome: HelperResponse.Outcome) {
             let encoded = (try? JSONEncoder().encode(HelperResponse(outcome: outcome))) ?? Data()
             reply(encoded)
@@ -626,9 +673,14 @@ final class HelperService: NSObject, BurrowHelperProtocol {
                 peerUID: connection.effectiveUserIdentifier,
                 claim: request.invokingUser)
         } catch {
-            // Numeric uid is useful for auditing account-switch/mismatch
+            // Name the check that failed. It is a closed enum, so it is safe
+            // in a world-readable log, and it is the one fact that tells a
+            // directory hiccup apart from a real mismatch — the report behind
+            // issue #425 had to reason by elimination because this line did
+            // not say. The numeric uid is useful for auditing account-switch
             // failures. Never log the account name, home, or claim text.
-            helperTrace("request refused: invoking identity mismatch for uid \(connection.effectiveUserIdentifier)")
+            let check = (error as? HelperInvokingUserResolutionError).map { "\($0)" } ?? "unknown"
+            helperTrace("request refused: invoking identity mismatch (\(check)) for uid \(connection.effectiveUserIdentifier)")
             return respond(.rejected(.invalidInvokingUser))
         }
         helperTrace("invoking identity accepted for uid \(invokingUser.uid); canonical home matched")

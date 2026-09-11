@@ -901,3 +901,10 @@
 "Install & Restart" = "Установить и перезапустить";
 "Not Yet" = "Не сейчас";
 "Release notes" = "Примечания к выпуску";
+/* Privileged helper refusals (#425) */
+"The privileged helper could not confirm which account asked for this, so nothing ran. Try again." = "Привилегированный вспомогательный компонент не смог подтвердить, от какой учётной записи поступил запрос, поэтому ничего не было выполнено. Попробуйте ещё раз.";
+"The privileged helper is from a different Burrow version, so nothing ran. Reinstall it from Settings ▸ Advanced." = "Привилегированный вспомогательный компонент относится к другой версии Burrow, поэтому ничего не было выполнено. Переустановите его в разделе «Настройки ▸ Дополнительно».";
+"The privileged helper refused one of the reviewed items, so nothing was cleaned. Rescan before trying again." = "Привилегированный вспомогательный компонент отклонил один из проверенных элементов, поэтому ничего не было очищено. Пересканируйте, прежде чем повторить попытку.";
+"The privileged helper did not recognize the network interface, so nothing ran." = "Привилегированный вспомогательный компонент не распознал сетевой интерфейс, поэтому ничего не было выполнено.";
+"The privileged helper refused the request as malformed, so nothing ran. Try again." = "Привилегированный вспомогательный компонент отклонил запрос как некорректный, поэтому ничего не было выполнено. Попробуйте ещё раз.";
+"Nothing ran: the privileged helper refused the request. The run log says why." = "Ничего не выполнено: привилегированный вспомогательный компонент отклонил запрос. Причина указана в журнале выполнения.";

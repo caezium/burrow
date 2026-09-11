@@ -886,3 +886,10 @@
 "Install & Restart" = "安裝並重新啟動";
 "Not Yet" = "暫不";
 "Release notes" = "發行說明";
+/* Privileged helper refusals (#425) */
+"The privileged helper could not confirm which account asked for this, so nothing ran. Try again." = "特權輔助程式無法確認是哪個帳號發出的請求，因此沒有執行任何操作。請再試一次。";
+"The privileged helper is from a different Burrow version, so nothing ran. Reinstall it from Settings ▸ Advanced." = "特權輔助程式來自另一個 Burrow 版本，因此沒有執行任何操作。請在「設定 ▸ 進階」中重新安裝。";
+"The privileged helper refused one of the reviewed items, so nothing was cleaned. Rescan before trying again." = "特權輔助程式拒絕了其中一個已審核項目，因此什麼都沒有清理。請重新掃描後再試。";
+"The privileged helper did not recognize the network interface, so nothing ran." = "特權輔助程式無法辨識該網路介面，因此沒有執行任何操作。";
+"The privileged helper refused the request as malformed, so nothing ran. Try again." = "特權輔助程式認為請求格式無效並已拒絕，因此沒有執行任何操作。請再試一次。";
+"Nothing ran: the privileged helper refused the request. The run log says why." = "未執行任何操作：特權輔助程式拒絕了請求。執行記錄中說明了原因。";

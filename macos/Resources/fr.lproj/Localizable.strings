@@ -901,3 +901,10 @@
 "Install & Restart" = "Installer et redémarrer";
 "Not Yet" = "Pas maintenant";
 "Release notes" = "Notes de version";
+/* Privileged helper refusals (#425) */
+"The privileged helper could not confirm which account asked for this, so nothing ran. Try again." = "L'assistant privilégié n'a pas pu confirmer quel compte a fait la demande ; rien n'a été exécuté. Réessaie.";
+"The privileged helper is from a different Burrow version, so nothing ran. Reinstall it from Settings ▸ Advanced." = "L'assistant privilégié provient d'une autre version de Burrow ; rien n'a été exécuté. Réinstalle-le depuis Réglages ▸ Avancé.";
+"The privileged helper refused one of the reviewed items, so nothing was cleaned. Rescan before trying again." = "L'assistant privilégié a refusé l'un des éléments vérifiés ; rien n'a été nettoyé. Relance l'analyse avant de réessayer.";
+"The privileged helper did not recognize the network interface, so nothing ran." = "L'assistant privilégié n'a pas reconnu l'interface réseau ; rien n'a été exécuté.";
+"The privileged helper refused the request as malformed, so nothing ran. Try again." = "L'assistant privilégié a refusé la demande, jugée mal formée ; rien n'a été exécuté. Réessaie.";
+"Nothing ran: the privileged helper refused the request. The run log says why." = "Rien n'a été exécuté : l'assistant privilégié a refusé la demande. Le journal d'exécution en indique la raison.";

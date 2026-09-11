@@ -45,6 +45,14 @@ final class ElevatedEngineRunTests: XCTestCase {
         XCTAssertEqual(outcome, .launchFailed(reason: "executable failed the bundle seal check"))
     }
 
+    func testCollect_aHelperRefusalIsALaunchFailureWithTheDaemonsReason() {
+        // The helper route explains a refused request the same way — reason
+        // lines, then its own sentinel exit — and it too never ran the engine.
+        let reason = HelperRequestRejection.buildMismatch.userExplanation
+        let outcome = ElevatedEngineRun.collect(stream([.line(reason), .exited(ElevatedExitCode.requestRefused)]))
+        XCTAssertEqual(outcome, .launchFailed(reason: reason))
+    }
+
     func testCollect_aStreamThatEndsWithoutAnExit_isALaunchFailure() {
         guard case .launchFailed = ElevatedEngineRun.collect(stream([.line("half")])) else {
             return XCTFail("no exit status must never read as a run that happened")

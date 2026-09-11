@@ -263,6 +263,7 @@ enum Connectivity {
         switch outcome {
         case .exited(0):     return (true, ok)
         case .authCancelled: return (false, NSLocalizedString("Cancelled.", comment: ""))
+        case .refused(let reason): return (false, reason.userExplanation)
         default:             return (false, fail)
         }
     }

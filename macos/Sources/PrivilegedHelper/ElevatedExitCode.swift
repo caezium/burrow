@@ -12,4 +12,10 @@ enum ElevatedExitCode {
     static let executableRefused: Int32 = 126
     /// The elevated process could not be spawned at all.
     static let launchFailed: Int32 = 127
+    /// The privileged helper refused the request before authorization, for a
+    /// reason it named (`HelperRequestRejection`).  Nothing ran.  EX_CONFIG,
+    /// the value `HelperResponse.Outcome.exitCode` already reserves for a
+    /// rejection, and deliberately not 127: a refused request is not a
+    /// program that failed verification, and the two must not share wording.
+    static let requestRefused: Int32 = 78
 }
