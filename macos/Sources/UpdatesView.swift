@@ -20,12 +20,33 @@
 import SwiftUI
 import AppKit
 
-struct OutdatedItem: Identifiable {
+struct OutdatedItem: Identifiable, Equatable {
     let id: String
     let name: String
     let installed: String
     let latest: String
     let kind: String   // "formula" | "cask"
+}
+
+/// What one `brew outdated` pass produced: the rows, or why there are none.
+/// A failed or timed-out brew used to come back as an empty list, which the
+/// pane showed as "nothing to update" (#424); now the reason travels with it.
+struct BrewOutdated: Equatable {
+    enum Problem: Equatable {
+        case notInstalled
+        case failed(String)
+    }
+    var items: [OutdatedItem] = []
+    var problem: Problem?
+    static let empty = BrewOutdated()
+}
+
+/// The two halves of the pane. They have different network stories — Mac
+/// apps are checked only on click, Homebrew's local index is free — so each
+/// gets its own header with its own single action instead of one shared
+/// button sitting above a mixed list.
+enum UpdatesSource: Hashable {
+    case apps, homebrew
 }
 
 /// One GUI app in the unified list.
@@ -112,110 +133,206 @@ struct UpdatesView: View {
     var apps: [InstalledApp] = []
 
     var body: some View {
-        Group {
-            if model.checking && model.appItems.isEmpty {
-                center { ProgressView("Checking update sources…").controlSize(.large).tint(Tool.apps.accent).font(Brand.mono(11)) }
-            } else {
-                VStack(spacing: 0) {
-                    header.padding(.horizontal, 18).padding(.vertical, 11)
-                    Rectangle().fill(Brand.hairline).frame(height: 1)
-                    list
-                }
+        VStack(spacing: 0) {
+            header.padding(.horizontal, 18).padding(.vertical, 11)
+            Rectangle().fill(Brand.hairline).frame(height: 1)
+            switch model.source {
+            case .apps: appsList
+            case .homebrew: brewList
             }
         }
         .onAppear { model.prepare(apps: apps); model.autoSurface() }
         .onChange(of: apps) { _, latest in model.prepare(apps: latest) }
     }
 
+    // MARK: Header — source picker on the left, that source's actions on the right
+
     private var header: some View {
         HStack(spacing: 10) {
-            if model.checked || !model.brewItems.isEmpty {
-                let n = model.availableItems.count + model.brewItems.count
-                Text(String(format: NSLocalizedString(n == 1 ? "%d update" : "%d updates", comment: ""), n))
-                    .font(Brand.mono(12)).foregroundStyle(Brand.textSecondary)
-            } else {
-                Text("Homebrew shown automatically — checking app versions contacts Apple and vendor servers.")
-                    .font(Brand.mono(10)).foregroundStyle(Brand.textTertiary)
+            HStack(spacing: 2) {
+                sourceTab("Mac apps", .apps, count: model.checked && !model.availableItems.isEmpty ? model.availableItems.count : nil)
+                sourceTab("Homebrew", .homebrew, count: model.brewItems.isEmpty ? nil : model.brewItems.count)
             }
+            .padding(2)
+            .background(Capsule().fill(Brand.hairline.opacity(0.5)))
             Spacer()
-            if model.checking || model.brewSurfacing {
-                HStack(spacing: 6) {
-                    ProgressView().controlSize(.small)
-                    Text(model.checking ? NSLocalizedString("Checking…", comment: "")
-                                        : NSLocalizedString("Checking Homebrew…", comment: ""))
-                        .font(Brand.mono(10)).foregroundStyle(Brand.textTertiary)
-                }
-            }
-            PillButton(title: model.checked ? "Check again" : "Check for updates", filled: !model.checked) {
-                model.checkNow()
-            }
-            .keyboardShortcut("r", modifiers: .command)
-            if model.updateAllRunning {
-                Text(verbatim: "\(model.updateAllCompleted)/\(model.updateAllTotal)")
-                    .font(Brand.mono(10)).foregroundStyle(Brand.textTertiary)
-                    .accessibilityLabel(String(
-                        format: NSLocalizedString("%d of %d update steps processed", comment: ""),
-                        model.updateAllCompleted,
-                        model.updateAllTotal
-                    ))
-                PillButton(title: model.cancelUpdateAllAfterCurrent
-                            ? "Stopping after current…" : "Stop after current",
-                           filled: false) {
-                    model.cancelUpdateAll()
-                }
-                .disabled(model.cancelUpdateAllAfterCurrent)
-            } else if model.checked, model.availableItems.count + model.brewItems.count > 1 {
-                PillButton(title: "Update All", filled: false) {
-                    model.updateAll()
-                }
+            switch model.source {
+            case .apps: appsActions
+            case .homebrew: brewActions
             }
         }
     }
 
+    private func sourceTab(_ title: String, _ value: UpdatesSource, count: Int?) -> some View {
+        let on = model.source == value
+        return Button { model.source = value } label: {
+            HStack(spacing: 5) {
+                Text(NSLocalizedString(title, comment: "")).font(Brand.mono(11, on ? .semibold : .regular))
+                if let count {
+                    Text(verbatim: "\(count)").font(Brand.mono(10, .semibold))
+                        .padding(.horizontal, 5).padding(.vertical, 1)
+                        .background(Capsule().fill(on ? Brand.onInverse.opacity(0.18) : Tool.apps.accent.opacity(0.14)))
+                }
+            }
+            .foregroundStyle(on ? Brand.onInverse : Brand.textSecondary)
+            .padding(.horizontal, 12).padding(.vertical, 5)
+            .background { if on { Capsule().fill(Brand.inverse) } }
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(count.map { String(format: NSLocalizedString($0 == 1 ? "%d update" : "%d updates", comment: ""), $0) }
+                            .map { "\(NSLocalizedString(title, comment: "")) — \($0)" } ?? NSLocalizedString(title, comment: ""))
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+
+    /// Mac apps: the explicit network check, then the batch once results exist.
     @ViewBuilder
-    private var list: some View {
+    private var appsActions: some View {
+        if model.checking {
+            progressLabel(NSLocalizedString("Checking…", comment: ""))
+        } else if !model.checked {
+            Text("Checking app versions contacts Apple and vendor servers.")
+                .font(Brand.mono(10)).foregroundStyle(Brand.textTertiary)
+        }
+        PillButton(title: model.checked ? "Check again" : "Check for updates", filled: !model.checked) {
+            model.checkNow()
+        }
+        .keyboardShortcut("r", modifiers: .command)
+        if model.updateAllRunning, model.updateAllSource == .apps {
+            batchControls
+        } else if model.checked, !model.availableItems.isEmpty {
+            PillButton(title: "Update all", filled: false) { model.updateAllApps() }
+        }
+    }
+
+    /// Homebrew: rows come from the local index for free; Refresh is the
+    /// network step (`brew update`), and the batch is available as soon as
+    /// there is anything to upgrade.
+    @ViewBuilder
+    private var brewActions: some View {
+        if model.brewLoading {
+            progressLabel(NSLocalizedString(model.brewRefreshing ? "Refreshing…" : "Checking Homebrew…", comment: ""))
+        } else if model.brewProblem == nil {
+            Text("Listed from Homebrew's local index — Refresh contacts Homebrew's update feeds.")
+                .font(Brand.mono(10)).foregroundStyle(Brand.textTertiary)
+        }
+        if model.brewProblem != .notInstalled {
+            PillButton(title: "Refresh", filled: false) { model.refreshBrew() }
+                .keyboardShortcut("r", modifiers: .command)
+        }
+        if model.updateAllRunning, model.updateAllSource == .homebrew {
+            batchControls
+        } else if !model.brewItems.isEmpty {
+            PillButton(title: "Update all", filled: !model.brewLoading) { model.upgradeAllBrews() }
+        }
+    }
+
+    private var batchControls: some View {
+        HStack(spacing: 10) {
+            Text(verbatim: "\(model.updateAllCompleted)/\(model.updateAllTotal)")
+                .font(Brand.mono(10)).foregroundStyle(Brand.textTertiary)
+                .accessibilityLabel(String(
+                    format: NSLocalizedString("%d of %d update steps processed", comment: ""),
+                    model.updateAllCompleted,
+                    model.updateAllTotal
+                ))
+            PillButton(title: model.cancelUpdateAllAfterCurrent
+                        ? "Stopping after current…" : "Stop after current",
+                       filled: false) {
+                model.cancelUpdateAll()
+            }
+            .disabled(model.cancelUpdateAllAfterCurrent)
+        }
+    }
+
+    private func progressLabel(_ text: String) -> some View {
+        HStack(spacing: 6) {
+            ProgressView().controlSize(.small)
+            Text(text).font(Brand.mono(10)).foregroundStyle(Brand.textTertiary)
+        }
+    }
+
+    // MARK: Lists
+
+    @ViewBuilder
+    private var appsList: some View {
+        if model.checking && model.appItems.isEmpty {
+            center { ProgressView("Checking update sources…").controlSize(.large).tint(Tool.apps.accent).font(Brand.mono(11)) }
+        } else {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    if let error = model.error {
+                        noteRow(error, color: Brand.amber)
+                    }
+                    if model.checked, model.availableItems.isEmpty {
+                        upToDateBanner
+                    }
+                    if !model.availableItems.isEmpty {
+                        sectionHeader(NSLocalizedString("Updates available", comment: ""), count: model.availableItems.count)
+                        ForEach(model.availableItems) { appRow($0) }
+                    }
+                    if model.checked, !model.upToDateItems.isEmpty {
+                        sectionHeader(NSLocalizedString("Up to date", comment: ""), count: model.upToDateItems.count)
+                        ForEach(model.upToDateItems) { appRow($0) }
+                    }
+                    if !model.checked {
+                        sectionHeader(NSLocalizedString("Apps with an update mechanism", comment: ""), count: model.appItems.count)
+                        ForEach(model.appItems) { appRow($0) }
+                    }
+                    if !model.uncheckableApps.isEmpty {
+                        sectionHeader(NSLocalizedString("Not checkable", comment: ""), count: model.uncheckableApps.count)
+                        Text("No App Store receipt, Sparkle feed, or known updater inside these bundles.")
+                            .font(Brand.mono(9)).foregroundStyle(Brand.textTertiary)
+                            .padding(.horizontal, 14).padding(.bottom, 4)
+                        ForEach(model.uncheckableApps, id: \.id) { app in
+                            plainRow(app)
+                        }
+                    }
+                }
+                .padding(.horizontal, 10).padding(.vertical, 4)
+            }
+            .scrollIndicators(.visible)
+        }
+    }
+
+    @ViewBuilder
+    private var brewList: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
-                if let error = model.error {
-                    Text(error)
-                        .font(Brand.mono(10)).foregroundStyle(Brand.amber)
-                        .padding(.horizontal, 14).padding(.vertical, 8)
-                        .accessibilityLabel(error)
+                switch model.brewProblem {
+                case .notInstalled:
+                    noteRow(NSLocalizedString("Homebrew (`brew`) not found on this Mac.", comment: ""), color: Brand.textTertiary)
+                case let .failed(message):
+                    noteRow(message, color: Brand.amber)
+                case nil:
+                    EmptyView()
                 }
-                if model.checked, model.availableItems.isEmpty, model.brewItems.isEmpty {
-                    VStack(spacing: 10) {
-                        Image(systemName: "checkmark.seal.fill").font(.system(size: Brand.scaled(30))).foregroundStyle(Brand.green)
-                        Text("Everything's up to date").font(Brand.serif(18)).foregroundStyle(Brand.textPrimary)
-                    }
-                    .frame(maxWidth: .infinity).padding(.vertical, 36)
+                if model.brewLoaded, model.brewItems.isEmpty, model.brewProblem == nil {
+                    upToDateBanner
                 }
-                if !model.availableItems.isEmpty || !model.brewItems.isEmpty {
-                    sectionHeader(NSLocalizedString("Updates available", comment: ""),
-                                  count: model.availableItems.count + model.brewItems.count)
-                    ForEach(model.availableItems) { appRow($0) }
+                if !model.brewItems.isEmpty {
+                    sectionHeader(NSLocalizedString("Updates available", comment: ""), count: model.brewItems.count)
                     ForEach(model.brewItems) { brewRow($0) }
-                }
-                if model.checked, !model.upToDateItems.isEmpty {
-                    sectionHeader(NSLocalizedString("Up to date", comment: ""), count: model.upToDateItems.count)
-                    ForEach(model.upToDateItems) { appRow($0) }
-                }
-                if !model.checked {
-                    sectionHeader(NSLocalizedString("Apps with an update mechanism", comment: ""), count: model.appItems.count)
-                    ForEach(model.appItems) { appRow($0) }
-                }
-                if !model.uncheckableApps.isEmpty {
-                    sectionHeader(NSLocalizedString("Not checkable", comment: ""), count: model.uncheckableApps.count)
-                    Text("No App Store receipt, Sparkle feed, or known updater inside these bundles.")
-                        .font(Brand.mono(9)).foregroundStyle(Brand.textTertiary)
-                        .padding(.horizontal, 14).padding(.bottom, 4)
-                    ForEach(model.uncheckableApps, id: \.id) { app in
-                        plainRow(app)
-                    }
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 4)
         }
         .scrollIndicators(.visible)
+    }
+
+    private var upToDateBanner: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "checkmark.seal.fill").font(.system(size: Brand.scaled(30))).foregroundStyle(Brand.green)
+            Text("Everything's up to date").font(Brand.serif(18)).foregroundStyle(Brand.textPrimary)
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 36)
+    }
+
+    private func noteRow(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(Brand.mono(10)).foregroundStyle(color)
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .accessibilityLabel(text)
     }
 
     private func sectionHeader(_ title: String, count: Int) -> some View {
@@ -293,7 +410,7 @@ struct UpdatesView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Text(title).font(Brand.sans(11, .semibold))
+            Text(NSLocalizedString(title, comment: "")).font(Brand.sans(11, .semibold))
                 .foregroundStyle(filled ? Color.white : Tool.apps.accent)
                 .padding(.horizontal, 12).padding(.vertical, 5)
                 .background(Capsule().fill(filled ? Tool.apps.accent : Tool.apps.accent.opacity(0.12)))
@@ -398,6 +515,9 @@ final class UpdatesModel: ObservableObject {
     @Published var appItems: [AppUpdateItem] = []
     @Published var uncheckableApps: [InstalledApp] = []
     @Published var brewItems: [OutdatedItem] = []
+    /// Which half of the pane is showing. Lives here rather than in the view
+    /// so switching Software segments and back doesn't reset it.
+    @Published var source: UpdatesSource = .apps
     @Published var checking = false
     @Published var checked = false
     @Published var error: String?
@@ -406,10 +526,20 @@ final class UpdatesModel: ObservableObject {
     @Published private(set) var updateAllRunning = false
     @Published private(set) var updateAllCompleted = 0
     @Published private(set) var updateAllTotal = 0
+    /// Which source the running batch belongs to, so only that header shows
+    /// its progress and stop control.
+    @Published private(set) var updateAllSource: UpdatesSource?
     /// Live brew step during an upgrade (H: brew-upgrade streaming).
     @Published var brewPhrase: String = ""
-    /// True while the on-open `brew outdated` surface is running (shows a spinner).
-    @Published var brewSurfacing = false
+    /// True while a `brew outdated` list is being produced (shows a spinner).
+    @Published private(set) var brewLoading = false
+    /// True when the load in flight is the network refresh (`brew update`).
+    @Published private(set) var brewRefreshing = false
+    /// A list has been produced at least once this session, so an empty one
+    /// means "up to date" rather than "not looked yet".
+    @Published private(set) var brewLoaded = false
+    /// Why the Homebrew list is empty or stale, shown in place of the rows.
+    @Published private(set) var brewProblem: BrewOutdated.Problem?
     private struct InventoryFingerprint: Equatable {
         let id: String
         let bundleID: String
@@ -426,7 +556,11 @@ final class UpdatesModel: ObservableObject {
     private let checkItem: (AppUpdateItem) async -> AppUpdateCheckResult
     private let retrySleep: (UInt64) async -> Void
     private let retryDelayNanoseconds: UInt64
-    private let loadBrewOutdated: () async -> [OutdatedItem]
+    /// `refresh: true` runs `brew update` first (network); false reads the
+    /// local index only.
+    private let loadBrewOutdated: (Bool) async -> BrewOutdated
+    /// Runs `brew upgrade <name>`, streaming progress lines; returns the exit code.
+    private let upgradeBrew: (OutdatedItem, @escaping (String) -> Void) async -> Int32
     private let stageElectron: (String, ElectronUpdateDescriptor) async -> ElectronStageOutcome
     private let installElectron: @MainActor (StagedElectronUpdate) async -> ElectronInstallOutcome
     private let confirmRestart: @MainActor (AppUpdateItem) -> Bool
@@ -462,7 +596,8 @@ final class UpdatesModel: ObservableObject {
         checkItem: ((AppUpdateItem) async -> AppUpdateCheckResult)? = nil,
         retrySleep: ((UInt64) async -> Void)? = nil,
         retryDelayNanoseconds: UInt64 = 750_000_000,
-        loadBrewOutdated: (() async -> [OutdatedItem])? = nil,
+        loadBrewOutdated: ((Bool) async -> BrewOutdated)? = nil,
+        upgradeBrew: ((OutdatedItem, @escaping (String) -> Void) async -> Int32)? = nil,
         stageElectron: ((String, ElectronUpdateDescriptor) async -> ElectronStageOutcome)? = nil,
         installElectron: (@MainActor (StagedElectronUpdate) async -> ElectronInstallOutcome)? = nil,
         confirmRestart: (@MainActor (AppUpdateItem) -> Bool)? = nil
@@ -472,7 +607,8 @@ final class UpdatesModel: ObservableObject {
         self.checkItem = checkItem ?? { await Self.check($0) }
         self.retrySleep = retrySleep ?? { delay in try? await Task.sleep(nanoseconds: delay) }
         self.retryDelayNanoseconds = min(retryDelayNanoseconds, 2_000_000_000)
-        self.loadBrewOutdated = loadBrewOutdated ?? { await Self.brewOutdated() }
+        self.loadBrewOutdated = loadBrewOutdated ?? { await Self.loadBrewOutdated(refresh: $0) }
+        self.upgradeBrew = upgradeBrew ?? { await Self.runBrewUpgrade($0, onLine: $1) }
         self.stageElectron = stageElectron ?? { await ElectronReplacementInstaller.stage(appPath: $0, descriptor: $1) }
         self.installElectron = installElectron ?? { await ElectronReplacementInstaller.install($0) }
         self.confirmRestart = confirmRestart ?? { Self.confirmRestartBeforeInstalling($0) }
@@ -559,25 +695,51 @@ final class UpdatesModel: ObservableObject {
         }
     }
 
-    /// Auto-surface the low-sensitivity sources on tab open: `brew outdated`
-    /// is the user's own tool (no app-controlled egress), so it runs without
-    /// the explicit click that gates the third-party appcast/iTunes checks.
-    /// Once per session; the manual "Check" still does the full network pass.
+    /// Surface Homebrew's list on tab open from its LOCAL index only
+    /// (`HOMEBREW_NO_AUTO_UPDATE=1`): no network, so it's instant and works
+    /// offline, and nothing leaves the Mac without a click — the same rule
+    /// the app checks follow. Once per session; Refresh is the network step.
     func autoSurface() {
-        guard !brewSurfaced, !checking else { return }
+        guard !brewSurfaced else { return }
         brewSurfaced = true
-        brewSurfacing = true
-        Task {
-            let brews = await loadBrewOutdated()
-            await MainActor.run {
-                if self.brewItems.isEmpty { self.brewItems = brews }
-                self.brewSurfacing = false
-            }
+        loadBrew(refresh: false)
+    }
+
+    /// The explicit Homebrew network step: `brew update` against the user's
+    /// configured feeds (mirrors included, #424), then the local list again.
+    func refreshBrew() {
+        loadBrew(refresh: true)
+    }
+
+    private func loadBrew(refresh: Bool) {
+        guard !brewLoading, upgrading.isEmpty, updateAllSource != .homebrew else { return }
+        brewLoading = true
+        brewRefreshing = refresh
+        let loadBrewOutdated = self.loadBrewOutdated
+        Task { @MainActor [weak self] in
+            let result = await loadBrewOutdated(refresh)
+            guard let self else { return }
+            self.apply(result)
+            self.brewLoading = false
+            self.brewRefreshing = false
         }
     }
 
-    /// The manual check: Sparkle appcasts + iTunes lookups + brew
-    /// outdated, bounded concurrency.
+    private func apply(_ result: BrewOutdated) {
+        brewItems = result.items
+        brewProblem = result.problem
+        brewLoaded = true
+        // Rows that vanished from the list take their finished phases with
+        // them; a row that is still outdated keeps its failure visible.
+        let live = Set(result.items.map(\.id))
+        phases = phases.filter { entry in
+            let isBrew = entry.key.hasPrefix("formula:") || entry.key.hasPrefix("cask:")
+            return !isBrew || live.contains(entry.key)
+        }
+    }
+
+    /// The manual check: Sparkle appcasts + iTunes lookups, bounded
+    /// concurrency. Homebrew has its own Refresh; this never touches it.
     func checkNow() {
         guard !checking, !updateAllRunning, appTasks.isEmpty, sparkleSessions.isEmpty, upgrading.isEmpty else { return }
         checking = true
@@ -588,7 +750,6 @@ final class UpdatesModel: ObservableObject {
         let checkItem = self.checkItem
         let retrySleep = self.retrySleep
         let retryDelayNanoseconds = self.retryDelayNanoseconds
-        let loadBrewOutdated = self.loadBrewOutdated
         for item in items {
             phases[item.id] = .checking
             checkFailureIDs.remove(item.id)
@@ -619,7 +780,6 @@ final class UpdatesModel: ObservableObject {
                     if let next = iterator.next() { enqueue(next) }
                 }
             }
-            let brews = await loadBrewOutdated()
             await MainActor.run {
                 guard generation == self.checkGeneration else { return }
                 let byID = Dictionary(uniqueKeysWithValues: results.map { ($0.id, $0) })
@@ -659,7 +819,6 @@ final class UpdatesModel: ObservableObject {
                     }
                     return copy
                 }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-                self.brewItems = brews
                 self.checking = false
                 self.checked = true
                 let failures = results.filter { if case .failed = $0.phase { return true }; return false }.count
@@ -842,17 +1001,13 @@ final class UpdatesModel: ObservableObject {
         appTasks.removeValue(forKey: id)
     }
 
-    private func isCurrentUpdateAll(inventoryGeneration: Int) -> Bool {
-        updateAllRunning && prepareGeneration == inventoryGeneration
-    }
-
     private func isCurrentAppUpdate(for id: String, owner: AppUpdateOwner) -> Bool {
         switch owner {
         case let .row(generation):
             return appTasks[id]?.generation == generation
                 && appItems.contains(where: { $0.id == id })
         case let .updateAll(inventoryGeneration):
-            return isCurrentUpdateAll(inventoryGeneration: inventoryGeneration)
+            return updateAllRunning && prepareGeneration == inventoryGeneration
                 && appItems.contains(where: { $0.id == id })
         }
     }
@@ -1060,35 +1215,26 @@ final class UpdatesModel: ObservableObject {
     // MARK: Homebrew (the existing flow)
 
     func upgrade(_ item: OutdatedItem) {
-        guard upgrading.isEmpty, !updateAllRunning else { return }
+        guard upgrading.isEmpty, !updateAllRunning, !brewLoading else { return }
         Task { @MainActor [weak self] in
             guard let self else { return }
             await self.performBrewUpdate(item)
-            self.brewItems = await self.loadBrewOutdated()
+            await self.reloadBrewAfterUpgrade()
         }
     }
 
-    /// Processes every available item serially. Electron replacements stop at
-    /// the visible ready-to-install boundary; only an explicit Install &
+    /// Processes every available Mac app serially. Electron replacements stop
+    /// at the visible ready-to-install boundary; only an explicit Install &
     /// Restart confirmation may let the batch or row quit and replace it.
     /// Cancellation is deliberately a boundary between apps: interrupting a
-    /// download or `brew` transaction halfway through is less safe than
-    /// finishing the current item and stopping before the next one.
-    func updateAll() {
-        guard !updateAllRunning,
-              updateAllTask == nil,
-              upgrading.isEmpty,
-              appTasks.isEmpty,
-              sparkleSessions.isEmpty else { return }
+    /// download halfway through is less safe than finishing the current item
+    /// and stopping before the next one.
+    func updateAllApps() {
+        guard canStartBatch else { return }
         let apps = availableItems
-        let brews = brewItems
-        guard !apps.isEmpty || !brews.isEmpty else { return }
-        let inventoryGeneration = prepareGeneration
-        let owner = AppUpdateOwner.updateAll(inventoryGeneration: inventoryGeneration)
-        cancelUpdateAllAfterCurrent = false
-        updateAllRunning = true
-        updateAllCompleted = 0
-        updateAllTotal = apps.count + brews.count
+        guard !apps.isEmpty else { return }
+        let owner = AppUpdateOwner.updateAll(inventoryGeneration: prepareGeneration)
+        beginBatch(source: .apps, total: apps.count)
         updateAllTask = Task { @MainActor [weak self] in
             guard let self else { return }
             for item in apps {
@@ -1102,17 +1248,26 @@ final class UpdatesModel: ObservableObject {
                 }
                 self.updateAllCompleted += 1
             }
+            self.endBatch()
+        }
+    }
+
+    /// `brew upgrade` every listed formula and cask, one at a time — the same
+    /// boundary rule as the app batch: a stop lands between transactions.
+    func upgradeAllBrews() {
+        guard canStartBatch, !brewLoading else { return }
+        let brews = brewItems
+        guard !brews.isEmpty else { return }
+        beginBatch(source: .homebrew, total: brews.count)
+        updateAllTask = Task { @MainActor [weak self] in
+            guard let self else { return }
             for item in brews {
-                guard !self.cancelUpdateAllAfterCurrent,
-                      self.isCurrentUpdateAll(inventoryGeneration: inventoryGeneration) else { break }
+                guard !self.cancelUpdateAllAfterCurrent else { break }
                 await self.performBrewUpdate(item)
-                guard self.isCurrentUpdateAll(inventoryGeneration: inventoryGeneration) else { break }
                 self.updateAllCompleted += 1
             }
-            self.brewItems = await self.loadBrewOutdated()
-            self.updateAllRunning = false
-            self.updateAllTask = nil
-            self.cancelUpdateAllAfterCurrent = false
+            self.endBatch()
+            await self.reloadBrewAfterUpgrade()
         }
     }
 
@@ -1121,24 +1276,50 @@ final class UpdatesModel: ObservableObject {
         cancelUpdateAllAfterCurrent = true
     }
 
-    func upgradeAll() {
-        updateAll()
+    /// One batch at a time across both sources, and never over a row that
+    /// is already mid-update.
+    private var canStartBatch: Bool {
+        !updateAllRunning && updateAllTask == nil && upgrading.isEmpty
+            && appTasks.isEmpty && sparkleSessions.isEmpty
+    }
+
+    private func beginBatch(source: UpdatesSource, total: Int) {
+        cancelUpdateAllAfterCurrent = false
+        updateAllRunning = true
+        updateAllSource = source
+        updateAllCompleted = 0
+        updateAllTotal = total
+    }
+
+    private func endBatch() {
+        updateAllRunning = false
+        updateAllSource = nil
+        updateAllTask = nil
+        cancelUpdateAllAfterCurrent = false
+    }
+
+    /// Re-read the local index after an upgrade so finished rows drop out
+    /// and a failed one stays, with its message, for another try.
+    private func reloadBrewAfterUpgrade() async {
+        guard !brewLoading else { return }
+        brewLoading = true
+        let result = await loadBrewOutdated(false)
+        apply(result)
+        brewLoading = false
     }
 
     private func performBrewUpdate(_ item: OutdatedItem) async {
-        guard let brew = Self.brewPath() else {
+        guard BrewClient.isInstalled else {
             phases[item.id] = .failed(.unsupported(NSLocalizedString("Homebrew is no longer available.", comment: "")))
             return
         }
         guard upgrading.isEmpty else { return }
         upgrading.insert(item.id)
         phases[item.id] = .installing
-        let code = await Task.detached(priority: .userInitiated) {
-            Self.runBrewStreaming(brew, ["upgrade", item.name], timeout: 1800) { line in
-                guard let phrase = BrewProgress.phrase(line) else { return }
-                Task { @MainActor [weak self] in self?.brewPhrase = phrase }
-            }
-        }.value
+        let code = await upgradeBrew(item) { line in
+            guard let phrase = BrewProgress.phrase(line) else { return }
+            Task { @MainActor [weak self] in self?.brewPhrase = phrase }
+        }
         brewPhrase = ""
         upgrading.remove(item.id)
         phases[item.id] = code == 0
@@ -1149,49 +1330,63 @@ final class UpdatesModel: ObservableObject {
             )))
     }
 
-    private static func brewOutdated() async -> [OutdatedItem] {
-        guard let brew = brewPath() else { return [] }
+    // MARK: Homebrew process seam
+
+    /// Produce the outdated list. `refresh` first runs `brew update` — the
+    /// only network call in this half of the pane — and a failure there
+    /// still falls through to the local list, so the rows stay useful and
+    /// the reason shows beside them. The list itself always runs with
+    /// auto-update off; without that, `brew outdated` fetches taps from
+    /// GitHub first, which is what stalled for two minutes and then showed
+    /// as "nothing to update" (#424).
+    nonisolated static func loadBrewOutdated(refresh: Bool) async -> BrewOutdated {
+        guard BrewClient.isInstalled else { return BrewOutdated(problem: .notInstalled) }
         return await Task.detached(priority: .userInitiated) {
-            let r = runBrew(brew, ["outdated", "--json=v2"])
-            return parseOutdated(r.out)
+            var problem: BrewOutdated.Problem?
+            if refresh {
+                let update = BrewClient.run(["update"], timeout: 600)
+                if update.code != 0 {
+                    problem = .failed(String(
+                        format: NSLocalizedString("Homebrew couldn't refresh: %@", comment: ""),
+                        brewProblemMessage(update)))
+                }
+            }
+            let outdated = BrewClient.run(["outdated", "--json=v2"], timeout: 120, autoUpdate: false)
+            guard outdated.code == 0 else {
+                return BrewOutdated(problem: .failed(String(
+                    format: NSLocalizedString("Homebrew couldn't list outdated packages: %@", comment: ""),
+                    brewProblemMessage(outdated))))
+            }
+            return BrewOutdated(items: parseOutdated(outdated.out), problem: problem)
         }.value
     }
 
-    nonisolated static func brewPath() -> String? {
-        for p in ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"]
-        where FileManager.default.isExecutableFile(atPath: p) { return p }
-        return nil
+    /// The one line worth showing from a failed brew run: the deadline if
+    /// that is what ended it, else brew's last stderr line, else the status.
+    nonisolated static func brewProblemMessage(_ result: BrewClient.Result) -> String {
+        if result.timedOut { return NSLocalizedString("Homebrew didn't respond in time.", comment: "") }
+        let lines = result.err.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
+        if let last = lines.last(where: { !$0.isEmpty }) { return last }
+        return String(format: NSLocalizedString("Homebrew exited with status %d.", comment: ""), result.code)
     }
 
-    private struct BrewResult { let out: String; let err: String; let code: Int32 }
-
-    private nonisolated static func runBrew(_ brew: String, _ args: [String], timeout: TimeInterval = 120) -> BrewResult {
-        var env = Foundation.ProcessInfo.processInfo.environment
-        let dir = (brew as NSString).deletingLastPathComponent
-        env["PATH"] = "\(dir):/usr/bin:/bin:/usr/sbin:/sbin:" + (env["PATH"] ?? "")
-        do {
-            let result = try EngineRunner.shared.capture(
-                MoCommand(target: .executable(brew), args: args,
-                          environment: env, timeout: timeout))
-            return BrewResult(out: result.stdout, err: result.stderr, code: result.exitCode)
-        } catch {
-            return BrewResult(out: "", err: "\(error)", code: -1)
-        }
-    }
-
-    /// Stream a brew run, calling `onLine` per stdout line (H: live progress).
-    /// The readability handler drains the pipe so waitUntilExit can't deadlock;
+    /// `brew upgrade <name>`, streamed line by line (H: live progress). The
+    /// readability handler drains the pipe so waitUntilExit can't deadlock;
     /// a work item terminates on timeout.
+    nonisolated static func runBrewUpgrade(_ item: OutdatedItem, onLine: @escaping (String) -> Void) async -> Int32 {
+        guard let brew = BrewClient.path() else { return -1 }
+        return await Task.detached(priority: .userInitiated) {
+            runBrewStreaming(brew, ["upgrade", item.name], timeout: 1800, onLine: onLine)
+        }.value
+    }
+
     private nonisolated static func runBrewStreaming(_ brew: String, _ args: [String],
                                                      timeout: TimeInterval,
                                                      onLine: @escaping (String) -> Void) -> Int32 {
-        var env = Foundation.ProcessInfo.processInfo.environment
-        let dir = (brew as NSString).deletingLastPathComponent
-        env["PATH"] = "\(dir):/usr/bin:/bin:/usr/sbin:/sbin:" + (env["PATH"] ?? "")
         let p = Process()
         p.executableURL = URL(fileURLWithPath: brew)
         p.arguments = args
-        p.environment = env
+        p.environment = BrewClient.environment(brew: brew)
         let pipe = Pipe()
         p.standardOutput = pipe
         p.standardError = pipe

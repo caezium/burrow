@@ -864,3 +864,25 @@
 "Extra Large" = "特大";
 "Scales text and icons across the whole app and the menu-bar popup — no relaunch needed. The menu-bar item itself keeps its own per-widget text size, set under Menu Bar." = "縮放整個應用程式與選單列彈出視窗中的文字和圖示，無需重新啟動。選單列項目本身的文字大小仍在「選單列」設定中按元件單獨調整。";
 "Release Notes" = "版本說明";
+
+// Software › Updates (#424): Mac apps / Homebrew split, brew problems, batch controls
+"Mac apps" = "Mac 應用程式";
+"Checking app versions contacts Apple and vendor servers." = "檢查應用程式版本會連線 Apple 與開發者的伺服器。";
+"Listed from Homebrew's local index — Refresh contacts Homebrew's update feeds." = "列表來自 Homebrew 的本機索引——「重新整理」會連線 Homebrew 的更新來源。";
+"Homebrew is no longer available." = "Homebrew 已無法使用。";
+"Homebrew exited with status %d. Retry after resolving its message." = "Homebrew 以狀態 %d 結束。請先解決其提示訊息，再重試。";
+"Homebrew didn't respond in time." = "Homebrew 未在時限內回應。";
+"Homebrew exited with status %d." = "Homebrew 以狀態 %d 結束。";
+"Homebrew couldn't refresh: %@" = "Homebrew 無法重新整理：%@";
+"Homebrew couldn't list outdated packages: %@" = "Homebrew 無法列出過期的套件：%@";
+"Stop after current" = "完成目前項目後停止";
+"Stopping after current…" = "完成目前項目後停止…";
+"Checking…" = "正在檢查…";
+"%d of %d update steps processed" = "已處理 %1$d / %2$d 個更新步驟";
+"%d update checks failed. Known versions were preserved." = "%d 項更新檢查失敗。已保留已知版本。";
+"Retry" = "重試";
+"Open updater" = "打開更新程式";
+"Open App Store" = "打開 App Store";
+"Install & Restart" = "安裝並重新啟動";
+"Not Yet" = "暫不";
+"Release notes" = "發行說明";

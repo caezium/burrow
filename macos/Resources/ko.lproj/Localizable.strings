@@ -879,3 +879,25 @@
 "Extra Large" = "아주 크게";
 "Scales text and icons across the whole app and the menu-bar popup — no relaunch needed. The menu-bar item itself keeps its own per-widget text size, set under Menu Bar." = "앱 전체와 메뉴 막대 팝업의 텍스트와 아이콘 크기를 조절합니다. 재실행이 필요 없습니다. 메뉴 막대 항목 자체의 텍스트 크기는 '메뉴 막대'에서 위젯별로 따로 설정합니다.";
 "Release Notes" = "릴리스 노트";
+
+// Software › Updates (#424): Mac apps / Homebrew split, brew problems, batch controls
+"Mac apps" = "Mac 앱";
+"Checking app versions contacts Apple and vendor servers." = "앱 버전을 확인하면 Apple 및 개발사 서버에 접속합니다.";
+"Listed from Homebrew's local index — Refresh contacts Homebrew's update feeds." = "Homebrew의 로컬 인덱스에서 가져온 목록입니다. ‘새로 고침’은 Homebrew 업데이트 피드에 접속합니다.";
+"Homebrew is no longer available." = "Homebrew를 더 이상 사용할 수 없습니다.";
+"Homebrew exited with status %d. Retry after resolving its message." = "Homebrew가 상태 %d(으)로 종료되었습니다. 메시지를 해결한 뒤 다시 시도하세요.";
+"Homebrew didn't respond in time." = "Homebrew가 제시간에 응답하지 않았습니다.";
+"Homebrew exited with status %d." = "Homebrew가 상태 %d(으)로 종료되었습니다.";
+"Homebrew couldn't refresh: %@" = "Homebrew를 새로 고칠 수 없습니다: %@";
+"Homebrew couldn't list outdated packages: %@" = "Homebrew가 오래된 패키지를 나열하지 못했습니다: %@";
+"Stop after current" = "현재 항목 후 중지";
+"Stopping after current…" = "현재 항목 후 중지 중…";
+"Checking…" = "확인 중…";
+"%d of %d update steps processed" = "업데이트 단계 %1$d / %2$d 처리됨";
+"%d update checks failed. Known versions were preserved." = "업데이트 확인 %d건이 실패했습니다. 알려진 버전은 유지됩니다.";
+"Retry" = "다시 시도";
+"Open updater" = "업데이터 열기";
+"Open App Store" = "App Store 열기";
+"Install & Restart" = "설치 후 재시동";
+"Not Yet" = "나중에";
+"Release notes" = "릴리스 노트";
