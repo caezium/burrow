@@ -206,6 +206,53 @@ final class HelperContractTests: XCTestCase {
                        "back off, never in")
     }
 
+    // MARK: - Admission versus idle exit
+
+    func testAdmissionGate_refusesToCloseWhileARequestIsInFlight() {
+        let gate = HelperAdmissionGate()
+        XCTAssertTrue(gate.admit())
+        XCTAssertTrue(gate.hasRequestsInFlight)
+        XCTAssertFalse(gate.closeIfIdle(), "a daemon with a request in its gate is not idle")
+        gate.release()
+        XCTAssertFalse(gate.hasRequestsInFlight)
+        XCTAssertTrue(gate.closeIfIdle())
+    }
+
+    func testAdmissionGate_onceClosedAdmitsNothing() {
+        let gate = HelperAdmissionGate()
+        XCTAssertTrue(gate.closeIfIdle())
+        XCTAssertFalse(gate.admit(), "a request arriving after the exit decision must not start")
+        XCTAssertFalse(gate.hasRequestsInFlight)
+    }
+
+    func testAdmissionGate_deferToTheRunnersOwnNotionOfBusy() {
+        let gate = HelperAdmissionGate()
+        XCTAssertFalse(gate.closeIfIdle(stillBusy: { true }))
+        XCTAssertTrue(gate.admit(), "a refused close leaves the gate open")
+    }
+
+    /// The race the gate exists for: a request and the idle-exit decision
+    /// arrive at the same instant. Exactly one of them may win — never both
+    /// (a request admitted into a process that has committed to exit) and
+    /// never neither (a refused request in a process that then stays up).
+    func testAdmissionGate_admissionAndExitDecisionCannotBothWin() {
+        for _ in 0..<500 {
+            let gate = HelperAdmissionGate()
+            let admitted = UnsafeMutablePointer<Bool>.allocate(capacity: 1)
+            let closed = UnsafeMutablePointer<Bool>.allocate(capacity: 1)
+            defer { admitted.deallocate(); closed.deallocate() }
+            DispatchQueue.concurrentPerform(iterations: 2) { index in
+                if index == 0 {
+                    admitted.pointee = gate.admit()
+                } else {
+                    closed.pointee = gate.closeIfIdle()
+                }
+            }
+            XCTAssertNotEqual(admitted.pointee, closed.pointee,
+                              "admitted=\(admitted.pointee) closed=\(closed.pointee)")
+        }
+    }
+
     // MARK: - The closed operation set
     //
     // The approved scope is exactly: privileged scan, clean, optimize, the

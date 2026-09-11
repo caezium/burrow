@@ -76,14 +76,15 @@ enum HelperMain {
         let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
         timer.schedule(deadline: .now() + 10, repeating: 10)
         timer.setEventHandler {
-            if service.isIdle {
-                if Date().timeIntervalSince(idleSince) >= idleTimeout {
-                    helperTrace("idle timeout reached; exiting")
-                    exit(0)
-                }
-            } else {
-                idleSince = Date()
-            }
+            guard service.isIdle else { idleSince = Date(); return }
+            guard Date().timeIntervalSince(idleSince) >= idleTimeout else { return }
+            // The decision and the exit are one step: `commitIdleExit`
+            // closes the admission gate under the lock `execute` admits
+            // with, so a request cannot slip in between the two. A request
+            // that beat it means the daemon is not idle after all.
+            guard service.commitIdleExit() else { idleSince = Date(); return }
+            helperTrace("idle timeout reached; exiting")
+            exit(0)
         }
         timer.resume()
 

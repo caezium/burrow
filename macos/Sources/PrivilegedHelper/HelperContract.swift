@@ -449,6 +449,55 @@ enum HelperAccountLookupRetry {
     }
 }
 
+// MARK: - Admission versus idle exit
+
+/// The one boundary between "may this request start" and "may the daemon
+/// exit".
+///
+/// The idle timer used to read a busy flag and then call `exit`, and a
+/// request could be admitted in the gap between the two — a root process
+/// dying with a request in its identity gate. Checking the flag under one
+/// lock and exiting under another is the same gap with extra steps, so both
+/// decisions are made here, under the same lock: once `closeIfIdle` has
+/// returned true no later `admit` succeeds, and while anything is admitted
+/// `closeIfIdle` returns false.
+final class HelperAdmissionGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var inFlight = 0
+    private var closed = false
+
+    /// Admit a request. False once shutdown has committed: the process is
+    /// about to exit and must not start work it cannot finish.
+    func admit() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        guard !closed else { return false }
+        inFlight += 1
+        return true
+    }
+
+    /// The request admitted earlier has finished, however it finished.
+    func release() {
+        lock.lock(); defer { lock.unlock() }
+        inFlight -= 1
+    }
+
+    var hasRequestsInFlight: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return inFlight > 0
+    }
+
+    /// Commit to shutdown if nothing is admitted and `stillBusy` says no,
+    /// both judged under the lock `admit` takes. Once this returns true the
+    /// gate stays closed: the caller is expected to exit, and nothing that
+    /// arrives afterwards can start.
+    func closeIfIdle(stillBusy: () -> Bool = { false }) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        guard inFlight == 0, !stillBusy() else { return false }
+        closed = true
+        return true
+    }
+}
+
 // MARK: - Reviewed cleanup targets
 
 /// The original review identities survive the authentication dialog and the XPC boundary.

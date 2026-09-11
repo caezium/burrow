@@ -556,27 +556,20 @@ final class HelperService: NSObject, BurrowHelperProtocol {
     }
 
     /// Nothing running and no request between arrival and execution. The
-    /// second half matters because the identity gate can now pause for a few
+    /// second half matters because the identity gate can pause for a few
     /// seconds: a request that lands in the last seconds of the idle window
-    /// must not have the daemon exit underneath it.
-    var isIdle: Bool {
-        guard !runner.hasWork else { return false }
-        inFlightLock.lock(); defer { inFlightLock.unlock() }
-        return inFlightRequests == 0
+    /// must not have the daemon exit underneath it. This is the timer's
+    /// reading of the clock only; the decision to exit is `commitIdleExit`.
+    var isIdle: Bool { !runner.hasWork && !gate.hasRequestsInFlight }
+
+    /// Commit to exiting, or refuse because something arrived. Decided under
+    /// the same lock `execute` admits requests with, so nothing can be
+    /// admitted between a true answer and the `exit` that follows it.
+    func commitIdleExit() -> Bool {
+        gate.closeIfIdle(stillBusy: { runner.hasWork })
     }
 
-    private let inFlightLock = NSLock()
-    private var inFlightRequests = 0
-
-    private func requestBegan() {
-        inFlightLock.lock(); defer { inFlightLock.unlock() }
-        inFlightRequests += 1
-    }
-
-    private func requestEnded() {
-        inFlightLock.lock(); defer { inFlightLock.unlock() }
-        inFlightRequests -= 1
-    }
+    private let gate = HelperAdmissionGate()
 
     /// Every network interface that actually exists on this machine.
     ///
@@ -626,8 +619,17 @@ final class HelperService: NSObject, BurrowHelperProtocol {
     }
 
     func execute(requestData: Data, authorization: Data, withReply reply: @escaping (Data) -> Void) {
-        requestBegan()
-        defer { requestEnded() }
+        guard gate.admit() else {
+            // The idle timer committed to exit under this same lock a moment
+            // ago, so this process is going away and must not start an
+            // identity lookup it cannot finish. No reply: the client's
+            // connection-error handler reports it exactly as a daemon that
+            // had already exited would, and launchd starts a fresh one on the
+            // next connection.
+            helperTrace("request refused: daemon is exiting")
+            return
+        }
+        defer { gate.release() }
 
         func respond(_ outcome: HelperResponse.Outcome) {
             let encoded = (try? JSONEncoder().encode(HelperResponse(outcome: outcome))) ?? Data()
