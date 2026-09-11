@@ -43,7 +43,6 @@ enum HomebrewEnvironment {
         return out
     }
 
-    /// `HOMEBREW_` followed by shell-identifier characters only.
     static func isValidKey(_ key: String) -> Bool {
         guard key.hasPrefix("HOMEBREW_"), key.count > "HOMEBREW_".count else { return false }
         return key.unicodeScalars.allSatisfy { scalar in

@@ -144,7 +144,7 @@ stdio bridge, CI, tests, and unsigned release packaging.
 | **Purge** | Reclaim space from dev projects: `node_modules`, build dirs, `target/`, `__pycache__`, and more — preview streams in, one confirmation, everything found goes to the Trash. | `mo purge` |
 | **Installers** | Find and remove leftover `.dmg`/`.pkg` installer files in bulk. | `mo installer` |
 | **Optimize** | One-tap safe maintenance: rebuild caches, repair metadata, flush DNS, restart Dock/Finder. | `mo optimize` |
-| **Software** | Installed-app list with search/sort (size, name, recent, source) and multi-select uninstall; an **Updates** tab with Mac apps and Homebrew side by side. | `mo uninstall --list`, `brew outdated` |
+| **Software** | Installed-app list with search/sort (size, name, recent, source) and multi-select uninstall; an **Updates** tab with a Mac apps / Homebrew picker, each half with its own check and update-all. | `mo uninstall --list`, `brew outdated` |
 | **Analyze** | Squarified treemap of your disk; drill into any folder, reveal in Finder. | `mo analyze --json` |
 
 Every scan offers a **no-risk preview** (`--dry-run`) first, a clear

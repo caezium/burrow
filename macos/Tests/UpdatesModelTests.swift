@@ -604,7 +604,9 @@ final class UpdatesModelTests: XCTestCase {
         XCTAssertTrue(model.brewItems.isEmpty)
         XCTAssertFalse(model.brewLoading)
 
-        // A second open and the app check both leave Homebrew alone.
+        // Neither a second open nor the app check may re-run brew: the open
+        // is once per session by design, and the app check must not be held
+        // hostage by a brew that can stall on the network (#424).
         model.autoSurface()
         model.checkNow()
         await eventually { model.checked }

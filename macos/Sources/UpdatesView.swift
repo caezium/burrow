@@ -531,9 +531,13 @@ final class UpdatesModel: ObservableObject {
     @Published private(set) var updateAllSource: UpdatesSource?
     /// Live brew step during an upgrade (H: brew-upgrade streaming).
     @Published var brewPhrase: String = ""
-    /// True while a `brew outdated` list is being produced (shows a spinner).
+    /// Two flags rather than one enum because they answer different
+    /// questions: `brewLoading` gates every brew action (no upgrade or second
+    /// load under a list still being produced, whichever kind), while
+    /// `brewRefreshing` only picks the spinner's copy — a local read finishes
+    /// in a second, a refresh can sit on the network for minutes, and the
+    /// user should know which one they are waiting on.
     @Published private(set) var brewLoading = false
-    /// True when the load in flight is the network refresh (`brew update`).
     @Published private(set) var brewRefreshing = false
     /// A list has been produced at least once this session, so an empty one
     /// means "up to date" rather than "not looked yet".

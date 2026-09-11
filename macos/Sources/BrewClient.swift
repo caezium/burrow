@@ -49,9 +49,10 @@ enum BrewClient {
         return env
     }
 
-    /// Run `brew <args>`, capturing output. Returns a nonzero code rather than
-    /// throwing when brew is missing; `timedOut` says the deadline, not brew,
-    /// ended the run.
+    /// A missing brew is reported the same way as a failing one (nonzero
+    /// code, message in `err`) so every caller has exactly one failure path
+    /// to render; `timedOut` is kept separate because "brew never answered"
+    /// deserves different copy from "brew said no".
     static func run(_ args: [String], timeout: TimeInterval = 120, autoUpdate: Bool = true) -> Result {
         guard let brew = path() else { return Result(out: "", err: "brew not found", code: -1) }
         do {
