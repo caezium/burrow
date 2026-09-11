@@ -880,6 +880,27 @@
 "Scales text and icons across the whole app and the menu-bar popup — no relaunch needed. The menu-bar item itself keeps its own per-widget text size, set under Menu Bar." = "Escala el texto y los iconos en toda la app y en el panel de la barra de menús, sin necesidad de reiniciar. El elemento de la barra de menús conserva su propio tamaño de texto, configurado por widget en «Barra de menús».";
 "Release Notes" = "Notas de la versión";
 
+// Software › Updates (#424): Mac apps / Homebrew split, brew problems, batch controls
+"Mac apps" = "Apps de Mac";
+"Checking app versions contacts Apple and vendor servers." = "Comprobar las versiones contacta con los servidores de Apple y de los desarrolladores.";
+"Listed from Homebrew's local index — Refresh contacts Homebrew's update feeds." = "Listado desde el índice local de Homebrew: «Actualizar» contacta con las fuentes de actualización de Homebrew.";
+"Homebrew is no longer available." = "Homebrew ya no está disponible.";
+"Homebrew exited with status %d. Retry after resolving its message." = "Homebrew terminó con el estado %d. Resuelve su mensaje y vuelve a intentarlo.";
+"Homebrew didn't respond in time." = "Homebrew no respondió a tiempo.";
+"Homebrew exited with status %d." = "Homebrew terminó con el estado %d.";
+"Homebrew couldn't refresh: %@" = "Homebrew no pudo actualizarse: %@";
+"Homebrew couldn't list outdated packages: %@" = "Homebrew no pudo listar los paquetes desactualizados: %@";
+"Stop after current" = "Detener tras el actual";
+"Stopping after current…" = "Deteniendo tras el actual…";
+"Checking…" = "Comprobando…";
+"%d of %d update steps processed" = "%1$d de %2$d pasos de actualización procesados";
+"%d update checks failed. Known versions were preserved." = "%d comprobaciones de actualización fallaron. Se conservaron las versiones conocidas.";
+"Retry" = "Reintentar";
+"Open updater" = "Abrir el actualizador";
+"Open App Store" = "Abrir App Store";
+"Install & Restart" = "Instalar y reiniciar";
+"Not Yet" = "Ahora no";
+"Release notes" = "Notas de la versión";
 /* Privileged helper refusals (#425) */
 "The privileged helper could not confirm which account asked for this, so nothing ran. Try again." = "El asistente con privilegios no pudo confirmar qué cuenta hizo la petición, así que no se ejecutó nada. Inténtalo de nuevo.";
 "The privileged helper is from a different Burrow version, so nothing ran. Reinstall it from Settings ▸ Advanced." = "El asistente con privilegios es de otra versión de Burrow, así que no se ejecutó nada. Reinstálalo desde Ajustes ▸ Avanzado.";

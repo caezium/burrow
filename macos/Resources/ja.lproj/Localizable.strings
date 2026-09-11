@@ -880,6 +880,27 @@
 "Scales text and icons across the whole app and the menu-bar popup — no relaunch needed. The menu-bar item itself keeps its own per-widget text size, set under Menu Bar." = "アプリ全体とメニューバーのポップアップの文字とアイコンを拡大縮小します。再起動は不要です。メニューバー項目自体の文字サイズは「メニューバー」でウィジェットごとに個別に設定します。";
 "Release Notes" = "リリースノート";
 
+// Software › Updates (#424): Mac apps / Homebrew split, brew problems, batch controls
+"Mac apps" = "Mac アプリ";
+"Checking app versions contacts Apple and vendor servers." = "アプリのバージョン確認では Apple と開発元のサーバーに接続します。";
+"Listed from Homebrew's local index — Refresh contacts Homebrew's update feeds." = "Homebrew のローカルインデックスから表示しています。「更新」で Homebrew の更新フィードに接続します。";
+"Homebrew is no longer available." = "Homebrew は利用できなくなりました。";
+"Homebrew exited with status %d. Retry after resolving its message." = "Homebrew がステータス %d で終了しました。メッセージを解決してから再試行してください。";
+"Homebrew didn't respond in time." = "Homebrew が時間内に応答しませんでした。";
+"Homebrew exited with status %d." = "Homebrew がステータス %d で終了しました。";
+"Homebrew couldn't refresh: %@" = "Homebrew を更新できませんでした：%@";
+"Homebrew couldn't list outdated packages: %@" = "Homebrew が古いパッケージを一覧できませんでした：%@";
+"Stop after current" = "現在の項目の後で停止";
+"Stopping after current…" = "現在の項目の後で停止します…";
+"Checking…" = "確認中…";
+"%d of %d update steps processed" = "%1$d / %2$d 件のアップデート手順を処理しました";
+"%d update checks failed. Known versions were preserved." = "%d 件のアップデート確認に失敗しました。既知のバージョンは保持されています。";
+"Retry" = "再試行";
+"Open updater" = "アップデーターを開く";
+"Open App Store" = "App Store を開く";
+"Install & Restart" = "インストールして再起動";
+"Not Yet" = "あとで";
+"Release notes" = "リリースノート";
 /* Privileged helper refusals (#425) */
 "The privileged helper could not confirm which account asked for this, so nothing ran. Try again." = "特権ヘルパーがどのアカウントからの要求か確認できなかったため、何も実行していません。もう一度お試しください。";
 "The privileged helper is from a different Burrow version, so nothing ran. Reinstall it from Settings ▸ Advanced." = "特権ヘルパーが別のバージョンの Burrow のものであるため、何も実行していません。「設定 ▸ 詳細」から再インストールしてください。";

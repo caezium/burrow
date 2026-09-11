@@ -880,6 +880,27 @@
 "Scales text and icons across the whole app and the menu-bar popup — no relaunch needed. The menu-bar item itself keeps its own per-widget text size, set under Menu Bar." = "Ajusta o texto e os ícones em todo o app e no painel da barra de menus — sem precisar reiniciar. O item da barra de menus mantém seu próprio tamanho de texto, definido por widget em “Barra de menus”.";
 "Release Notes" = "Notas de versão";
 
+// Software › Updates (#424): Mac apps / Homebrew split, brew problems, batch controls
+"Mac apps" = "Apps do Mac";
+"Checking app versions contacts Apple and vendor servers." = "Verificar as versões contata os servidores da Apple e dos desenvolvedores.";
+"Listed from Homebrew's local index — Refresh contacts Homebrew's update feeds." = "Listado a partir do índice local do Homebrew — “Atualizar” contata as fontes de atualização do Homebrew.";
+"Homebrew is no longer available." = "O Homebrew não está mais disponível.";
+"Homebrew exited with status %d. Retry after resolving its message." = "O Homebrew saiu com o status %d. Resolva a mensagem dele e tente de novo.";
+"Homebrew didn't respond in time." = "O Homebrew não respondeu a tempo.";
+"Homebrew exited with status %d." = "O Homebrew saiu com o status %d.";
+"Homebrew couldn't refresh: %@" = "O Homebrew não conseguiu atualizar: %@";
+"Homebrew couldn't list outdated packages: %@" = "O Homebrew não conseguiu listar os pacotes desatualizados: %@";
+"Stop after current" = "Parar após o atual";
+"Stopping after current…" = "Parando após o atual…";
+"Checking…" = "Verificando…";
+"%d of %d update steps processed" = "%1$d de %2$d etapas de atualização processadas";
+"%d update checks failed. Known versions were preserved." = "%d verificações de atualização falharam. As versões conhecidas foram mantidas.";
+"Retry" = "Tentar de novo";
+"Open updater" = "Abrir o atualizador";
+"Open App Store" = "Abrir a App Store";
+"Install & Restart" = "Instalar e reiniciar";
+"Not Yet" = "Agora não";
+"Release notes" = "Notas da versão";
 /* Privileged helper refusals (#425) */
 "The privileged helper could not confirm which account asked for this, so nothing ran. Try again." = "O auxiliar com privilégios não conseguiu confirmar qual conta fez o pedido, então nada foi executado. Tente de novo.";
 "The privileged helper is from a different Burrow version, so nothing ran. Reinstall it from Settings ▸ Advanced." = "O auxiliar com privilégios é de outra versão do Burrow, então nada foi executado. Reinstale-o em Ajustes ▸ Avançado.";

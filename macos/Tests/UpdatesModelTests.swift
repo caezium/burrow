@@ -131,7 +131,7 @@ final class UpdatesModelTests: XCTestCase {
         let model = UpdatesModel(
             checkItem: { item in responses.next(for: item.id) },
             retrySleep: { delay in retryDelays.append(delay) },
-            loadBrewOutdated: { [] }
+            loadBrewOutdated: { _ in .empty }
         )
         model.appItems = [updateItem(id: "electron", installed: "1.0.0", source: .electron)]
 
@@ -155,7 +155,7 @@ final class UpdatesModelTests: XCTestCase {
         let model = UpdatesModel(
             checkItem: { item in responses.next(for: item.id) },
             retrySleep: { delay in retryDelays.append(delay) },
-            loadBrewOutdated: { [] }
+            loadBrewOutdated: { _ in .empty }
         )
         model.appItems = [updateItem(
             id: "electron",
@@ -182,7 +182,7 @@ final class UpdatesModelTests: XCTestCase {
         let model = UpdatesModel(
             checkItem: { item in responses.next(for: item.id) },
             retrySleep: { _ in },
-            loadBrewOutdated: { [] }
+            loadBrewOutdated: { _ in .empty }
         )
         model.appItems = [updateItem(
             id: "electron",
@@ -206,7 +206,7 @@ final class UpdatesModelTests: XCTestCase {
         ])
         let model = UpdatesModel(
             checkItem: { item in responses.next(for: item.id) },
-            loadBrewOutdated: { [] }
+            loadBrewOutdated: { _ in .empty }
         )
         model.appItems = [updateItem(
             id: "electron",
@@ -231,7 +231,7 @@ final class UpdatesModelTests: XCTestCase {
             detectSource: { _ in .electron },
             sourceFingerprint: { $0.path },
             checkItem: { item in await responder.response(for: item.id) },
-            loadBrewOutdated: { [] }
+            loadBrewOutdated: { _ in .empty }
         )
 
         model.prepare(apps: [app(id: "old", name: "Old", path: "/Applications/Old.app")])
@@ -265,7 +265,7 @@ final class UpdatesModelTests: XCTestCase {
             checkItem: { item in
                 .available(id: item.id, version: descriptor.version, electronDescriptor: descriptor)
             },
-            loadBrewOutdated: { [] },
+            loadBrewOutdated: { _ in .empty },
             stageElectron: { _, _ in await staging.stage() }
         )
         model.appItems = [updateItem(id: "electron", installed: "1.0.0", source: .electron)]
@@ -274,7 +274,7 @@ final class UpdatesModelTests: XCTestCase {
 
         model.update(model.appItems[0])
         await fulfillment(of: [rowStageStarted], timeout: 1)
-        model.updateAll()
+        model.updateAllApps()
 
         XCTAssertFalse(model.updateAllRunning)
         await staging.finishFirst(with: .failure(.cancelled))
@@ -295,14 +295,14 @@ final class UpdatesModelTests: XCTestCase {
             checkItem: { item in
                 .available(id: item.id, version: descriptor.version, electronDescriptor: descriptor)
             },
-            loadBrewOutdated: { [] },
+            loadBrewOutdated: { _ in .empty },
             stageElectron: { _, _ in await staging.stage() }
         )
         model.appItems = [updateItem(id: "electron", installed: "1.0.0", source: .electron)]
         model.checkNow()
         await eventually { model.checked }
 
-        model.updateAll()
+        model.updateAllApps()
         model.update(model.appItems[0])
         await fulfillment(of: [batchStageStarted], timeout: 1)
         await staging.finishFirst(with: .failure(.cancelled))
@@ -337,7 +337,7 @@ final class UpdatesModelTests: XCTestCase {
             checkItem: { item in
                 .available(id: item.id, version: descriptor.version, electronDescriptor: descriptor)
             },
-            loadBrewOutdated: { [] },
+            loadBrewOutdated: { _ in .empty },
             stageElectron: { _, _ in await staging.stage() },
             installElectron: { _ in
                 installCount += 1
@@ -354,7 +354,7 @@ final class UpdatesModelTests: XCTestCase {
         model.checkNow()
         await eventually { model.checked && model.availableItems.map(\.id) == ["electron"] }
 
-        model.updateAll()
+        model.updateAllApps()
         await fulfillment(of: [stageStarted], timeout: 1)
         model.prepare(apps: [])
         XCTAssertTrue(model.appItems.isEmpty)
@@ -393,7 +393,7 @@ final class UpdatesModelTests: XCTestCase {
             checkItem: { item in
                 .available(id: item.id, version: descriptor.version, electronDescriptor: descriptor)
             },
-            loadBrewOutdated: { [] },
+            loadBrewOutdated: { _ in .empty },
             stageElectron: { _, _ in .ready(staged) },
             installElectron: { _ in
                 installCount += 1
@@ -455,7 +455,7 @@ final class UpdatesModelTests: XCTestCase {
             checkItem: { item in
                 .available(id: item.id, version: descriptor.version, electronDescriptor: descriptor)
             },
-            loadBrewOutdated: { [] },
+            loadBrewOutdated: { _ in .empty },
             stageElectron: { _, _ in await staging.stage() }
         )
         model.appItems = [updateItem(id: "electron", installed: "1.0.0", source: .electron)]
@@ -470,7 +470,7 @@ final class UpdatesModelTests: XCTestCase {
 
         await staging.finish(call: 1, with: .ready(cancelledStage))
         await eventually { !FileManager.default.fileExists(atPath: stagingRoot.path) }
-        model.updateAll()
+        model.updateAllApps()
 
         XCTAssertFalse(model.updateAllRunning)
         await staging.finish(call: 2, with: .failure(.offline))
@@ -504,7 +504,7 @@ final class UpdatesModelTests: XCTestCase {
             checkItem: { item in
                 .available(id: item.id, version: descriptor.version, electronDescriptor: descriptor)
             },
-            loadBrewOutdated: { [] },
+            loadBrewOutdated: { _ in .empty },
             stageElectron: { _, _ in await staging.stage() },
             installElectron: { staged in
                 installedCandidate = staged.candidateURL
@@ -562,7 +562,7 @@ final class UpdatesModelTests: XCTestCase {
             checkItem: { item in
                 .available(id: item.id, version: descriptor.version, electronDescriptor: descriptor)
             },
-            loadBrewOutdated: { [] },
+            loadBrewOutdated: { _ in .empty },
             stageElectron: { _, _ in workflow.stage() },
             installElectron: { staged in workflow.install(staged) },
             confirmRestart: { item in workflow.confirmRestart(for: item.name) }
@@ -571,7 +571,7 @@ final class UpdatesModelTests: XCTestCase {
         model.checkNow()
         await eventually { model.checked }
 
-        model.updateAll()
+        model.updateAllApps()
         await eventually { !model.updateAllRunning && model.phase(for: "electron") == .readyToInstall }
 
         XCTAssertEqual(workflow.stageCount, 1)
@@ -586,6 +586,132 @@ final class UpdatesModelTests: XCTestCase {
         XCTAssertEqual(workflow.installCount, 1)
         XCTAssertEqual(workflow.confirmedNames, ["Electron", "Electron"])
         XCTAssertEqual(workflow.events, ["stage", "confirm:Electron", "confirm:Electron", "install"])
+    }
+
+    // MARK: Homebrew half (#424)
+
+    func testAutoSurfaceReadsTheLocalIndexOnceAndSurfacesAProblem() async {
+        let loads = LockedStringRecorder()
+        let model = UpdatesModel(loadBrewOutdated: { refresh in
+            loads.append(refresh ? "refresh" : "local")
+            return BrewOutdated(problem: .failed("Error: git fetch exited with 128"))
+        })
+
+        model.autoSurface()
+        await eventually { model.brewLoaded }
+
+        XCTAssertEqual(model.brewProblem, .failed("Error: git fetch exited with 128"))
+        XCTAssertTrue(model.brewItems.isEmpty)
+        XCTAssertFalse(model.brewLoading)
+
+        // Neither a second open nor the app check may re-run brew: the open
+        // is once per session by design, and the app check must not be held
+        // hostage by a brew that can stall on the network (#424).
+        model.autoSurface()
+        model.checkNow()
+        await eventually { model.checked }
+        XCTAssertEqual(loads.values, ["local"])
+    }
+
+    func testRefreshBrewRunsTheNetworkStepAndReplacesTheList() async {
+        let loads = LockedStringRecorder()
+        let model = UpdatesModel(loadBrewOutdated: { refresh in
+            loads.append(refresh ? "refresh" : "local")
+            return refresh ? BrewOutdated(items: [brew("git")]) : .empty
+        })
+        model.autoSurface()
+        await eventually { model.brewLoaded }
+        XCTAssertTrue(model.brewItems.isEmpty)
+
+        model.refreshBrew()
+        XCTAssertTrue(model.brewLoading)
+        XCTAssertTrue(model.brewRefreshing)
+        await eventually { model.brewItems.map(\.name) == ["git"] }
+
+        XCTAssertNil(model.brewProblem)
+        XCTAssertFalse(model.brewRefreshing)
+        XCTAssertEqual(loads.values, ["local", "refresh"])
+    }
+
+    func testUpgradeAllBrewsRunsSeriallyThenReloadsSoFinishedRowsDropOut() async {
+        let upgraded = LockedStringRecorder()
+        let model = UpdatesModel(
+            loadBrewOutdated: { _ in
+                let done = Set(upgraded.values)
+                return BrewOutdated(items: [brew("git"), brew("wget")].filter { !done.contains($0.name) })
+            },
+            upgradeBrew: { item, _ in
+                upgraded.append(item.name)
+                return 0
+            }
+        )
+        model.autoSurface()
+        await eventually { model.brewItems.count == 2 }
+
+        model.upgradeAllBrews()
+        XCTAssertTrue(model.updateAllRunning)
+        XCTAssertEqual(model.updateAllSource, .homebrew)
+        XCTAssertEqual(model.updateAllTotal, 2)
+        await eventually { !model.updateAllRunning && !model.brewLoading && model.brewItems.isEmpty }
+
+        XCTAssertEqual(upgraded.values, ["git", "wget"])
+        XCTAssertEqual(model.updateAllCompleted, 2)
+        XCTAssertNil(model.updateAllSource)
+        XCTAssertEqual(model.phase(for: "formula:git"), .idle)
+        XCTAssertEqual(model.phase(for: "formula:wget"), .idle)
+    }
+
+    func testBrewBatchStopsAfterTheCurrentItemAndKeepsAFailureOnItsRow() async {
+        let upgraded = LockedStringRecorder()
+        let gate = BrewGate()
+        let model = UpdatesModel(
+            loadBrewOutdated: { _ in BrewOutdated(items: [brew("git"), brew("wget")]) },
+            upgradeBrew: { item, _ in
+                upgraded.append(item.name)
+                return await gate.wait()
+            }
+        )
+        model.autoSurface()
+        await eventually { model.brewItems.count == 2 }
+
+        model.upgradeAllBrews()
+        await eventually { upgraded.values == ["git"] }
+        model.cancelUpdateAll()
+        XCTAssertTrue(model.cancelUpdateAllAfterCurrent)
+        await gate.release(1)
+        await eventually { !model.updateAllRunning && !model.brewLoading }
+
+        XCTAssertEqual(upgraded.values, ["git"], "the stop lands between transactions")
+        XCTAssertEqual(model.updateAllCompleted, 1)
+        guard case .failed = model.phase(for: "formula:git") else {
+            return XCTFail("the still-outdated row keeps its failure, got \(model.phase(for: "formula:git"))")
+        }
+        XCTAssertEqual(model.phase(for: "formula:wget"), .idle)
+    }
+
+    func testOneBatchAtATimeAcrossBothSources() async {
+        let gate = BrewGate()
+        let model = UpdatesModel(
+            checkItem: { item in .available(id: item.id, version: "2.0.0") },
+            loadBrewOutdated: { _ in BrewOutdated(items: [brew("git")]) },
+            upgradeBrew: { _, _ in await gate.wait() }
+        )
+        model.appItems = [updateItem(id: "sparkle", installed: "1.0.0", source: .sparkle)]
+        model.autoSurface()
+        model.checkNow()
+        await eventually { model.checked && model.brewItems.count == 1 }
+        XCTAssertEqual(model.availableItems.map(\.id), ["sparkle"])
+
+        model.upgradeAllBrews()
+        XCTAssertEqual(model.updateAllSource, .homebrew)
+        model.updateAllApps()
+        XCTAssertEqual(model.updateAllSource, .homebrew, "the app batch waits its turn")
+        model.refreshBrew()
+        XCTAssertFalse(model.brewLoading, "no reload underneath a running upgrade")
+
+        await gate.release(0)
+        await eventually { !model.updateAllRunning && !model.brewLoading }
+        XCTAssertNil(model.updateAllSource)
     }
 
     private func app(id: String, name: String, path: String) -> InstalledApp {
@@ -853,5 +979,26 @@ private final class LockedStringRecorder: @unchecked Sendable {
         lock.lock()
         storage.append(value)
         lock.unlock()
+    }
+}
+
+private func brew(_ name: String, kind: String = "formula") -> OutdatedItem {
+    OutdatedItem(id: "\(kind):\(name)", name: name, installed: "1.0", latest: "2.0", kind: kind)
+}
+
+/// Holds a fake `brew upgrade` open until the test releases it, so a stop
+/// can be requested while an item is mid-flight. A release that arrives
+/// before the wait is kept, never lost.
+private actor BrewGate {
+    private var waiters: [CheckedContinuation<Int32, Never>] = []
+    private var pending: [Int32] = []
+
+    func wait() async -> Int32 {
+        if !pending.isEmpty { return pending.removeFirst() }
+        return await withCheckedContinuation { waiters.append($0) }
+    }
+
+    func release(_ code: Int32) {
+        if waiters.isEmpty { pending.append(code) } else { waiters.removeFirst().resume(returning: code) }
     }
 }

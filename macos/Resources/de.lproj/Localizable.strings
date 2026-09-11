@@ -880,6 +880,27 @@
 "Scales text and icons across the whole app and the menu-bar popup — no relaunch needed. The menu-bar item itself keeps its own per-widget text size, set under Menu Bar." = "Skaliert Text und Symbole in der gesamten App und im Menüleisten-Popup – ohne Neustart. Das Menüleisten-Element selbst behält seine eigene Textgröße, die pro Widget unter „Menüleiste“ eingestellt wird.";
 "Release Notes" = "Versionshinweise";
 
+// Software › Updates (#424): Mac apps / Homebrew split, brew problems, batch controls
+"Mac apps" = "Mac-Apps";
+"Checking app versions contacts Apple and vendor servers." = "Die Versionsprüfung kontaktiert Server von Apple und den Anbietern.";
+"Listed from Homebrew's local index — Refresh contacts Homebrew's update feeds." = "Aus dem lokalen Homebrew-Index – „Aktualisieren“ kontaktiert die Update-Feeds von Homebrew.";
+"Homebrew is no longer available." = "Homebrew ist nicht mehr verfügbar.";
+"Homebrew exited with status %d. Retry after resolving its message." = "Homebrew wurde mit Status %d beendet. Behebe die Meldung und versuche es erneut.";
+"Homebrew didn't respond in time." = "Homebrew hat nicht rechtzeitig geantwortet.";
+"Homebrew exited with status %d." = "Homebrew wurde mit Status %d beendet.";
+"Homebrew couldn't refresh: %@" = "Homebrew konnte nicht aktualisieren: %@";
+"Homebrew couldn't list outdated packages: %@" = "Homebrew konnte veraltete Pakete nicht auflisten: %@";
+"Stop after current" = "Nach dem aktuellen stoppen";
+"Stopping after current…" = "Stoppt nach dem aktuellen …";
+"Checking…" = "Prüfe …";
+"%d of %d update steps processed" = "%1$d von %2$d Update-Schritten verarbeitet";
+"%d update checks failed. Known versions were preserved." = "%d Update-Prüfungen fehlgeschlagen. Bekannte Versionen wurden beibehalten.";
+"Retry" = "Erneut versuchen";
+"Open updater" = "Updater öffnen";
+"Open App Store" = "App Store öffnen";
+"Install & Restart" = "Installieren & neu starten";
+"Not Yet" = "Noch nicht";
+"Release notes" = "Versionshinweise";
 /* Privileged helper refusals (#425) */
 "The privileged helper could not confirm which account asked for this, so nothing ran. Try again." = "Das privilegierte Hilfsprogramm konnte nicht bestätigen, welches Konto dies angefordert hat, deshalb wurde nichts ausgeführt. Versuche es erneut.";
 "The privileged helper is from a different Burrow version, so nothing ran. Reinstall it from Settings ▸ Advanced." = "Das privilegierte Hilfsprogramm stammt aus einer anderen Burrow-Version, deshalb wurde nichts ausgeführt. Installiere es unter „Einstellungen ▸ Erweitert“ neu.";
