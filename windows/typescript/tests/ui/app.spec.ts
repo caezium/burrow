@@ -94,10 +94,45 @@ test('small desktop layout keeps settings reachable without horizontal overflow'
   await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
 });
 
-test('system cache preview has no removal action', async ({ page }) => {
+test('temporary files use a fixed scope and browser preview cannot recycle', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Clean', exact: true }).click();
-  await page.getByRole('button', { name: 'Preview temporary files', exact: true }).click();
-  await expect(page.getByText('Temporary files', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Review.*recycle/i })).not.toBeVisible();
+  await expect(page.getByRole('button', { name: 'Choose folder', exact: true })).not.toBeVisible();
+  await page.getByRole('button', { name: 'Scan temporary files', exact: true }).click();
+  const select = page.getByRole('checkbox', {
+    name: 'Select up to 200 filtered items',
+    exact: true,
+  });
+  await expect(select).toBeVisible();
+  await select.check();
+  await expect(page.getByText('3 selected', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Review & recycle', exact: true })).toBeDisabled();
+  await expect(page.getByRole('status').filter({ hasText: 'Example files only' })).toBeVisible();
+});
+
+test('duplicate review retains one copy, counts only extras and survives navigation', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page
+    .getByRole('navigation')
+    .getByRole('button', { name: 'Duplicates', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Choose folder', exact: true }).click();
+  await page.getByRole('button', { name: 'Find duplicates', exact: true }).click();
+  await page.getByRole('button', { name: 'Select extra copies', exact: true }).click();
+  await expect(page.getByRole('checkbox', { checked: true })).toHaveCount(2);
+  await expect(page.getByRole('checkbox', { checked: false })).toBeDisabled();
+  await expect(page.getByText('Keeping 1 copy', { exact: true })).toBeVisible();
+  await expect(page.getByText('Keeping 1 file across 1 group.')).toBeVisible();
+  await expect(page.locator('.tool-selection-bar')).toContainText('491.5 MB');
+  await expect(page.getByRole('button', { name: 'Review & recycle', exact: true })).toBeDisabled();
+  await page.getByRole('checkbox', { checked: true }).first().uncheck();
+  await expect(page.getByRole('checkbox', { checked: false }).first()).toBeEnabled();
+  await page.getByRole('navigation').getByRole('button', { name: 'Clean', exact: true }).click();
+  await page
+    .getByRole('navigation')
+    .getByRole('button', { name: 'Duplicates', exact: true })
+    .click();
+  await expect(page.getByRole('checkbox', { checked: true })).toHaveCount(1);
 });

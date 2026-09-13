@@ -10,7 +10,17 @@ const nonnegative = (value: number): number => (Number.isFinite(value) ? Math.ma
 export class TelemetryService {
   private pending: Promise<Snapshot> | undefined;
   private previousCpu = cpuTimes();
+  private readonly providers = {
+    load: singleFlight(() => si.currentLoad()),
+    memory: singleFlight(() => si.mem()),
+    disks: singleFlight(() => si.fsSize()),
+    interfaces: singleFlight(() => si.networkInterfaces()),
+    stats: singleFlight(() => si.networkStats('*')),
+    battery: singleFlight(() => si.battery()),
+    processes: singleFlight(() => si.processes()),
+  };
 
+  /** Shares a pending snapshot; individual providers remain shared after its deadline expires. */
   sample(): Promise<Snapshot> {
     if (!this.pending)
       this.pending = this.collect().finally(() => {
@@ -37,13 +47,13 @@ export class TelemetryService {
       }
     };
     const [load, memory, disks, interfaces, stats, battery, processes] = await Promise.all([
-      safely('CPU counters', si.currentLoad(), null),
-      safely('Memory counters', si.mem(), null),
-      safely('Disk counters', si.fsSize(), []),
-      safely('Network interfaces', si.networkInterfaces(), []),
-      safely('Network traffic', si.networkStats('*'), []),
-      safely('Battery information', si.battery(), null),
-      safely('Process information', si.processes(), null),
+      safely('CPU counters', this.providers.load(), null),
+      safely('Memory counters', this.providers.memory(), null),
+      safely('Disk counters', this.providers.disks(), []),
+      safely('Network interfaces', this.providers.interfaces(), []),
+      safely('Network traffic', this.providers.stats(), []),
+      safely('Battery information', this.providers.battery(), null),
+      safely('Process information', this.providers.processes(), null),
     ]);
     const currentCpu = cpuTimes();
     const elapsed = currentCpu.total - this.previousCpu.total;
@@ -116,6 +126,21 @@ export class TelemetryService {
     };
   }
 }
+
+/** A caller's timeout must not release a provider that still has an OS request running. */
+function singleFlight<T>(request: () => Promise<T>): () => Promise<T> {
+  let pending: Promise<T> | undefined;
+  return () => {
+    if (!pending)
+      pending = Promise.resolve()
+        .then(request)
+        .finally(() => {
+          pending = undefined;
+        });
+    return pending;
+  };
+}
+
 function cpuTimes(): { total: number; idle: number } {
   return os.cpus().reduce(
     (result, cpu) => ({

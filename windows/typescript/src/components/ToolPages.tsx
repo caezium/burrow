@@ -148,7 +148,7 @@ function useScan(api: BurrowAPI, kind: ScanKind) {
     setError('');
     setProgress(null);
     try {
-      const next = await api.scan(kind, path || undefined);
+      const next = await api.scan(kind, kind === 'clean' ? undefined : path || undefined);
       setResult(next);
       setRoot(next.root);
       return next;
@@ -179,12 +179,26 @@ function useScan(api: BurrowAPI, kind: ScanKind) {
   async function cancel() {
     try {
       await api.cancelScan();
+      return true;
     } catch (failure) {
       setError(errorMessage(failure));
+      return false;
     }
   }
 
-  return { result, scanning, progress, error, setError, root, choosing, start, choose, cancel };
+  return {
+    result,
+    scanning,
+    progress,
+    error,
+    setError,
+    root,
+    choosing,
+    start,
+    choose,
+    cancel,
+    invalidate: () => setResult(null),
+  };
 }
 
 type ScanState = ReturnType<typeof useScan>;
@@ -192,10 +206,12 @@ function ScanControls({
   state,
   action = 'Scan folder',
   disabled = false,
+  fixedScope = false,
 }: {
   state: ScanState;
   action?: string;
   disabled?: boolean;
+  fixedScope?: boolean;
 }) {
   return (
     <>
@@ -203,24 +219,32 @@ function ScanControls({
         <div className="tool-folder-path">
           <FolderOpen size={19} aria-hidden="true" />
           <div>
-            <span className="tool-label">Selected folder</span>
-            <span title={state.root || 'Choose a folder to begin'}>
-              {state.root || 'Choose a folder to begin'}
+            <span className="tool-label">
+              {fixedScope ? 'Current user · temporary files' : 'Selected folder'}
+            </span>
+            <span
+              title={
+                state.root || (fixedScope ? 'Windows user Temp folder' : 'Choose a folder to begin')
+              }
+            >
+              {state.root || (fixedScope ? 'Windows user Temp folder' : 'Choose a folder to begin')}
             </span>
           </div>
         </div>
-        <button
-          className="button"
-          onClick={() => void state.choose()}
-          disabled={disabled || state.scanning || state.choosing}
-        >
-          <Folder size={15} aria-hidden="true" />
-          {state.choosing ? 'Choosing…' : 'Choose folder'}
-        </button>
+        {!fixedScope && (
+          <button
+            className="button"
+            onClick={() => void state.choose()}
+            disabled={disabled || state.scanning || state.choosing}
+          >
+            <Folder size={15} aria-hidden="true" />
+            {state.choosing ? 'Choosing…' : 'Choose folder'}
+          </button>
+        )}
         <button
           className="button primary"
           onClick={() => void state.start()}
-          disabled={disabled || !state.root || state.scanning || state.choosing}
+          disabled={disabled || (!fixedScope && !state.root) || state.scanning || state.choosing}
         >
           <Search size={15} aria-hidden="true" />
           {action}
@@ -273,9 +297,9 @@ function ScanFootnote({ result }: { result: ScanResult }) {
 const cleanCategories = [
   {
     kind: 'clean',
-    title: 'System & app caches',
-    label: 'System junk',
-    description: 'Fresh air through old tunnels.',
+    title: 'Temporary files',
+    label: 'Temporary files',
+    description: 'Clear old files from your user Temp folder.',
     icon: Sparkles,
     color: '#35C2A5',
   },
@@ -325,7 +349,7 @@ function CleanPage({ api }: ToolProps) {
         ))}
       </div>
       <div hidden={category !== 'clean'}>
-        <SystemCachePreview api={api} />
+        <CleanupScan api={api} kind="clean" />
       </div>
       <div hidden={category !== 'purge'}>
         <CleanupScan api={api} kind="purge" />
@@ -337,162 +361,51 @@ function CleanPage({ api }: ToolProps) {
   );
 }
 
-function SystemCachePreview({ api }: ToolProps) {
-  const state = useScan(api, 'clean');
-  async function reveal(path: string) {
+function useRecycle(api: BurrowAPI, state: ScanState) {
+  const [recycling, setRecycling] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const [message, setMessage] = useState('');
+  const active = useRef(false);
+
+  async function recycle(ids: string[]) {
+    if (!state.result || !ids.length || active.current || api.mode === 'preview') return;
+    const snapshot = state.result;
+    active.current = true;
+    setRecycling(true);
+    state.setError('');
+    setMessage('');
     try {
-      await api.reveal(path);
+      const outcome = await api.recycle(snapshot.id, ids);
+      const moved = `${count(outcome.recycled)} ${outcome.recycled === 1 ? 'item' : 'items'} · ${formatBytes(outcome.bytes)} moved to Recycle Bin.`;
+      setMessage(
+        `${outcome.cancelled ? (outcome.recycled > 0 ? `Removal stopped. ${moved}` : 'Removal cancelled. No items were moved.') : moved}${outcome.failures.length ? ` ${outcome.failures.length} ${outcome.failures.length === 1 ? 'issue' : 'issues'}: ${outcome.failures.slice(0, 3).join('; ')}` : ''}`,
+      );
+      if (!outcome.cancelled || outcome.recycled > 0) {
+        // Never expose IDs from the pre-removal scan after a partial or completed batch.
+        state.invalidate();
+        await state.start(snapshot.root);
+      }
     } catch (failure) {
-      state.setError(errorMessage(failure));
+      state.invalidate();
+      state.setError(`${errorMessage(failure)} Scan again to review the current files.`);
+    } finally {
+      active.current = false;
+      setRecycling(false);
+      setStopping(false);
     }
   }
-  return (
-    <section className="panel tool-scan-panel">
-      <div className="tool-section-heading">
-        <div>
-          <h2>A little care before we clear.</h2>
-          <p className="muted">Inspect temporary files in your Windows user account.</p>
-        </div>
-        <span className="pill">Read-only preview</span>
-      </div>
-      <Notice>
-        System cache cleanup rules are being adapted for Windows. This scan previews your user Temp
-        folder; removal is not enabled.
-      </Notice>
-      <div className="tool-scan-controls">
-        <div className="tool-folder-path">
-          <ShieldCheck size={20} aria-hidden="true" />
-          <div>
-            <span className="tool-label">Protected scan scope</span>
-            <span title={state.root}>{state.root || 'Current user · Windows temporary files'}</span>
-          </div>
-        </div>
-        <button
-          className="button primary"
-          disabled={state.scanning}
-          onClick={() => void state.start('')}
-        >
-          <Search size={15} aria-hidden="true" />
-          {state.scanning ? 'Scanning…' : 'Preview temporary files'}
-        </button>
-      </div>
-      {state.error && <Notice error>{state.error}</Notice>}
-      {state.scanning ? (
-        <div className="tool-scan-progress" role="status">
-          <div className="tool-progress-top">
-            <LoaderCircle size={17} className="tool-spin" aria-hidden="true" />
-            <strong>Reading temporary files</strong>
-            <span className="muted">
-              {state.progress
-                ? `${count(state.progress.scanned)} items · ${formatBytes(state.progress.bytes)}`
-                : 'Preparing scan…'}
-            </span>
-            <button className="button tool-small" onClick={() => void state.cancel()}>
-              <X size={14} aria-hidden="true" />
-              Cancel
-            </button>
-          </div>
-          <div className="tool-indeterminate" />
-          <p className="tool-path muted">
-            {state.progress?.path || 'Inspecting the current user’s Temp folder.'}
-          </p>
-        </div>
-      ) : state.result ? (
-        <>
-          <div className="tool-results-toolbar">
-            <div>
-              <strong>{formatBytes(state.result.totalBytes)}</strong>
-              <span className="muted">
-                {' '}
-                across {count(state.result.entries.length)} temporary items
-              </span>
-            </div>
-            <span className="pill">{api.mode === 'preview' ? 'Example data' : 'Local scan'}</span>
-          </div>
-          {state.result.entries.length ? (
-            <div className="tool-table-wrap">
-              <table className="tool-table">
-                <thead>
-                  <tr>
-                    <th>Temporary item</th>
-                    <th className="tool-align-right">Size</th>
-                    <th>
-                      <span className="tool-sr-only">Reveal</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...state.result.entries]
-                    .sort((a, b) => b.bytes - a.bytes)
-                    .map((entry) => (
-                      <tr key={entry.id}>
-                        <td>
-                          <div className="tool-file">
-                            <span className="tool-file-icon">
-                              {entry.isDirectory ? (
-                                <Folder size={19} aria-hidden="true" />
-                              ) : (
-                                <File size={19} aria-hidden="true" />
-                              )}
-                            </span>
-                            <span>
-                              <strong>{entry.name}</strong>
-                              <small title={entry.path}>{entry.path}</small>
-                            </span>
-                          </div>
-                        </td>
-                        <td className="tool-align-right tool-mono">{formatBytes(entry.bytes)}</td>
-                        <td>
-                          <button
-                            className="tool-icon-button"
-                            aria-label={`Reveal ${entry.name}`}
-                            onClick={() => void reveal(entry.path)}
-                          >
-                            <ExternalLink size={16} aria-hidden="true" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="empty-state tool-empty">
-              <CheckCircle2 size={31} aria-hidden="true" />
-              <h3>No temporary content measured.</h3>
-              <p className="muted">There are no readable items in this scan.</p>
-            </div>
-          )}
-          <ScanFootnote result={state.result} />
-        </>
-      ) : (
-        <div className="empty-state tool-empty">
-          <div className="tool-orb tool-orb-teal">
-            <Sparkles size={34} strokeWidth={1.4} aria-hidden="true" />
-          </div>
-          <h3>Take a look before clearing space.</h3>
-          <p className="muted">
-            Preview the size of your temporary files.
-            <br />
-            This scan leaves every file in place.
-          </p>
-        </div>
-      )}
-      <button className="tool-next-link" onClick={() => navigate('analyze')}>
-        <HardDrive size={17} aria-hidden="true" />
-        <span>Want to explore another folder? Open Analyze.</span>
-        <ArrowRight size={17} aria-hidden="true" />
-      </button>
-    </section>
-  );
+  async function stop() {
+    setStopping(true);
+    if (!(await state.cancel())) setStopping(false);
+  }
+  return { recycling, stopping, message, setMessage, recycle, stop };
 }
 
-function CleanupScan({ api, kind }: ToolProps & { kind: 'purge' | 'installers' }) {
+function CleanupScan({ api, kind }: ToolProps & { kind: 'clean' | 'purge' | 'installers' }) {
   const state = useScan(api, kind);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [recycling, setRecycling] = useState(false);
-  const [message, setMessage] = useState('');
+  const { recycling, stopping, message, setMessage, recycle, stop } = useRecycle(api, state);
   const entries = state.result?.entries || [];
   const visible = useMemo(
     () =>
@@ -539,27 +452,6 @@ function CleanupScan({ api, kind }: ToolProps & { kind: 'purge' | 'installers' }
       return next;
     });
   }
-  async function recycle() {
-    if (!state.result || selected.size === 0) return;
-    setRecycling(true);
-    state.setError('');
-    setMessage('');
-    try {
-      const outcome = await api.recycle(state.result.id, [...selected]);
-      const moved = `${count(outcome.recycled)} items · ${formatBytes(outcome.bytes)} moved to Recycle Bin.`;
-      setMessage(
-        `${outcome.cancelled ? (outcome.recycled > 0 ? `Removal stopped. ${moved}` : 'Removal cancelled. No items were moved.') : moved}${outcome.failures.length ? ` ${outcome.failures.length} items could not be moved: ${outcome.failures.slice(0, 3).join('; ')}` : ''}`,
-      );
-      if (outcome.recycled > 0) {
-        setSelected(new Set());
-        await state.start(state.result.root);
-      }
-    } catch (failure) {
-      state.setError(errorMessage(failure));
-    } finally {
-      setRecycling(false);
-    }
-  }
   async function reveal(path: string) {
     try {
       await api.reveal(path);
@@ -572,16 +464,40 @@ function CleanupScan({ api, kind }: ToolProps & { kind: 'purge' | 'installers' }
     <section className="panel tool-scan-panel">
       <div className="tool-section-heading">
         <div>
-          <h2>{kind === 'purge' ? 'Clear the build-up.' : 'Unpacked. No longer needed?'}</h2>
+          <h2>
+            {kind === 'clean'
+              ? 'A little room to breathe.'
+              : kind === 'purge'
+                ? 'Clear the build-up.'
+                : 'Unpacked. No longer needed?'}
+          </h2>
           <p className="muted">
-            {kind === 'purge'
-              ? 'Find generated development folders. Review each project before recycling anything.'
-              : 'Find installation packages in a folder you choose. Keep the ones you still need.'}
+            {kind === 'clean'
+              ? 'Review temporary files last modified more than seven days ago. Recent or changing files stay in place.'
+              : kind === 'purge'
+                ? 'Find generated development folders. Review each project before recycling anything.'
+                : 'Find installation packages in a folder you choose. Keep the ones you still need.'}
           </p>
         </div>
         <span className="pill">{api.mode === 'preview' ? 'Preview data' : 'Local scan'}</span>
       </div>
-      <ScanControls state={state} disabled={recycling} />
+      <ScanControls
+        state={state}
+        disabled={recycling}
+        fixedScope={kind === 'clean'}
+        action={kind === 'clean' ? 'Scan temporary files' : 'Scan folder'}
+      />
+      {kind === 'clean' && (
+        <Notice>
+          Only your Windows user Temp folder is included. App caches, browser data, and system
+          folders are outside this cleanup.
+        </Notice>
+      )}
+      {api.mode === 'preview' && (
+        <Notice>
+          Example files only. Open the desktop app to review and recycle files on your computer.
+        </Notice>
+      )}
       {message && <Notice>{message}</Notice>}
       {state.result && !state.scanning ? (
         <>
@@ -635,6 +551,8 @@ function CleanupScan({ api, kind }: ToolProps & { kind: 'purge' | 'installers' }
                           <span className="tool-file-icon">
                             {entry.isDirectory ? (
                               <Folder size={19} aria-hidden="true" />
+                            ) : kind === 'clean' ? (
+                              <File size={19} aria-hidden="true" />
                             ) : (
                               <Package size={19} aria-hidden="true" />
                             )}
@@ -671,7 +589,9 @@ function CleanupScan({ api, kind }: ToolProps & { kind: 'purge' | 'installers' }
               <p className="muted">
                 {query
                   ? 'Try a different file name or path.'
-                  : 'Try another folder, or enjoy the breathing room.'}
+                  : kind === 'clean'
+                    ? 'No eligible temporary files older than seven days were found. Recent files stay in place.'
+                    : 'Try another folder, or enjoy the breathing room.'}
               </p>
             </div>
           )}
@@ -680,18 +600,25 @@ function CleanupScan({ api, kind }: ToolProps & { kind: 'purge' | 'installers' }
               <strong>{selected.size} selected</strong>
               <span className="muted"> · {formatBytes(selectedBytes)}</span>
             </span>
-            <button
-              className="button primary"
-              disabled={selected.size === 0 || recycling || api.mode === 'preview'}
-              onClick={() => void recycle()}
-            >
-              {recycling ? (
-                <LoaderCircle size={16} className="tool-spin" aria-hidden="true" />
-              ) : (
-                <Trash2 size={16} aria-hidden="true" />
+            <div className="tool-recycle-actions">
+              {recycling && (
+                <button className="button" onClick={() => void stop()} disabled={stopping}>
+                  {stopping ? 'Stopping…' : 'Stop after current item'}
+                </button>
               )}
-              {recycling ? 'Moving to Recycle Bin…' : 'Review & recycle'}
-            </button>
+              <button
+                className="button primary"
+                disabled={selected.size === 0 || recycling || api.mode === 'preview'}
+                onClick={() => void recycle([...selected])}
+              >
+                {recycling ? (
+                  <LoaderCircle size={16} className="tool-spin" aria-hidden="true" />
+                ) : (
+                  <Trash2 size={16} aria-hidden="true" />
+                )}
+                {recycling ? 'Moving to Recycle Bin…' : 'Review & recycle'}
+              </button>
+            </div>
           </div>
           <p className="muted tool-caption">
             Review up to 200 items at a time. Windows asks for confirmation before removal. Items go
@@ -704,11 +631,15 @@ function CleanupScan({ api, kind }: ToolProps & { kind: 'purge' | 'installers' }
         !state.scanning && (
           <div className="empty-state tool-empty">
             <FolderOpen size={33} strokeWidth={1.4} aria-hidden="true" />
-            <h3>Start with a folder.</h3>
+            <h3>
+              {kind === 'clean' ? 'Take a look before clearing space.' : 'Start with a folder.'}
+            </h3>
             <p className="muted">
-              {kind === 'purge'
-                ? 'Choose your projects folder to look for generated build artifacts.'
-                : 'Choose Downloads or a folder where you keep installers.'}
+              {kind === 'clean'
+                ? 'Scan your user Temp folder for old files. Nothing is removed during the scan.'
+                : kind === 'purge'
+                  ? 'Choose your projects folder to look for generated build artifacts.'
+                  : 'Choose Downloads or a folder where you keep installers.'}
             </p>
             <span className="tool-caption muted">
               Nothing is selected or removed automatically.
@@ -977,26 +908,58 @@ function AnalyzePage({ api }: ToolProps) {
 function DuplicatesPage({ api }: ToolProps) {
   const state = useScan(api, 'duplicates');
   const [query, setQuery] = useState('');
-  const groups = useMemo(() => {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const { recycling, stopping, message, setMessage, recycle, stop } = useRecycle(api, state);
+  const allGroups = useMemo(() => {
     const byGroup = new Map<string, ScanEntry[]>();
     for (const entry of state.result?.entries || []) {
-      const key = entry.group || entry.id;
-      byGroup.set(key, [...(byGroup.get(key) || []), entry]);
+      if (!entry.group) continue;
+      byGroup.set(entry.group, [...(byGroup.get(entry.group) || []), entry]);
     }
     return [...byGroup.values()]
-      .filter(
-        (group) =>
-          group.length > 1 &&
-          group.some((entry) =>
-            `${entry.name} ${entry.path}`.toLowerCase().includes(query.toLowerCase()),
-          ),
-      )
+      .filter((group) => group.length > 1)
+      .map((group) => group.sort((a, b) => a.modified - b.modified || a.path.localeCompare(b.path)))
       .sort((a, b) => b[0].bytes * (b.length - 1) - a[0].bytes * (a.length - 1));
-  }, [state.result, query]);
+  }, [state.result]);
+  const groups = allGroups.filter((group) =>
+    group.some((entry) =>
+      `${entry.name} ${entry.path}`.toLowerCase().includes(query.toLowerCase()),
+    ),
+  );
   const extraBytes = groups.reduce(
     (total, group) => total + group[0].bytes * (group.length - 1),
     0,
   );
+  const selectedBytes = allGroups
+    .flat()
+    .reduce((total, entry) => total + (selected.has(entry.id) ? entry.bytes : 0), 0);
+  const retained = allGroups.flat().length - selected.size;
+  const hiddenSelection = allGroups.some(
+    (group) => !groups.includes(group) && group.some((entry) => selected.has(entry.id)),
+  );
+  useEffect(() => setSelected(new Set()), [state.result]);
+
+  function toggle(entry: ScanEntry, group: ScanEntry[]) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(entry.id)) next.delete(entry.id);
+      else if (next.size < 200 && group.some((copy) => copy.id !== entry.id && !next.has(copy.id)))
+        next.add(entry.id);
+      return next;
+    });
+  }
+  function selectExtraCopies() {
+    setSelected((current) => {
+      const next = new Set(current);
+      for (const group of groups) for (const entry of group) next.delete(entry.id);
+      for (const group of groups)
+        for (const entry of group.slice(1)) if (next.size < 200) next.add(entry.id);
+      return next;
+    });
+    setMessage(
+      'Extra copies selected, up to 200 items. The oldest modified copy in each group is kept; matching dates use the file path. Review the paths before continuing.',
+    );
+  }
   async function reveal(path: string) {
     try {
       await api.reveal(path);
@@ -1012,11 +975,17 @@ function DuplicatesPage({ api }: ToolProps) {
         description="Find what you've stashed twice."
       />
       <section className="panel tool-scan-panel">
-        <ScanControls state={state} action="Find duplicates" />
+        <ScanControls state={state} action="Find duplicates" disabled={recycling} />
         <Notice>
-          Duplicates are grouped by matching file content. This view is read-only: reveal and review
-          copies in Explorer before making changes.
+          Files are grouped by matching content. Choose copies to recycle and keep at least one file
+          in every group. Contents are checked again before removal.
         </Notice>
+        {api.mode === 'preview' && (
+          <Notice>
+            Example files only. Open the desktop app to review and recycle files on your computer.
+          </Notice>
+        )}
+        {message && <Notice>{message}</Notice>}
         {state.result && !state.scanning ? (
           <>
             <div className="tool-results-toolbar">
@@ -1034,41 +1003,103 @@ function DuplicatesPage({ api }: ToolProps) {
               />
             </div>
             {groups.length ? (
-              <div className="tool-duplicate-groups">
-                {groups.map((group) => (
-                  <article className="tool-duplicate-group" key={group[0].group || group[0].id}>
-                    <header>
-                      <span className="tool-file-icon">
-                        <Copy size={18} aria-hidden="true" />
-                      </span>
-                      <div>
-                        <strong>{group[0].name}</strong>
-                        <p className="muted">
-                          {group.length} identical files · {formatBytes(group[0].bytes)} each
-                        </p>
-                      </div>
-                      <span className="pill">
-                        {formatBytes(group[0].bytes * (group.length - 1))} extra
-                      </span>
-                    </header>
-                    {group.map((entry) => (
-                      <div className="tool-duplicate-file" key={entry.id}>
-                        <File size={15} aria-hidden="true" />
-                        <span className="tool-path" title={entry.path}>
-                          {entry.path}
-                        </span>
-                        <button
-                          className="button tool-small"
-                          onClick={() => void reveal(entry.path)}
-                        >
-                          Reveal
-                          <ExternalLink size={13} aria-hidden="true" />
-                        </button>
-                      </div>
-                    ))}
-                  </article>
-                ))}
-              </div>
+              <>
+                <div className="tool-duplicate-actions">
+                  <span className="muted">
+                    Keep one copy per group. Nothing is selected automatically.
+                  </span>
+                  <button
+                    className="button tool-small"
+                    onClick={selectExtraCopies}
+                    disabled={recycling}
+                  >
+                    Select extra copies
+                  </button>
+                  <button
+                    className="button tool-small"
+                    onClick={() => setSelected(new Set())}
+                    disabled={recycling || selected.size === 0}
+                  >
+                    Clear selection
+                  </button>
+                </div>
+                <div className="tool-duplicate-groups">
+                  {groups.map((group) => {
+                    const remaining = group.filter((entry) => !selected.has(entry.id)).length;
+                    return (
+                      <article
+                        className="tool-duplicate-group"
+                        key={group[0].group}
+                        aria-label={`Duplicate group: ${group[0].name}`}
+                      >
+                        <header>
+                          <span className="tool-file-icon">
+                            <Copy size={18} aria-hidden="true" />
+                          </span>
+                          <div>
+                            <strong>{group[0].name}</strong>
+                            <p className="muted">
+                              {group.length} identical files · {formatBytes(group[0].bytes)} each
+                            </p>
+                          </div>
+                          <span className="pill">
+                            Keeping {remaining} {remaining === 1 ? 'copy' : 'copies'}
+                          </span>
+                        </header>
+                        {group.map((entry) => {
+                          const isSelected = selected.has(entry.id);
+                          const lastCopy = !isSelected && remaining === 1;
+                          return (
+                            <div
+                              className={`tool-duplicate-file ${isSelected ? 'is-selected' : ''}`}
+                              key={entry.id}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                aria-label={`Select copy ${entry.path}`}
+                                onChange={() => toggle(entry, group)}
+                                disabled={
+                                  recycling || lastCopy || (!isSelected && selected.size >= 200)
+                                }
+                                title={
+                                  lastCopy
+                                    ? 'Keep at least one copy. Deselect another copy to change which file is kept.'
+                                    : undefined
+                                }
+                              />
+                              <File size={15} aria-hidden="true" />
+                              <div className="tool-duplicate-detail">
+                                <span className="tool-path" title={entry.path}>
+                                  {entry.path}
+                                </span>
+                                <small className="muted">
+                                  Modified {new Date(entry.modified).toLocaleDateString()}
+                                  {lastCopy ? ' · Kept copy' : ''}
+                                </small>
+                              </div>
+                              {lastCopy && (
+                                <span className="tool-keep-tag">
+                                  <ShieldCheck size={12} aria-hidden="true" />
+                                  Keep
+                                </span>
+                              )}
+                              <button
+                                className="button tool-small"
+                                aria-label={`Reveal ${entry.path}`}
+                                onClick={() => void reveal(entry.path)}
+                              >
+                                Reveal
+                                <ExternalLink size={13} aria-hidden="true" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </article>
+                    );
+                  })}
+                </div>
+              </>
             ) : (
               <div className="empty-state tool-empty">
                 <CheckCircle2 size={31} aria-hidden="true" />
@@ -1080,6 +1111,41 @@ function DuplicatesPage({ api }: ToolProps) {
                 </p>
               </div>
             )}
+            <div className="tool-selection-bar">
+              <div>
+                <strong>{selected.size} selected</strong>
+                <span className="muted"> · {formatBytes(selectedBytes)}</span>
+                <p className="muted tool-caption">
+                  Keeping {retained} {retained === 1 ? 'file' : 'files'} across {allGroups.length}{' '}
+                  {allGroups.length === 1 ? 'group' : 'groups'}
+                  {hiddenSelection ? ' · Selection includes hidden groups' : ''}.
+                </p>
+              </div>
+              <div className="tool-recycle-actions">
+                {recycling && (
+                  <button className="button" onClick={() => void stop()} disabled={stopping}>
+                    {stopping ? 'Stopping…' : 'Stop after current item'}
+                  </button>
+                )}
+                <button
+                  className="button primary"
+                  disabled={selected.size === 0 || recycling || api.mode === 'preview'}
+                  onClick={() => void recycle([...selected])}
+                >
+                  {recycling ? (
+                    <LoaderCircle size={16} className="tool-spin" aria-hidden="true" />
+                  ) : (
+                    <Trash2 size={16} aria-hidden="true" />
+                  )}
+                  {recycling ? 'Moving to Recycle Bin…' : 'Review & recycle'}
+                </button>
+              </div>
+            </div>
+            <p className="muted tool-caption">
+              Review up to 200 copies at a time. To change the kept file, deselect another copy
+              first. Windows asks for confirmation before removal. Files go to the Recycle Bin; disk
+              space is released when you empty it.
+            </p>
             <ScanFootnote result={state.result} />
           </>
         ) : (
@@ -1483,16 +1549,23 @@ function NetworkPage({ api }: ToolProps) {
   const samples = recent.filter((item) => item.rx !== null || item.tx !== null);
   const last = recent[recent.length - 1];
   const maximum = Math.max(1, ...samples.flatMap((item) => [item.rx || 0, item.tx || 0]));
-  const line = (key: 'rx' | 'tx') =>
-    recent
-      .flatMap((item, index) =>
-        item[key] === null
-          ? []
-          : [
-              `${10 + (index / Math.max(1, recent.length - 1)) * 780},${130 - (item[key]! / maximum) * 105}`,
-            ],
-      )
-      .join(' ');
+  const lines = (key: 'rx' | 'tx') => {
+    const segments: string[] = [];
+    let points: string[] = [];
+    for (const [index, item] of recent.entries()) {
+      const value = item[key];
+      if (value === null) {
+        if (points.length) segments.push(points.join(' '));
+        points = [];
+      } else {
+        points.push(
+          `${10 + (index / Math.max(1, recent.length - 1)) * 780},${130 - (value / maximum) * 105}`,
+        );
+      }
+    }
+    if (points.length) segments.push(points.join(' '));
+    return segments;
+  };
   return (
     <div className="tool-page tool-network">
       <Heading
@@ -1540,8 +1613,12 @@ function NetworkPage({ api }: ToolProps) {
                   aria-label="Recent received and sent network transfer rates"
                 >
                   <path className="tool-chart-grid" d="M10 25H790M10 77H790M10 130H790" />
-                  <polyline points={line('rx')} className="tool-chart-rx" />
-                  <polyline points={line('tx')} className="tool-chart-tx" />
+                  {lines('rx').map((points, index) => (
+                    <polyline key={`rx-${index}`} points={points} className="tool-chart-rx" />
+                  ))}
+                  {lines('tx').map((points, index) => (
+                    <polyline key={`tx-${index}`} points={points} className="tool-chart-tx" />
+                  ))}
                 </svg>
                 <div className="tool-chart-labels">
                   <span>Earlier</span>

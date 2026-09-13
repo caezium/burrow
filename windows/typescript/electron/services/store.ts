@@ -145,22 +145,69 @@ export class LocalStore {
   }
 }
 
+/** Treat local JSON as untrusted so corrupt samples cannot reach charts or IPC consumers. */
 function isSnapshot(value: unknown): value is Snapshot {
-  if (!value || typeof value !== 'object') return false;
-  const s = value as Snapshot;
+  if (!isRecord(value)) return false;
+  const s = value;
   return (
-    Number.isFinite(s.timestamp) &&
+    nonnegative(s.timestamp) &&
     typeof s.hostname === 'string' &&
     typeof s.platform === 'string' &&
-    !!s.cpu &&
-    Number.isFinite(s.cpu.usage) &&
-    !!s.memory &&
-    Number.isFinite(s.memory.total) &&
+    typeof s.osVersion === 'string' &&
+    nonnegative(s.uptime) &&
+    isRecord(s.cpu) &&
+    percentage(s.cpu.usage) &&
+    nonnegative(s.cpu.cores) &&
+    Number.isInteger(s.cpu.cores) &&
+    typeof s.cpu.model === 'string' &&
+    isRecord(s.memory) &&
+    nonnegative(s.memory.total) &&
+    nonnegative(s.memory.used) &&
+    percentage(s.memory.percent) &&
     Array.isArray(s.disks) &&
+    s.disks.every(
+      (disk) =>
+        isRecord(disk) &&
+        typeof disk.name === 'string' &&
+        typeof disk.mount === 'string' &&
+        nonnegative(disk.used) &&
+        nonnegative(disk.total),
+    ) &&
     Array.isArray(s.network) &&
+    s.network.every(
+      (network) =>
+        isRecord(network) &&
+        typeof network.name === 'string' &&
+        typeof network.address === 'string' &&
+        (network.rx === null || nonnegative(network.rx)) &&
+        (network.tx === null || nonnegative(network.tx)),
+    ) &&
+    (s.battery === null ||
+      (isRecord(s.battery) &&
+        percentage(s.battery.percent) &&
+        typeof s.battery.charging === 'boolean')) &&
     Array.isArray(s.processes) &&
-    Array.isArray(s.warnings)
+    s.processes.every(
+      (process) =>
+        isRecord(process) &&
+        nonnegative(process.pid) &&
+        Number.isInteger(process.pid) &&
+        typeof process.name === 'string' &&
+        nonnegative(process.cpu) &&
+        nonnegative(process.memory),
+    ) &&
+    Array.isArray(s.warnings) &&
+    s.warnings.every((warning) => typeof warning === 'string')
   );
+}
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+function nonnegative(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+function percentage(value: unknown): value is number {
+  return nonnegative(value) && value <= 100;
 }
 function isActivity(value: unknown): value is ActivityEntry {
   if (!value || typeof value !== 'object') return false;

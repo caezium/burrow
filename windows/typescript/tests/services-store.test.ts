@@ -84,6 +84,42 @@ describe('local settings, activity and telemetry history', () => {
       (await readdir(root)).some((file) => file.startsWith('burrow-state.json.corrupt-')),
     ).toBe(true);
   });
+  it('rejects malformed history scalars and nested records while retaining a complete sample', async () => {
+    const root = await fixture();
+    const valid = {
+      ...snapshot(),
+      disks: [{ name: 'C:', mount: 'C:\\', used: 1, total: 2 }],
+      network: [{ name: 'Ethernet', address: '127.0.0.1', rx: null, tx: 0 }],
+      battery: { percent: 50, charging: true },
+    };
+    const invalid = [
+      { memory: { used: 1, total: 2 } },
+      { memory: { used: 1, total: 2, percent: null } },
+      { cpu: { usage: 10, cores: '1', model: 'test' } },
+      { osVersion: undefined },
+      { uptime: -1 },
+      { disks: [null] },
+      { disks: [{ name: 'C:', mount: 'C:\\', used: '1', total: 2 }] },
+      { network: [{ name: 'Ethernet', address: '127.0.0.1', rx: -1, tx: 0 }] },
+      { network: [{ name: 'Ethernet', address: '127.0.0.1', tx: 0 }] },
+      { processes: [{ pid: 1, name: 'test', cpu: 0 }] },
+      { battery: { percent: 101, charging: true } },
+      { warnings: [null] },
+    ].map((patch) => ({ ...valid, ...patch }));
+    await writeFile(
+      path.join(root, 'burrow-state.json'),
+      JSON.stringify({
+        version: 1,
+        settings: DEFAULT_SETTINGS,
+        history: [...invalid, valid],
+        activity: [],
+      }),
+    );
+    const store = new LocalStore(root);
+    await store.init();
+    expect(store.getHistory(0)).toEqual([valid]);
+    expect(Number.isFinite(store.getHistory(0)[0].memory.percent)).toBe(true);
+  });
   it('serializes concurrent settings writes without losing the last update', async () => {
     const root = await fixture();
     const store = new LocalStore(root);

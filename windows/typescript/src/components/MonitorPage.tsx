@@ -410,7 +410,12 @@ function History({ active }: { active: boolean }) {
     const refresh = () =>
       api
         .getHistory(Date.now() - range * 1000)
-        .then((r) => alive && setRows(r))
+        .then((r) => {
+          if (alive) {
+            setRows(r);
+            setError('');
+          }
+        })
         .catch((e) => alive && setError(errorMessage(e)));
     void refresh();
     const timer = setInterval(refresh, 15000);

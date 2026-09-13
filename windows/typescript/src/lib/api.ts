@@ -64,8 +64,8 @@ const preview: BurrowAPI = {
           : kind === 'analyze'
             ? ['Projects', 'Downloads', 'Documents', 'Pictures', 'Videos']
             : kind === 'duplicates'
-              ? ['report.pdf', 'report-copy.pdf']
-              : ['Temporary files', 'Application cache', 'Crash reports'];
+              ? ['report.pdf', 'report-copy.pdf', 'report-backup.pdf']
+              : ['old-session.tmp', 'installer-cache', 'crash-report.tmp'];
     const previewRoot =
       root ??
       (kind === 'clean' ? 'C:\\Users\\You\\AppData\\Local\\Temp' : 'C:\\Users\\You\\Downloads');
@@ -78,9 +78,9 @@ const preview: BurrowAPI = {
           bytes:
             (kind === 'duplicates' ? 1 : names.length - index) *
             (kind === 'analyze' ? 4.6 * GB : 0.24 * GB),
-          category: kind,
+          category: kind === 'clean' ? 'Temporary files · older than 7 days' : kind,
           modified: Date.now() - 86400000 * 45,
-          isDirectory: kind === 'analyze' || kind === 'purge',
+          isDirectory: kind === 'analyze' || kind === 'purge' || (kind === 'clean' && index === 1),
           ...(kind === 'duplicates' ? { group: 'example-match' } : {}),
         }));
     return {

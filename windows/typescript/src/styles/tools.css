@@ -498,6 +498,13 @@
 .tool-selection-bar strong {
   font-weight: 500;
 }
+.tool-recycle-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
 .tool-caption {
   font-size: 10px;
   line-height: 1.6;
@@ -680,6 +687,41 @@
   display: flex;
   flex-direction: column;
   gap: 13px;
+}
+.tool-duplicate-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 11px;
+}
+.tool-duplicate-actions > span {
+  flex: 1;
+}
+.tool-duplicate-file input {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  accent-color: var(--tool-accent);
+}
+.tool-duplicate-file.is-selected {
+  background: color-mix(in srgb, var(--tool-accent) 5%, transparent);
+}
+.tool-duplicate-detail {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tool-keep-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tool-accent);
+  font-size: 10px;
+  flex: none;
 }
 .tool-duplicate-group {
   border-radius: 12px;

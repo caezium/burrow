@@ -18,6 +18,7 @@ import { lstat, realpath } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { LocalStore, ScanService, SystemService, TelemetryService } from './services';
 import { drainWithin } from './services/lifecycle';
+import { recycleReviewed } from './services/recycle';
 import type { ScanKind, Settings, Snapshot } from '../src/shared/contracts';
 
 protocol.registerSchemesAsPrivileged([
@@ -227,6 +228,8 @@ function registerIPC() {
   handle('scan', (kind: ScanKind, root?: string) => {
     if (!['clean', 'purge', 'installers', 'analyze', 'duplicates'].includes(kind))
       throw new Error('Unknown scan kind');
+    if (kind === 'clean' && root !== undefined)
+      throw new Error('Temporary file cleanup uses only your user temporary folder.');
     if (root !== undefined) {
       root = localPath(root);
       if (![...authorizedRoots].some((approved) => within(root!, approved)))
@@ -272,68 +275,31 @@ function registerIPC() {
     if (process.platform !== 'win32')
       throw new Error('Recycling is enabled only in the Windows desktop app.');
     textArg(scanId, 100);
-    return runOperation('recycle', async () => {
-      let recycled = 0;
-      let bytes = 0;
-      const failures: string[] = [];
-      const selected = await scanner.validateRecycle(scanId, ids);
-      const review = selected
-        .slice(0, 12)
-        .map((item) => item.path)
-        .join('\n');
-      const approved = await confirm(
-        'Review cleanup',
-        `Move ${selected.length} selected item${selected.length === 1 ? '' : 's'} to the Recycle Bin?`,
-        `${review}${selected.length > 12 ? `\n… and ${selected.length - 12} more selected items.` : ''}\n\nSpace is freed only after you empty the Recycle Bin. Files that changed since the scan will be skipped.`,
-        'Move to Recycle Bin',
-      );
-      if (!approved) return { recycled, bytes, failures, cancelled: true };
-      // Persist intent before handing a path to the OS, then a receipt after every item.
-      store.addActivity({
-        title: 'Recycle operation started',
-        detail: `${selected.length} selected items in ${scanner.getResult(scanId)?.root ?? 'the scanned folder'}`,
-        status: 'partial',
-        bytes: 0,
-      });
-      await store.flush();
-      for (const item of selected) {
-        if (stopRequested || quitting) break;
-        try {
-          const checked = await scanner.revalidateEntry(scanId, item.id);
-          if (stopRequested || quitting) break;
-          await shell.trashItem(checked.path);
-          scanner.markRecycled(scanId, item.id);
-          recycled++;
-          bytes += checked.bytes;
-          store.addActivity({
-            title: 'Moved to Recycle Bin',
-            detail: checked.path,
-            status: 'success',
-            bytes: checked.bytes,
-          });
-        } catch (error) {
-          failures.push(
-            `${item.name}: ${error instanceof Error ? error.message : 'Recycle failed'}`,
+    return runOperation('recycle', () =>
+      recycleReviewed(scanId, ids, {
+        scanner,
+        confirm: (selected) => {
+          const review = selected
+            .slice(0, 12)
+            .map((item) => item.path)
+            .join('\n');
+          const duplicateNote =
+            scanner.getResult(scanId)?.kind === 'duplicates'
+              ? '\nAn unselected matching copy will be checked before each move.'
+              : '';
+          return confirm(
+            'Review cleanup',
+            `Move ${selected.length} selected item${selected.length === 1 ? '' : 's'} to the Recycle Bin?`,
+            `${review}${selected.length > 12 ? `\n… and ${selected.length - 12} more selected items.` : ''}\n\nSpace is freed only after you empty the Recycle Bin. Files that changed since the scan will be skipped.${duplicateNote}`,
+            'Move to Recycle Bin',
           );
-          store.addActivity({
-            title: 'Item could not be recycled',
-            detail: failures.at(-1)!,
-            status: 'error',
-            bytes: 0,
-          });
-        }
-        // If persistence fails, stop before moving more files. The pending receipt remains dirty.
-        await store.flush();
-      }
-      store.addActivity({
-        title: 'Moved items to Recycle Bin',
-        detail: `${recycled} moved · ${failures.length} failed${stopRequested ? ' · stopped' : ''}${failures.length ? `\n${failures.join('\n')}` : ''}`,
-        status: stopRequested ? 'cancelled' : failures.length ? 'partial' : 'success',
-        bytes,
-      });
-      await store.flush();
-      return { recycled, bytes, failures, cancelled: stopRequested };
-    });
+        },
+        trash: (file) => shell.trashItem(file),
+        record: (entry) => store.addActivity(entry),
+        flush: () => store.flush(),
+        shouldStop: () => stopRequested || quitting,
+      }),
+    );
   });
   handle('reveal', async (file: string) => {
     const checked = localPath(file);

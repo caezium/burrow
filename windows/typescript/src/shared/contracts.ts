@@ -75,6 +75,7 @@ export interface ScanProgress {
 }
 export interface RecycleResult {
   recycled: number;
+  recycledIds: string[];
   bytes: number;
   failures: string[];
   cancelled: boolean;

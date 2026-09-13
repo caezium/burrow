@@ -50,21 +50,23 @@ The [Windows TypeScript workflow](../../.github/workflows/windows-typescript.yml
 
 ## What works in the desktop preview
 
-| Area                             | Current behavior                                                                                                         |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Monitor                          | Real CPU, memory, disk, network, battery when available, and process readings. GPU and fan readings are not implemented. |
-| History and Activity             | Local persisted metric samples and operation records. No legacy history import.                                          |
-| Clean                            | Read-only size preview of the current user’s temporary/cache folder. Cache deletion is not enabled.                      |
-| Project artifacts and installers | Scan, review selections, native confirmation, and Recycle Bin removal of supported candidates.                           |
-| Analyze                          | Read-only directory sizing and a size-proportional treemap.                                                              |
-| Duplicates                       | Read-only duplicate scan. No duplicate deletion.                                                                         |
-| Apps                             | Installed app inventory and a handoff to Windows Apps settings for removal.                                              |
-| Optimize                         | DNS cache flush only. Other macOS maintenance operations have not been ported.                                           |
-| Ports, Network, Get Online       | Local connections, addresses, DNS configuration, and a public DNS lookup.                                                |
-| Settings                         | Appearance, sampling interval, retention, and tray behavior.                                                             |
-| Leftovers and Similar Photos     | Explicitly unavailable in this preview.                                                                                  |
+| Area                             | Current behavior                                                                                                                     |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Monitor                          | Real CPU, memory, disk, network, battery when available, and process readings. GPU and fan readings are not implemented.             |
+| History and Activity             | Local persisted metric samples and operation records. No legacy history import.                                                      |
+| Clean                            | Review and recycle files/complete trees older than seven days in the fixed user temporary folder. Other app caches are not included. |
+| Project artifacts and installers | Scan, review selections, native confirmation, and Recycle Bin removal of supported candidates.                                       |
+| Analyze                          | Read-only directory sizing and a size-proportional treemap.                                                                          |
+| Duplicates                       | SHA-256 groups, select extra copies, and reviewed recycling while preserving an unselected matching copy.                            |
+| Apps                             | Installed app inventory and a handoff to Windows Apps settings for removal.                                                          |
+| Optimize                         | DNS cache flush only. Other macOS maintenance operations have not been ported.                                                       |
+| Ports, Network, Get Online       | Local connections, addresses, DNS configuration, and a public DNS lookup.                                                            |
+| Settings                         | Appearance, sampling interval, retention, and tray behavior.                                                                         |
+| Leftovers and Similar Photos     | Explicitly unavailable in this preview.                                                                                              |
 
-Reviewed removal is restricted to project artifacts and old installers. It uses the desktop's reviewed scan record and a native confirmation before sending eligible entries to the Recycle Bin. There is no permanent-delete fallback. A scan does not itself authorize removal.
+Reviewed removal covers old user temporary files, project artifacts, old installers, and selected exact duplicates. It uses the desktop's reviewed scan record and a native confirmation before sending eligible entries to the Recycle Bin. There is no permanent-delete fallback. A scan does not itself authorize removal.
+
+Temporary cleanup stays inside `%USERPROFILE%\AppData\Local\Temp` on Windows and does not accept a custom folder. Recently modified items, incomplete directory scans, symlinks, and junctions are skipped. For duplicates, the desktop verifies an unselected original-content copy before every move; selecting every copy in a group is rejected. Previews expire after 15 minutes. Cancellation and partial failures return the exact moved IDs, and the interface refreshes before allowing another operation. Space is freed only when the Recycle Bin is emptied.
 
 ## Structure and local data
 

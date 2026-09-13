@@ -26,15 +26,28 @@ The README's older Windows screenshots use top navigation and an older dashboard
 The preview has its own local state and desktop services. It does not silently connect to a running WinUI instance or claim parity with that app's existing engine and agent integrations.
 
 - Real device telemetry, local settings, history, and activity are implemented in the desktop. The browser adapter is explicitly an example-data preview.
-- Directory analysis, project-artifact scans, installer scans, and duplicate detection use local filesystem services. Duplicate and Analyze results are read-only.
-- Cache cleanup stops at preview. It must not be presented as a working cache-removal implementation.
-- Recycle Bin removal is limited to reviewed project-artifact and installer candidates, with a native confirmation. Native removal failures are reported; there is no permanent-delete fallback.
+- Directory analysis, project-artifact scans, installer scans, and exact duplicate detection use bounded local filesystem services. Analyze remains read-only.
+- Clean scans the fixed user temporary folder. Only top-level files and complete directory trees whose entries are all older than seven days are offered. Browser caches and other application data are outside this scope.
+- Exact duplicate review offers a deterministic “Select extra copies” action and keeps at least one unselected copy in each SHA-256 group. The desktop rechecks both selected content and an unselected matching copy before each move; changed or missing copies stop that item's removal.
+- Temporary files, project artifacts, old installers, and selected duplicate copies can be sent to the Recycle Bin after native confirmation. The operation revalidates server-owned scan IDs and filesystem fingerprints, records exact successful IDs, and stops further moves if activity persistence fails. There is no permanent-delete fallback.
 - Apps inventory hands removal to Windows Apps settings. In-app uninstall, leftover deletion, application updates, and startup/service management remain migration work.
 - Optimize currently offers DNS cache flushing. It does not reproduce the macOS engine's maintenance suite.
 - GPU and fan telemetry, leftover discovery, and similar-photo detection remain unavailable.
 - MCP, HTTP, conductor/engine integration, AI Explain, legacy store import, and broader macOS feature parity are not migrated.
 
 The legacy C# implementation, its tests, bundled engine, and release workflows remain intact. Any migration of its security-sensitive path handling, deletion receipts, authenticated agent APIs, or shared state should be assessed independently before replacing the released application.
+
+## Remaining migration work
+
+| Area                     | Next work                                                                                             |
+| ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Clean and Tune-Up        | Exact application/browser cache rules; a combined scan, review, and execution plan.                   |
+| Apps                     | App details and registered uninstallers, updates, startup entries, and service management.            |
+| Leftovers                | Evidence-based read-only discovery and reveal, matching the current macOS v1 boundary.                |
+| Similar Photos           | Windows image indexing, similarity groups, thumbnails, and review.                                    |
+| Monitor and connectivity | GPU/fan support where available, deeper process/connection inspection, richer connection diagnostics. |
+| Integrations             | Authenticated MCP/HTTP, conductor/engine coordination, and AI Explain.                                |
+| Release                  | Legacy data migration, native Windows interaction tests, signing, and update delivery.                |
 
 ## Validation and release boundary
 

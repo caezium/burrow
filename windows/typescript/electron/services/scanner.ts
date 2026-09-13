@@ -33,18 +33,33 @@ type Context = {
   candidates: Map<string, Candidate>;
 };
 type TreeSize = { bytes: number; digest: string; safe: boolean };
-class StopScan extends Error {}
+type Preview = {
+  result: ScanResult;
+  candidates: Map<string, Candidate>;
+  recycleSelection?: Set<string>;
+};
+export const TEMP_RETENTION_DAYS = 7;
+class StopScan extends Error {
+  constructor() {
+    super('The scan or file validation was stopped');
+  }
+}
 
 export class ScanService {
   private active: Context | undefined;
-  private latest: { result: ScanResult; candidates: Map<string, Candidate> } | undefined;
+  private readonly validations = new Set<AbortController>();
+  private latest: Preview | undefined;
   private readonly limits: ScanLimits;
-  constructor(limits: Partial<ScanLimits> = {}) {
+  private readonly tempRoot: string;
+  constructor(limits: Partial<ScanLimits> = {}, options: { tempRoot?: string } = {}) {
     this.limits = { ...DEFAULT_LIMITS, ...limits };
+    // This override is main-process configuration for tests, never a renderer argument.
+    this.tempRoot = options.tempRoot ?? defaultTempRoot();
   }
 
   cancel(): void {
     this.active?.controller.abort();
+    for (const controller of this.validations) controller.abort();
   }
   getResult(scanId: string): ScanResult | undefined {
     return this.latest?.result.id === scanId ? structuredClone(this.latest.result) : undefined;
@@ -58,7 +73,11 @@ export class ScanService {
       throw new Error('Unknown scan kind');
     this.cancel();
     this.latest = undefined;
-    const chosenRoot = root || defaultRoot(kind);
+    if (kind === 'clean' && root !== undefined)
+      throw new Error(
+        'Temporary cleanup uses the fixed user temp folder; a custom root is not allowed',
+      );
+    const chosenRoot = kind === 'clean' ? this.tempRoot : root || defaultRoot(kind);
     const ctx: Context = {
       controller: new AbortController(),
       started: Date.now(),
@@ -82,10 +101,15 @@ export class ScanService {
     };
     this.active = ctx;
     try {
-      const checkedRoot = await validateRoot(chosenRoot, kind === 'purge' || kind === 'installers');
+      const checkedRoot = await validateRoot(
+        chosenRoot,
+        kind !== 'analyze',
+        kind === 'clean' ? this.tempRoot : undefined,
+      );
       ctx.result.root = checkedRoot;
       this.emit(ctx, checkedRoot, true);
-      if (kind === 'clean' || kind === 'analyze') await this.analyze(ctx, checkedRoot);
+      if (kind === 'clean') await this.clean(ctx, checkedRoot);
+      else if (kind === 'analyze') await this.analyze(ctx, checkedRoot);
       else if (kind === 'purge') await this.purge(ctx, checkedRoot, 0);
       else if (kind === 'installers') await this.installers(ctx, checkedRoot);
       else await this.duplicates(ctx, checkedRoot);
@@ -108,6 +132,7 @@ export class ScanService {
   /** Validates server-owned IDs, never renderer-supplied file paths. Does not delete anything. */
   async validateRecycle(scanId: string, ids: string[]): Promise<ScanEntry[]> {
     const latest = this.requireLatest(scanId);
+    latest.recycleSelection = undefined;
     if (
       !Array.isArray(ids) ||
       ids.length === 0 ||
@@ -117,14 +142,28 @@ export class ScanService {
       throw new Error('Select between 1 and 200 scanned items');
     if (new Set(ids).size !== ids.length)
       throw new Error('Duplicate selection IDs are not allowed');
+    const selection = new Set(ids);
     const selected: ScanEntry[] = [];
-    for (const id of ids) {
-      const candidate = latest.candidates.get(id);
-      if (!candidate)
-        throw new Error('This item was not authorized by the latest complete preview');
-      selected.push(await this.revalidateEntry(scanId, id));
+    const ctx = this.validationContext(latest);
+    try {
+      const checkedGroups = new Set<string>();
+      for (const id of ids) {
+        const candidate = latest.candidates.get(id);
+        if (!candidate)
+          throw new Error('This item was not authorized by the latest complete preview');
+        selected.push(await this.revalidateCandidate(latest, candidate, ctx));
+        if (candidate.entry.group && !checkedGroups.has(candidate.entry.group)) {
+          await this.validateKeeper(latest, candidate.entry.group, selection, ctx);
+          checkedGroups.add(candidate.entry.group);
+        }
+      }
+      this.check(ctx);
+      this.requireLatest(scanId);
+      latest.recycleSelection = selection;
+      return selected;
+    } finally {
+      this.validations.delete(ctx.controller);
     }
-    return selected;
   }
 
   /** Call immediately before each native recycle-bin operation, after confirmation. */
@@ -132,36 +171,106 @@ export class ScanService {
     const latest = this.requireLatest(scanId);
     const candidate = latest.candidates.get(id);
     if (!candidate) throw new Error('This item is not in the latest authorized preview');
+    const ctx = this.validationContext(latest);
+    try {
+      const entry = await this.revalidateCandidate(latest, candidate, ctx);
+      if (entry.group) {
+        if (!latest.recycleSelection?.has(id))
+          throw new Error('Review and validate the entire duplicate selection before recycling');
+        await this.validateKeeper(latest, entry.group, latest.recycleSelection, ctx);
+        // Keeper hashing can take time; catch a selected-path change during that work.
+        await this.checkCandidatePath(latest, candidate);
+      }
+      this.check(ctx);
+      this.requireLatest(scanId);
+      return entry;
+    } finally {
+      this.validations.delete(ctx.controller);
+    }
+  }
+
+  private async revalidateCandidate(
+    latest: Preview,
+    candidate: Candidate,
+    ctx: Context,
+  ): Promise<ScanEntry> {
     const { entry } = candidate;
-    const root = await validateRoot(latest.result.root, true);
-    if (!isInside(entry.path, root))
-      throw new Error('The selected item is outside the preview folder');
-    await assertNoSymlinkAncestors(entry.path);
-    assertUnprotected(entry.path);
-    const stat = await lstat(entry.path);
-    if (stat.isSymbolicLink() || fingerprint(stat) !== candidate.fingerprint)
-      throw new Error('The selected item changed after preview. Scan again.');
+    const stat = await this.checkCandidatePath(latest, candidate);
+    const tempRoot = latest.result.kind === 'clean' ? this.tempRoot : undefined;
+    const cutoff = tempRoot ? Date.now() - TEMP_RETENTION_DAYS * 86_400_000 : undefined;
+    if (cutoff !== undefined && stat.mtimeMs >= cutoff)
+      throw new Error('The temporary item is too recent to recycle. Scan again.');
     if (candidate.treeFingerprint) {
-      const ctx: Context = {
-        controller: new AbortController(),
-        started: Date.now(),
-        lastProgress: 0,
-        bytes: 0,
-        hashBytes: 0,
-        candidates: new Map(),
-        result: { ...latest.result, entries: [], scanned: 0, skipped: 0, truncated: false },
-      };
       let measured: TreeSize;
       try {
-        measured = await this.measure(ctx, entry.path, 0);
+        measured = await this.measure(ctx, entry.path, 0, cutoff);
       } catch {
         throw new Error('The directory could not be fully revalidated. Scan again.');
       }
       if (!measured.safe || measured.digest !== candidate.treeFingerprint)
         throw new Error('The directory contents changed after preview. Scan again.');
     }
-    this.requireLatest(scanId);
+    if (entry.group) {
+      if (!stat.isFile() || ctx.hashBytes + stat.size > this.limits.maxHashBytes)
+        throw new Error('Duplicate revalidation exceeded its safety limit. Select fewer items.');
+      const digest = await this.hashFile(ctx, entry.path, stat);
+      if (digest !== entry.group)
+        throw new Error('Duplicate contents changed after preview. Scan again.');
+    }
     return { ...entry };
+  }
+
+  private async checkCandidatePath(latest: Preview, candidate: Candidate): Promise<Stats> {
+    const { entry } = candidate;
+    const tempRoot = latest.result.kind === 'clean' ? this.tempRoot : undefined;
+    const root = await validateRoot(latest.result.root, true, tempRoot);
+    if (!isInside(entry.path, root))
+      throw new Error('The selected item is outside the preview folder');
+    await assertNoSymlinkAncestors(entry.path);
+    assertUnprotected(entry.path, tempRoot);
+    const stat = await lstat(entry.path);
+    if (stat.isSymbolicLink() || fingerprint(stat) !== candidate.fingerprint)
+      throw new Error('The selected item changed after preview. Scan again.');
+    return stat;
+  }
+
+  private async validateKeeper(
+    latest: Preview,
+    group: string,
+    selection: Set<string>,
+    ctx: Context,
+  ): Promise<void> {
+    // Only server-owned, unrecycled, unselected candidates can preserve a copy.
+    const keepers = [...latest.candidates.values()].filter(
+      ({ entry }) => entry.group === group && !selection.has(entry.id),
+    );
+    if (!keepers.length)
+      throw new Error('Keep at least one unselected copy of every duplicate group');
+    for (const keeper of keepers) {
+      try {
+        await this.revalidateCandidate(latest, keeper, ctx);
+        return;
+      } catch (error) {
+        if (error instanceof StopScan) throw error;
+        // A changed/missing keeper is never trusted; another verified copy may still remain.
+        this.check(ctx);
+      }
+    }
+    throw new Error('No unchanged duplicate copy remains outside the selection. Scan again.');
+  }
+
+  private validationContext(latest: Preview): Context {
+    const controller = new AbortController();
+    this.validations.add(controller);
+    return {
+      controller,
+      started: Date.now(),
+      lastProgress: 0,
+      bytes: 0,
+      hashBytes: 0,
+      candidates: new Map(),
+      result: { ...latest.result, entries: [], scanned: 0, skipped: 0, truncated: false },
+    };
   }
 
   /** Remove a successfully recycled item from the allowlist to prevent replay. */
@@ -172,10 +281,8 @@ export class ScanService {
   private requireLatest(scanId: string) {
     if (!this.latest || this.latest.result.id !== scanId)
       throw new Error('Preview expired. Scan again before recycling.');
-    if (!['purge', 'installers'].includes(this.latest.result.kind))
-      throw new Error(
-        'This scan is read-only. Only development artifacts and old installers can be recycled.',
-      );
+    if (this.latest.result.kind === 'analyze')
+      throw new Error('Storage analysis is read-only. Choose a cleanup tool to recycle items.');
     if (this.latest.result.cancelled)
       throw new Error('Cancelled previews cannot authorize recycling');
     if (Date.now() - this.latest.result.timestamp > 15 * 60_000)
@@ -226,14 +333,23 @@ export class ScanService {
       }
     }
   }
-  private async measure(ctx: Context, directory: string, depth: number): Promise<TreeSize> {
+  private async measure(
+    ctx: Context,
+    directory: string,
+    depth: number,
+    olderThan?: number,
+  ): Promise<TreeSize> {
     this.check(ctx, directory);
     if (depth > this.limits.maxDepth) {
       ctx.result.truncated = true;
       return { bytes: 0, digest: '', safe: false };
     }
     const before = await lstat(directory);
-    if (!before.isDirectory() || before.isSymbolicLink())
+    if (
+      !before.isDirectory() ||
+      before.isSymbolicLink() ||
+      (olderThan !== undefined && before.mtimeMs >= olderThan)
+    )
       return { bytes: 0, digest: '', safe: false };
     let bytes = 0;
     let safe = true;
@@ -245,8 +361,9 @@ export class ScanService {
         safe = false;
         continue;
       }
+      if (olderThan !== undefined && stat.mtimeMs >= olderThan) safe = false;
       if (stat.isDirectory()) {
-        const child = await this.measure(ctx, file, depth + 1);
+        const child = await this.measure(ctx, file, depth + 1, olderThan);
         bytes += child.bytes;
         safe &&= child.safe;
         children.push(`${path.basename(file)}\0${fingerprint(stat)}\0${child.digest}`);
@@ -291,6 +408,29 @@ export class ScanService {
       treeFingerprint,
     });
   }
+  private async clean(ctx: Context, root: string): Promise<void> {
+    const cutoff = Date.now() - TEMP_RETENTION_DAYS * 86_400_000;
+    for await (const { file, stat } of this.children(ctx, root)) {
+      if (
+        stat.isSymbolicLink() ||
+        (!stat.isFile() && !stat.isDirectory()) ||
+        stat.mtimeMs >= cutoff
+      ) {
+        ctx.result.skipped++;
+        continue;
+      }
+      assertUnprotected(file, root);
+      const category = `Temporary files · older than ${TEMP_RETENTION_DAYS} days`;
+      if (stat.isDirectory()) {
+        const measured = await this.measure(ctx, file, 0, cutoff);
+        if (measured.safe) this.add(ctx, file, stat, measured.bytes, category, measured.digest);
+        else ctx.result.skipped++;
+      } else {
+        ctx.bytes += stat.size;
+        this.add(ctx, file, stat, stat.size, category);
+      }
+    }
+  }
   private async analyze(ctx: Context, root: string): Promise<void> {
     for await (const { file, stat } of this.children(ctx, root)) {
       if (stat.isSymbolicLink()) {
@@ -299,22 +439,10 @@ export class ScanService {
       }
       if (stat.isDirectory()) {
         const size = await this.measure(ctx, file, 0);
-        this.add(
-          ctx,
-          file,
-          stat,
-          size.bytes,
-          ctx.result.kind === 'clean' ? 'Cache preview' : 'Folder',
-        );
+        this.add(ctx, file, stat, size.bytes, 'Folder');
       } else if (stat.isFile()) {
         ctx.bytes += stat.size;
-        this.add(
-          ctx,
-          file,
-          stat,
-          stat.size,
-          ctx.result.kind === 'clean' ? 'Cache preview' : 'File',
-        );
+        this.add(ctx, file, stat, stat.size, 'File');
       }
     }
   }
@@ -347,7 +475,7 @@ export class ScanService {
         continue;
       }
       if (!stat.isDirectory()) continue;
-      const name = path.basename(file);
+      const name = path.basename(file).toLowerCase();
       if (name === '.git' || name === '.ssh' || name === '.gnupg') continue;
       const category = artifactCategory(name, names);
       if (category) {
@@ -393,7 +521,7 @@ export class ScanService {
           continue;
         }
         if (item.stat.isDirectory()) {
-          if (path.basename(item.file) !== '.git') await walk(item.file, depth + 1);
+          if (path.basename(item.file).toLowerCase() !== '.git') await walk(item.file, depth + 1);
         } else if (item.stat.isFile() && item.stat.size > 0) {
           if (item.stat.size > this.limits.maxFileBytes) {
             ctx.result.skipped++;
@@ -420,11 +548,13 @@ export class ScanService {
     for (const group of bySize.values()) {
       if (group.length < 2) continue;
       const hashes = new Map<string, typeof group>();
+      let hashBudgetReached = false;
       for (const item of group) {
         this.check(ctx, item.file);
         if (ctx.hashBytes + item.stat.size > this.limits.maxHashBytes) {
           ctx.result.truncated = true;
-          throw new StopScan();
+          hashBudgetReached = true;
+          break;
         }
         let digest;
         try {
@@ -443,6 +573,8 @@ export class ScanService {
         for (const { file, stat } of items)
           this.add(ctx, file, stat, stat.size, 'SHA-256 match', undefined, digest);
       }
+      // Preserve already-confirmed pairs even when the next file exceeds the byte budget.
+      if (hashBudgetReached) return;
     }
   }
   private async hashFile(ctx: Context, file: string, original: Stats): Promise<string> {
@@ -480,12 +612,14 @@ export class ScanService {
 }
 
 function defaultRoot(kind: ScanKind): string {
-  if (kind === 'clean') {
-    if (process.platform === 'win32') return path.join(os.homedir(), 'AppData', 'Local', 'Temp');
-    if (process.platform === 'darwin') return path.join(os.homedir(), 'Library', 'Caches');
-    return path.join(os.homedir(), '.cache');
-  }
   return path.join(os.homedir(), kind === 'installers' ? 'Downloads' : 'Documents');
+}
+function defaultTempRoot(): string {
+  if (process.platform === 'win32') return path.join(os.homedir(), 'AppData', 'Local', 'Temp');
+  const root = os.tmpdir();
+  // macOS exposes its OS-owned temp location through the standard /var alias.
+  // Normalize only that known alias; all remaining ancestors must pass lstat checks.
+  return process.platform === 'darwin' && root.startsWith('/var/') ? `/private${root}` : root;
 }
 function artifactCategory(name: string, markers: Set<string>): string | undefined {
   if (
@@ -531,7 +665,8 @@ function isInside(file: string, root: string): boolean {
     !path.isAbsolute(relative)
   );
 }
-function assertUnprotected(file: string): void {
+function assertUnprotected(file: string, trustedTempRoot?: string): void {
+  if (trustedTempRoot && isInside(file, path.resolve(trustedTempRoot))) return;
   const protectedRoots =
     process.platform === 'win32'
       ? [
@@ -560,7 +695,11 @@ function assertUnprotected(file: string): void {
       throw new Error('System and application-data folders cannot be recycled');
   }
 }
-async function validateRoot(root: string, deletionScope: boolean): Promise<string> {
+async function validateRoot(
+  root: string,
+  deletionScope: boolean,
+  trustedTempRoot?: string,
+): Promise<string> {
   if (
     typeof root !== 'string' ||
     !path.isAbsolute(root) ||
@@ -576,7 +715,9 @@ async function validateRoot(root: string, deletionScope: boolean): Promise<strin
   const normalized = path.resolve(root);
   if (deletionScope && (normalized === path.parse(normalized).root || normalized === os.homedir()))
     throw new Error('Choose a project or downloads folder, not a drive or profile root');
-  if (deletionScope) assertUnprotected(normalized);
+  if (trustedTempRoot && path.relative(path.resolve(trustedTempRoot), normalized) !== '')
+    throw new Error('Temporary cleanup must stay in the fixed user temp folder');
+  if (deletionScope && !trustedTempRoot) assertUnprotected(normalized);
   await assertNoSymlinkAncestors(normalized);
   const stat = await lstat(normalized);
   if (!stat.isDirectory() || stat.isSymbolicLink())
