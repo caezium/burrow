@@ -62,11 +62,18 @@ The [Windows TypeScript workflow](../../.github/workflows/windows-typescript.yml
 | Optimize                         | DNS cache flush only. Other macOS maintenance operations have not been ported.                                                       |
 | Ports, Network, Get Online       | Local connections, addresses, DNS configuration, and a public DNS lookup.                                                            |
 | Settings                         | Appearance, sampling interval, retention, and tray behavior.                                                                         |
-| Leftovers and Similar Photos     | Explicitly unavailable in this preview.                                                                                              |
+| Leftovers                        | Read-only discovery of possible old cache/log leftovers in fixed Local or Roaming app-data scopes; evidence and reveal only.         |
+| Similar Photos                   | Explicitly unavailable in this preview.                                                                                              |
 
 Reviewed removal covers old user temporary files, project artifacts, old installers, and selected exact duplicates. It uses the desktop's reviewed scan record and a native confirmation before sending eligible entries to the Recycle Bin. There is no permanent-delete fallback. A scan does not itself authorize removal.
 
 Temporary cleanup stays inside `%USERPROFILE%\AppData\Local\Temp` on Windows and does not accept a custom folder. Recently modified items, incomplete directory scans, symlinks, and junctions are skipped. For duplicates, the desktop verifies an unselected original-content copy before every move; selecting every copy in a group is rejected. Previews expire after 15 minutes. Cancellation and partial failures return the exact moved IDs, and the interface refreshes before allowing another operation. Space is freed only when the Recycle Bin is emptied.
+
+## Reviewing possible leftovers
+
+Leftovers compares fixed `%USERPROFILE%\AppData\Local` or `%USERPROFILE%\AppData\Roaming` folders with registered desktop application names and publishers. It considers only immediate `Cache`, `Caches`, `Log`, or `Logs` children of unmatched application folders, and only when the complete scanned subtree was last modified more than 60 days ago. Known shared/system folders and links are skipped; scan limits and incomplete results are shown.
+
+A missing name match is not proof that an app was uninstalled. Portable and Microsoft Store apps may be absent from the desktop inventory. Findings show the evidence and can be revealed in Explorer; this page does not delete or recycle them. Empty, unreadable, or capped inventories stop discovery. Other cleanup tools do not receive removal authorization for these results.
 
 ## Structure and local data
 

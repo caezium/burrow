@@ -58,6 +58,9 @@ async function desktop(
         minimizeToTray: true,
       };
       const api: BurrowAPI = {
+        scanLeftovers: async () => {
+          throw new Error('Not used by cleanup fixtures');
+        },
         mode: 'desktop',
         getSnapshot: async () => snapshot,
         getHistory: async () => [],

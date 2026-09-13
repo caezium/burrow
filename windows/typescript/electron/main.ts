@@ -19,7 +19,8 @@ import { pathToFileURL } from 'node:url';
 import { LocalStore, ScanService, SystemService, TelemetryService } from './services';
 import { drainWithin } from './services/lifecycle';
 import { recycleReviewed } from './services/recycle';
-import type { ScanKind, Settings, Snapshot } from '../src/shared/contracts';
+import { LeftoversService } from './services/leftovers';
+import type { LeftoverScope, ScanKind, Settings, Snapshot } from '../src/shared/contracts';
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'burrow', privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -38,6 +39,7 @@ let store: LocalStore;
 const telemetry = new TelemetryService();
 const scanner = new ScanService();
 const system = new SystemService();
+const leftovers = new LeftoversService(() => system.getApps(true));
 let latest: Snapshot | null = null;
 const recentSamples: Snapshot[] = [];
 let sampling: Promise<Snapshot> | null = null;
@@ -267,8 +269,41 @@ function registerIPC() {
       }
     });
   });
+  handle('leftovers', (scope: LeftoverScope) => {
+    if (scope !== 'local' && scope !== 'roaming') throw new Error('Unknown application-data scope');
+    return runOperation('scan', async () => {
+      try {
+        const result = await leftovers.scan(scope, (progress) => {
+          if (mainWindow && !mainWindow.isDestroyed())
+            mainWindow.webContents.send('burrow:scan-progress', progress);
+        });
+        revealedPaths.clear();
+        for (const entry of result.entries) revealedPaths.add(path.resolve(entry.path));
+        store.addActivity({
+          title: 'Leftovers scan',
+          detail: `${result.entries.length} possible cache/log leftovers in ${result.root}; compared with ${result.installedApps} registered desktop apps. Read-only.${result.truncated ? ' Scan limit reached.' : ''}${result.skipped ? ` ${result.skipped} entries skipped.` : ''}`,
+          status: result.cancelled
+            ? 'cancelled'
+            : result.truncated || result.skipped
+              ? 'partial'
+              : 'success',
+          bytes: 0,
+        });
+        return result;
+      } catch (error) {
+        store.addActivity({
+          title: 'Leftovers scan failed',
+          detail: error instanceof Error ? error.message : 'Unknown error',
+          status: 'error',
+          bytes: 0,
+        });
+        throw error;
+      }
+    });
+  });
   handle('cancel-scan', () => {
     scanner.cancel();
+    leftovers.cancel();
     stopRequested = true;
   });
   handle('recycle', (scanId: string, ids: string[]) => {
@@ -538,6 +573,7 @@ else {
     quitting = true;
     clearTimeout(timer);
     scanner.cancel();
+    leftovers.cancel();
     stopRequested = true;
     shutdown = prepareQuit().finally(() => {
       shutdown = null;

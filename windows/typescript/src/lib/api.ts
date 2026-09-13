@@ -96,6 +96,52 @@ const preview: BurrowAPI = {
       timestamp: Date.now(),
     };
   },
+  scanLeftovers: async (scope) => {
+    cancelled = false;
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    const root = `C:\\Users\\You\\AppData\\${scope === 'local' ? 'Local' : 'Roaming'}`;
+    return {
+      id: 'preview-leftovers',
+      scope,
+      root,
+      installedApps: 42,
+      scanned: 128,
+      skipped: 3,
+      truncated: false,
+      cancelled,
+      timestamp: Date.now(),
+      entries: cancelled
+        ? []
+        : [
+            {
+              id: 'leftover-cache',
+              name: 'Old Studio / Cache',
+              path: `${root}\\Old Studio\\Cache`,
+              bytes: 420 * 1024 ** 2,
+              modified: Date.now() - 90 * 86_400_000,
+              category: 'cache' as const,
+              evidence: [
+                'Known cache folder; all scanned content is older than 60 days.',
+                'No matching registered desktop app name or publisher.',
+                'Portable or Store apps may be missing from this inventory. This is not proof of uninstall.',
+              ],
+            },
+            {
+              id: 'leftover-logs',
+              name: 'Archive Player / Logs',
+              path: `${root}\\Archive Player\\Logs`,
+              bytes: 38 * 1024 ** 2,
+              modified: Date.now() - 120 * 86_400_000,
+              category: 'logs' as const,
+              evidence: [
+                'Known log folder; all scanned content is older than 60 days.',
+                'No matching registered desktop app name or publisher.',
+                'Review in Explorer before deciding whether this data is still needed.',
+              ],
+            },
+          ],
+    };
+  },
   cancelScan: async () => {
     cancelled = true;
   },

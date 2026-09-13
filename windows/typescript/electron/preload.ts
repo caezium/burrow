@@ -16,6 +16,7 @@ const api: BurrowAPI = {
   saveSettings: (settings) => ipcRenderer.invoke('burrow:save-settings', settings),
   chooseFolder: () => ipcRenderer.invoke('burrow:choose-folder'),
   scan: (kind, root) => ipcRenderer.invoke('burrow:scan', kind, root),
+  scanLeftovers: (scope) => ipcRenderer.invoke('burrow:leftovers', scope),
   cancelScan: () => ipcRenderer.invoke('burrow:cancel-scan'),
   recycle: (scanId, ids) => ipcRenderer.invoke('burrow:recycle', scanId, ids),
   reveal: (file) => ipcRenderer.invoke('burrow:reveal', file),

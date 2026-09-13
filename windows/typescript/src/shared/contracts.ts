@@ -73,6 +73,28 @@ export interface ScanProgress {
   bytes: number;
   path: string;
 }
+export type LeftoverScope = 'local' | 'roaming';
+export interface LeftoverEntry {
+  id: string;
+  name: string;
+  path: string;
+  bytes: number;
+  modified: number;
+  category: 'cache' | 'logs';
+  evidence: string[];
+}
+export interface LeftoverReport {
+  id: string;
+  scope: LeftoverScope;
+  root: string;
+  entries: LeftoverEntry[];
+  installedApps: number;
+  scanned: number;
+  skipped: number;
+  truncated: boolean;
+  cancelled: boolean;
+  timestamp: number;
+}
 export interface RecycleResult {
   recycled: number;
   recycledIds: string[];
@@ -109,6 +131,7 @@ export interface BurrowAPI {
   saveSettings(settings: Settings): Promise<Settings>;
   chooseFolder(): Promise<string | null>;
   scan(kind: ScanKind, root?: string): Promise<ScanResult>;
+  scanLeftovers(scope: LeftoverScope): Promise<LeftoverReport>;
   cancelScan(): Promise<void>;
   recycle(scanId: string, ids: string[]): Promise<RecycleResult>;
   reveal(path: string): Promise<void>;

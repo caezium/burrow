@@ -32,7 +32,8 @@ The preview has its own local state and desktop services. It does not silently c
 - Temporary files, project artifacts, old installers, and selected duplicate copies can be sent to the Recycle Bin after native confirmation. The operation revalidates server-owned scan IDs and filesystem fingerprints, records exact successful IDs, and stops further moves if activity persistence fails. There is no permanent-delete fallback.
 - Apps inventory hands removal to Windows Apps settings. In-app uninstall, leftover deletion, application updates, and startup/service management remain migration work.
 - Optimize currently offers DNS cache flushing. It does not reproduce the macOS engine's maintenance suite.
-- GPU and fan telemetry, leftover discovery, and similar-photo detection remain unavailable.
+- Leftovers provides read-only possible cache/log discovery in fixed Local/Roaming app-data scopes, based on a strict registered desktop-app inventory and complete 60-day-old cache/log subtrees. Each finding includes evidence and Explorer reveal; it does not authorize removal.
+- GPU and fan telemetry and similar-photo detection remain unavailable.
 - MCP, HTTP, conductor/engine integration, AI Explain, legacy store import, and broader macOS feature parity are not migrated.
 
 The legacy C# implementation, its tests, bundled engine, and release workflows remain intact. Any migration of its security-sensitive path handling, deletion receipts, authenticated agent APIs, or shared state should be assessed independently before replacing the released application.
@@ -43,7 +44,7 @@ The legacy C# implementation, its tests, bundled engine, and release workflows r
 | ------------------------ | ----------------------------------------------------------------------------------------------------- |
 | Clean and Tune-Up        | Exact application/browser cache rules; a combined scan, review, and execution plan.                   |
 | Apps                     | App details and registered uninstallers, updates, startup entries, and service management.            |
-| Leftovers                | Evidence-based read-only discovery and reveal, matching the current macOS v1 boundary.                |
+| Leftovers                | Read-only v1 is implemented; broader app-identity coverage and evidence refinement remain.            |
 | Similar Photos           | Windows image indexing, similarity groups, thumbnails, and review.                                    |
 | Monitor and connectivity | GPU/fan support where available, deeper process/connection inspection, richer connection diagnostics. |
 | Integrations             | Authenticated MCP/HTTP, conductor/engine coordination, and AI Explain.                                |

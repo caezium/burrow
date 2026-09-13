@@ -1353,3 +1353,126 @@
     transition: none;
   }
 }
+.tool-leftover-scopes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.tool-leftover-scopes .button {
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px 18px;
+  gap: 6px;
+  font-size: 13px;
+  text-align: left;
+}
+.tool-leftover-scopes .button > span {
+  font-size: 11px;
+}
+.tool-leftover-scopes .is-active {
+  border-color: color-mix(in srgb, var(--tool-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--tool-accent) 8%, transparent);
+}
+.tool-leftover-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 8px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+.tool-leftover-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.tool-leftover-summary strong {
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: -0.8px;
+}
+.tool-leftover-summary span {
+  font-size: 11px;
+  color: var(--secondary);
+}
+.tool-leftover-sort select {
+  padding: 9px 12px;
+  border-radius: 9px;
+  background: var(--chip);
+  color: inherit;
+  border: 1px solid var(--border);
+  font-size: 11px;
+}
+.tool-leftover-candidates {
+  display: grid;
+  gap: 15px;
+}
+.tool-leftover-card {
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 20px;
+}
+.tool-leftover-card > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tool-leftover-card > header > div {
+  min-width: 0;
+  flex: 1;
+}
+.tool-leftover-card > header > span:last-child {
+  flex: none;
+  font-size: 13px;
+}
+.tool-leftover-card > header p {
+  margin: 5px 0 0;
+  font-size: 11px;
+}
+.tool-leftover-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+  font-size: 10px;
+}
+.tool-leftover-evidence {
+  padding: 15px 0 4px;
+  font-size: 11px;
+}
+.tool-leftover-evidence > strong {
+  font-weight: 550;
+}
+.tool-leftover-evidence ul {
+  margin: 9px 0;
+  padding-left: 18px;
+  color: var(--secondary);
+  line-height: 1.75;
+}
+.tool-leftover-evidence li + li {
+  margin-top: 3px;
+}
+.tool-leftover-card > footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 13px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+}
+@media (max-width: 900px) {
+  .tool-leftover-summary {
+    gap: 10px;
+  }
+  .tool-leftover-summary strong {
+    font-size: 21px;
+  }
+  .tool-leftover-scopes .button {
+    padding: 12px;
+  }
+  .tool-leftover-card {
+    padding: 16px;
+  }
+}

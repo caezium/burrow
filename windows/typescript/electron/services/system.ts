@@ -15,9 +15,35 @@ $OutputEncoding = [Console]::OutputEncoding
 $paths = @('HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*')
 @(Get-ItemProperty -Path $paths -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -and -not $_.SystemComponent } | Select-Object -First 3000 @{n='id';e={$_.PSPath}}, @{n='name';e={$_.DisplayName}}, @{n='version';e={$_.DisplayVersion}}, @{n='publisher';e={$_.Publisher}}, @{n='size';e={[double]$_.EstimatedSize * 1024}}, @{n='installDate';e={$_.InstallDate}}) | ConvertTo-Json -Compress -Depth 3
 `;
+// Leftover matching must fail if a present registry source is unreadable. Missing
+// architecture-specific keys are allowed; installed Store/portable apps remain out of scope.
+const STRICT_APPS_SCRIPT = APPS_SCRIPT.replace(
+  'Get-ItemProperty -Path $paths -ErrorAction SilentlyContinue',
+  String.raw`$paths | ForEach-Object {
+    $key = $_.Substring(0, $_.Length - 2)
+    if (Test-Path -LiteralPath $key -ErrorAction Stop) {
+      Get-ChildItem -LiteralPath $key -ErrorAction Stop | ForEach-Object {
+        Get-ItemProperty -LiteralPath $_.PSPath -ErrorAction Stop
+      }
+    }
+  }`,
+).replace('Select-Object -First 3000', 'Select-Object -First 3001');
 
 export class SystemService {
-  async getApps(): Promise<InstalledApp[]> {
+  private readonly appRequests = new Map<boolean, Promise<InstalledApp[]>>();
+
+  /** Strict inventory refuses unreadable registry sources or capped results for leftover matching. */
+  getApps(strict = false): Promise<InstalledApp[]> {
+    let pending = this.appRequests.get(strict);
+    if (!pending) {
+      // Cancelling the UI does not terminate PowerShell; reuse that bounded request until it settles.
+      pending = this.readApps(strict).finally(() => this.appRequests.delete(strict));
+      this.appRequests.set(strict, pending);
+    }
+    return pending;
+  }
+
+  private async readApps(strict: boolean): Promise<InstalledApp[]> {
     requireWindows('Installed-app inventory');
     const powershell = path.join(
       process.env.SystemRoot || 'C:\\Windows',
@@ -28,11 +54,21 @@ export class SystemService {
     );
     const { stdout } = await run(
       powershell,
-      ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', APPS_SCRIPT],
+      [
+        '-NoLogo',
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        strict ? STRICT_APPS_SCRIPT : APPS_SCRIPT,
+      ],
       { windowsHide: true, timeout: 20_000, maxBuffer: 4 * 1024 ** 2, encoding: 'utf8' },
     );
     const parsed: unknown = stdout.trim() ? JSON.parse(stdout) : [];
     const rows: unknown[] = Array.isArray(parsed) ? parsed : [parsed];
+    if (strict && rows.length > 3000)
+      throw new Error(
+        'Installed-app inventory exceeds the completeness limit. Leftover detection is unavailable.',
+      );
     const text = (value: unknown) => (typeof value === 'string' ? value.slice(0, 1_024) : '');
     const apps = rows
       .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')

@@ -42,6 +42,7 @@ import type {
   Snapshot,
 } from '../shared/contracts';
 import { formatBytes } from '../lib/format';
+import { LeftoversPage } from './LeftoversPage';
 import '../styles/tools.css';
 
 type ToolProps = { api: BurrowAPI };
@@ -1870,6 +1871,7 @@ export function ToolPage({ route, api }: { route: Route; api: BurrowAPI }) {
     case 'connectivity':
       return <ConnectivityPage api={api} />;
     case 'leftovers':
+      return <LeftoversPage api={api} />;
     case 'photos':
       return <MigrationPage route={route} />;
     default:
