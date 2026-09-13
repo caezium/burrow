@@ -1,0 +1,89 @@
+name: windows-typescript
+
+on:
+  push:
+    branches: [main, windows]
+    paths:
+      - "windows/typescript/**"
+      - ".github/workflows/windows-typescript.yml"
+  pull_request:
+    paths:
+      - "windows/typescript/**"
+      - ".github/workflows/windows-typescript.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-typescript-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-package:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: windows/typescript
+        shell: pwsh
+    env:
+      CI: "true"
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: windows/typescript/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build desktop and renderer
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install chromium
+
+      - name: Browser UI tests
+        run: npm run test:ui
+
+      - name: Upload UI test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: burrow-typescript-ui-results
+          path: |
+            windows/typescript/playwright-report/
+            windows/typescript/test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Package unsigned Windows x64 preview
+        # Explicit targets override the architectures in package.json's target list.
+        # --x64 alone would still add that list's arm64 NSIS target.
+        run: npx electron-builder --win nsis zip --x64 --publish never
+
+      - name: Upload unsigned Windows x64 packages
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: burrow-typescript-windows-x64-unsigned
+          path: |
+            windows/typescript/release/*.exe
+            windows/typescript/release/*.zip
+            windows/typescript/release/*.blockmap
+          if-no-files-found: error
+          retention-days: 14
