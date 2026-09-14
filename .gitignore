@@ -73,3 +73,10 @@ plans/
 # Runtime binary and license payload staged by windows-release.yml.
 /windows/Assets/burrow.exe
 /windows/Assets/licenses/burrow-cli/
+
+# TypeScript Windows rewrite
+node_modules/
+/windows/typescript/dist-electron/
+/windows/typescript/release/
+/windows/typescript/test-results/
+/windows/typescript/playwright-report/
