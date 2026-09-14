@@ -23,7 +23,7 @@ For a browser-only interface preview:
 npm run dev:web
 ```
 
-Open the local URL printed by Vite. Browser mode displays example device readings and example scan results. It cannot delete files, run maintenance, or open Windows Settings. Example data is separate from the desktop's real telemetry and local history.
+Open the local URL printed by Vite. Browser mode displays example device readings, scans, and application details. It cannot delete files, launch uninstallers, run maintenance, or open Windows Settings. Example data is separate from the desktop's real telemetry and local history.
 
 ## Check and package
 
@@ -58,7 +58,7 @@ The [Windows TypeScript workflow](../../.github/workflows/windows-typescript.yml
 | Project artifacts and installers | Scan, review selections, native confirmation, and Recycle Bin removal of supported candidates.                                       |
 | Analyze                          | Read-only directory sizing and a size-proportional treemap.                                                                          |
 | Duplicates                       | SHA-256 groups, select extra copies, and reviewed recycling while preserving an unselected matching copy.                            |
-| Apps                             | Installed app inventory and a handoff to Windows Apps settings for removal.                                                          |
+| Apps                             | Registered desktop app inventory, details, installation-folder reveal, and reviewed launch of supported registered uninstallers.     |
 | Optimize                         | DNS cache flush only. Other macOS maintenance operations have not been ported.                                                       |
 | Ports, Network, Get Online       | Local connections, addresses, DNS configuration, and a public DNS lookup.                                                            |
 | Settings                         | Appearance, sampling interval, retention, and tray behavior.                                                                         |
@@ -68,6 +68,14 @@ The [Windows TypeScript workflow](../../.github/workflows/windows-typescript.yml
 Reviewed removal covers old user temporary files, project artifacts, old installers, and selected exact duplicates. It uses the desktop's reviewed scan record and a native confirmation before sending eligible entries to the Recycle Bin. There is no permanent-delete fallback. A scan does not itself authorize removal.
 
 Temporary cleanup stays inside `%USERPROFILE%\AppData\Local\Temp` on Windows and does not accept a custom folder. Recently modified items, incomplete directory scans, symlinks, and junctions are skipped. For duplicates, the desktop verifies an unselected original-content copy before every move; selecting every copy in a group is rejected. Previews expire after 15 minutes. Cancellation and partial failures return the exact moved IDs, and the interface refreshes before allowing another operation. Space is freed only when the Recycle Bin is emptied.
+
+## Reviewing an installed app
+
+Select an app to see its publisher, version, reported size, installation date, user/machine scope, and registered installation folder when available. Folder reveal and uninstall resolve the app's identity in the desktop process; the interface cannot submit an executable or command line.
+
+Supported uninstallers require a fresh review and a native confirmation. The desktop rereads the registry and checks the reviewed executable and installation directory again before launch. MSI removal uses the fixed Windows Installer executable and a validated product code with interactive UI and no automatic restart. EXE uninstallers must resolve to an allowed application directory; ambiguous paths, links, command/script hosts, recognized quiet flags, and entries that disable removal are unavailable. Unsupported entries retain a Windows Apps settings handoff. This inventory does not enumerate Store packages or unregistered portable apps.
+
+A review expires after ten minutes. Once a launch is dispatched, its review cannot be reused. The interface requires refreshed details after every attempt. Activity saves the accepted request before launch and records the outcome with zero reclaimed bytes. “Uninstaller started” confirms only launch; finish the vendor's prompts and refresh the app list to check the registered inventory. An unknown result requires checking Windows before retrying. Quitting Burrow can stop a pending launch, but does not cancel an uninstaller already handed to Windows. Burrow does not remove related app data in this workflow.
 
 ## Reviewing possible leftovers
 

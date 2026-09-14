@@ -32,7 +32,6 @@ import {
 import type {
   BurrowAPI,
   Diagnostic,
-  InstalledApp,
   PortInfo,
   Route,
   ScanEntry,
@@ -43,6 +42,7 @@ import type {
 } from '../shared/contracts';
 import { formatBytes } from '../lib/format';
 import { LeftoversPage } from './LeftoversPage';
+import { AppsPage } from './AppsPage';
 import '../styles/tools.css';
 
 type ToolProps = { api: BurrowAPI };
@@ -1162,145 +1162,6 @@ function DuplicatesPage({ api }: ToolProps) {
             </div>
           )
         )}
-      </section>
-    </div>
-  );
-}
-
-function AppsPage({ api }: ToolProps) {
-  const [apps, setApps] = useState<InstalledApp[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [query, setQuery] = useState('');
-  const [sort, setSort] = useState('name');
-  async function refresh() {
-    setLoading(true);
-    setError('');
-    try {
-      setApps(await api.getApps());
-    } catch (failure) {
-      setError(errorMessage(failure));
-    } finally {
-      setLoading(false);
-    }
-  }
-  useEffect(() => {
-    void refresh();
-  }, [api]);
-  async function openSettings() {
-    try {
-      await api.openAppsSettings();
-    } catch (failure) {
-      setError(errorMessage(failure));
-    }
-  }
-  const visible = useMemo(
-    () =>
-      apps
-        .filter((app) => `${app.name} ${app.publisher}`.toLowerCase().includes(query.toLowerCase()))
-        .sort((a, b) =>
-          sort === 'size'
-            ? b.size - a.size || a.name.localeCompare(b.name)
-            : sort === 'publisher'
-              ? a.publisher.localeCompare(b.publisher) || a.name.localeCompare(b.name)
-              : a.name.localeCompare(b.name),
-        ),
-    [apps, query, sort],
-  );
-  return (
-    <div className="tool-page tool-apps">
-      <Heading
-        eyebrow="Room for what you use"
-        title="Apps"
-        description="Shed what you've outgrown."
-        action={
-          <button className="button" onClick={() => void refresh()} disabled={loading}>
-            <RefreshCw size={15} className={loading ? 'tool-spin' : ''} aria-hidden="true" />
-            Refresh
-          </button>
-        }
-      />
-      <section className="panel tool-scan-panel">
-        <div className="tool-apps-summary">
-          <div className="tool-orb tool-orb-coral">
-            <Package size={29} strokeWidth={1.5} aria-hidden="true" />
-          </div>
-          <div>
-            <strong>
-              {loading ? 'Reading your apps…' : `${count(apps.length)} installed apps`}
-            </strong>
-            <p className="muted">Windows manages app removal, permissions, and dependencies.</p>
-          </div>
-          <button
-            className="button primary"
-            disabled={api.mode === 'preview'}
-            onClick={() => void openSettings()}
-          >
-            Manage in Windows
-            <ExternalLink size={15} aria-hidden="true" />
-          </button>
-        </div>
-        {error && <Notice error>{error}</Notice>}
-        <div className="tool-results-toolbar">
-          <SearchField value={query} onChange={setQuery} placeholder="Search apps or publishers" />
-          <label className="tool-select">
-            <span>Sort by</span>
-            <select value={sort} onChange={(event) => setSort(event.target.value)}>
-              <option value="name">Name</option>
-              <option value="size">Size</option>
-              <option value="publisher">Publisher</option>
-            </select>
-          </label>
-        </div>
-        {loading ? (
-          <Busy text="Reading installed apps from Windows…" />
-        ) : visible.length ? (
-          <div className="tool-table-wrap">
-            <table className="tool-table">
-              <thead>
-                <tr>
-                  <th>Application</th>
-                  <th>Publisher</th>
-                  <th>Version</th>
-                  <th className="tool-align-right">Reported size</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((app) => (
-                  <tr key={app.id}>
-                    <td>
-                      <div className="tool-file">
-                        <span className="tool-app-avatar">
-                          {app.name.slice(0, 1).toUpperCase()}
-                        </span>
-                        <strong>{app.name}</strong>
-                      </div>
-                    </td>
-                    <td className="muted">{app.publisher || '—'}</td>
-                    <td className="tool-mono muted">{app.version || '—'}</td>
-                    <td className="tool-align-right tool-mono">
-                      {app.size > 0 ? formatBytes(app.size) : 'Not reported'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="empty-state tool-empty">
-            <Package size={31} aria-hidden="true" />
-            <h3>{query ? 'No apps match your search.' : 'No applications reported.'}</h3>
-            <p className="muted">
-              {query
-                ? 'Try an app name or publisher.'
-                : 'Refresh to read the Windows app inventory again.'}
-            </p>
-          </div>
-        )}
-        <p className="tool-caption muted">
-          App sizes are provided by Windows and may be unavailable. To uninstall, open Windows
-          settings and select an app.
-        </p>
       </section>
     </div>
   );

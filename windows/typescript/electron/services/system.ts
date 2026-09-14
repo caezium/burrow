@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import si from 'systeminformation';
 import type { Diagnostic, InstalledApp, PortInfo } from '../../src/shared/contracts';
+import type { RegisteredApp } from './applications-policy';
 
 const run = promisify(execFile);
 const APPS_SCRIPT = String.raw`
@@ -29,8 +30,98 @@ const STRICT_APPS_SCRIPT = APPS_SCRIPT.replace(
   }`,
 ).replace('Select-Object -First 3000', 'Select-Object -First 3001');
 
+const REGISTRATIONS_SCRIPT = String.raw`
+$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$OutputEncoding = [Console]::OutputEncoding
+$keys = @('HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall', 'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall', 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall')
+@($keys | ForEach-Object {
+  if (Test-Path -LiteralPath $_ -ErrorAction Stop) {
+    Get-ChildItem -LiteralPath $_ -ErrorAction Stop | ForEach-Object {
+      Get-ItemProperty -LiteralPath $_.PSPath -ErrorAction Stop
+    }
+  }
+} | Where-Object { $_.DisplayName } | Select-Object -First 3001 @{n='id';e={$_.PSPath}}, @{n='name';e={$_.DisplayName}}, @{n='version';e={$_.DisplayVersion}}, @{n='publisher';e={$_.Publisher}}, @{n='size';e={[double]$_.EstimatedSize * 1024}}, @{n='installDate';e={$_.InstallDate}}, @{n='installLocation';e={$_.InstallLocation}}, @{n='uninstallString';e={$_.UninstallString}}, @{n='windowsInstaller';e={[bool]($_.WindowsInstaller -eq 1)}}, @{n='noRemove';e={[bool]($_.NoRemove -eq 1)}}, @{n='systemComponent';e={[bool]($_.SystemComponent -eq 1)}}, @{n='keyName';e={$_.PSChildName}}, @{n='scope';e={if ($_.PSPath -match 'HKEY_CURRENT_USER') {'user'} else {'machine'}}}) | ConvertTo-Json -Compress -Depth 3
+`;
+
 export class SystemService {
   private readonly appRequests = new Map<boolean, Promise<InstalledApp[]>>();
+  private registrationRequest: Promise<RegisteredApp[]> | undefined;
+
+  /** Strict, fresh registry registrations; never returns QuietUninstallString or shell-expanded paths. */
+  getAppRegistrations(): Promise<RegisteredApp[]> {
+    if (!this.registrationRequest) {
+      this.registrationRequest = this.readAppRegistrations().finally(() => {
+        this.registrationRequest = undefined;
+      });
+    }
+    return this.registrationRequest;
+  }
+
+  private async readAppRegistrations(): Promise<RegisteredApp[]> {
+    requireWindows('Installed-app registrations');
+    const powershell = path.join(
+      process.env.SystemRoot || 'C:\\Windows',
+      'System32',
+      'WindowsPowerShell',
+      'v1.0',
+      'powershell.exe',
+    );
+    const { stdout } = await run(
+      powershell,
+      ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', REGISTRATIONS_SCRIPT],
+      { windowsHide: true, timeout: 20_000, maxBuffer: 8 * 1024 ** 2, encoding: 'utf8' },
+    );
+    const parsed: unknown = stdout.trim() ? JSON.parse(stdout) : [];
+    const rows: unknown[] = Array.isArray(parsed) ? parsed : [parsed];
+    if (rows.length > 3000)
+      throw new Error('Registered-app inventory exceeds the completeness limit');
+    const display = (value: unknown) => (typeof value === 'string' ? value.slice(0, 1024) : '');
+    const bounded = (value: unknown, limit: number) =>
+      value == null
+        ? ''
+        : typeof value === 'string' && value.length <= limit && !value.includes('\0')
+          ? value
+          : null;
+    return rows
+      .map((row): RegisteredApp => {
+        if (!row || typeof row !== 'object') throw new Error('Malformed registered-app inventory');
+        const value = row as Record<string, unknown>;
+        const id = bounded(value.id, 4096);
+        if (!id || (value.scope !== 'user' && value.scope !== 'machine'))
+          throw new Error('Malformed registration identity');
+        const installLocation = bounded(value.installLocation, 32_000);
+        const uninstallString = bounded(value.uninstallString, 32_768);
+        const keyName = bounded(value.keyName, 255);
+        const invalid =
+          installLocation === null ||
+          uninstallString === null ||
+          keyName === null ||
+          typeof value.noRemove !== 'boolean' ||
+          typeof value.systemComponent !== 'boolean' ||
+          typeof value.windowsInstaller !== 'boolean';
+        return {
+          id,
+          name: display(value.name),
+          version: display(value.version),
+          publisher: display(value.publisher),
+          size:
+            typeof value.size === 'number' && Number.isFinite(value.size)
+              ? Math.max(0, value.size)
+              : 0,
+          installDate: display(value.installDate),
+          scope: value.scope,
+          installLocation: installLocation ?? '',
+          uninstallString: invalid ? '' : uninstallString,
+          keyName: keyName ?? '',
+          windowsInstaller: value.windowsInstaller === true,
+          noRemove: invalid || value.noRemove === true,
+          systemComponent: value.systemComponent === true,
+        };
+      })
+      .filter((app) => app.name)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
 
   /** Strict inventory refuses unreadable registry sources or capped results for leftover matching. */
   getApps(strict = false): Promise<InstalledApp[]> {

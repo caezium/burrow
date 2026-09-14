@@ -110,6 +110,24 @@ export interface InstalledApp {
   size: number;
   installDate: string;
 }
+export interface AppDetails {
+  app: InstalledApp;
+  scope: 'user' | 'machine';
+  installLocation: string | null;
+  canReveal: boolean;
+  reviewId: string | null;
+  uninstall: {
+    available: boolean;
+    kind: 'msi' | 'exe' | null;
+    target: string | null;
+    reason: string;
+  };
+}
+export interface AppUninstallResult {
+  status: 'launched' | 'cancelled' | 'failed' | 'unknown';
+  message: string;
+  pid?: number;
+}
 export interface PortInfo {
   port: number;
   address: string;
@@ -136,6 +154,9 @@ export interface BurrowAPI {
   recycle(scanId: string, ids: string[]): Promise<RecycleResult>;
   reveal(path: string): Promise<void>;
   getApps(): Promise<InstalledApp[]>;
+  getAppDetails(appId: string): Promise<AppDetails>;
+  revealApp(appId: string): Promise<void>;
+  uninstallApp(reviewId: string): Promise<AppUninstallResult>;
   openAppsSettings(): Promise<void>;
   getPorts(): Promise<PortInfo[]>;
   diagnose(): Promise<Diagnostic[]>;

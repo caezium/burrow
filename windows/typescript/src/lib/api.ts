@@ -165,6 +165,28 @@ const preview: BurrowAPI = {
       installDate: '2026-08-12',
     },
   ],
+  getAppDetails: async (appId) => {
+    const app = (await preview.getApps()).find((entry) => entry.id === appId);
+    if (!app) throw new Error('This example app is no longer available. Refresh the app list.');
+    return {
+      app,
+      scope: appId === 'code' ? 'user' : 'machine',
+      installLocation:
+        appId === 'code'
+          ? 'C:\\Users\\You\\AppData\\Local\\Programs\\Microsoft VS Code'
+          : 'C:\\Program Files\\Mozilla Firefox',
+      canReveal: false,
+      reviewId: null,
+      uninstall: {
+        available: false,
+        kind: null,
+        target: null,
+        reason: 'Example app details. Open the Windows desktop app to review an uninstaller.',
+      },
+    };
+  },
+  revealApp: unavailable,
+  uninstallApp: unavailable,
   openAppsSettings: unavailable,
   getPorts: async () => [
     { port: 5173, address: '127.0.0.1', pid: 12480, name: 'node.exe', protocol: 'TCP' },

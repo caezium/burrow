@@ -30,7 +30,7 @@ The preview has its own local state and desktop services. It does not silently c
 - Clean scans the fixed user temporary folder. Only top-level files and complete directory trees whose entries are all older than seven days are offered. Browser caches and other application data are outside this scope.
 - Exact duplicate review offers a deterministic “Select extra copies” action and keeps at least one unselected copy in each SHA-256 group. The desktop rechecks both selected content and an unselected matching copy before each move; changed or missing copies stop that item's removal.
 - Temporary files, project artifacts, old installers, and selected duplicate copies can be sent to the Recycle Bin after native confirmation. The operation revalidates server-owned scan IDs and filesystem fingerprints, records exact successful IDs, and stops further moves if activity persistence fails. There is no permanent-delete fallback.
-- Apps inventory hands removal to Windows Apps settings. In-app uninstall, leftover deletion, application updates, and startup/service management remain migration work.
+- Apps inventory includes a detail review, validated installation-folder reveal, and native-confirmed launch of supported registered MSI/EXE uninstallers. Registry records and executable identity are rechecked after confirmation; short-lived desktop review IDs authorize launch. Activity reports launch outcomes without claiming removal or recovered space. Unsupported commands, Store/portable coverage, leftover deletion, application updates, and startup/service management remain migration work.
 - Optimize currently offers DNS cache flushing. It does not reproduce the macOS engine's maintenance suite.
 - Leftovers provides read-only possible cache/log discovery in fixed Local/Roaming app-data scopes, based on a strict registered desktop-app inventory and complete 60-day-old cache/log subtrees. Each finding includes evidence and Explorer reveal; it does not authorize removal.
 - GPU and fan telemetry and similar-photo detection remain unavailable.
@@ -43,7 +43,7 @@ The legacy C# implementation, its tests, bundled engine, and release workflows r
 | Area                     | Next work                                                                                             |
 | ------------------------ | ----------------------------------------------------------------------------------------------------- |
 | Clean and Tune-Up        | Exact application/browser cache rules; a combined scan, review, and execution plan.                   |
-| Apps                     | App details and registered uninstallers, updates, startup entries, and service management.            |
+| Apps                     | Broader installer/Store coverage, updates, startup entries, and service management.                   |
 | Leftovers                | Read-only v1 is implemented; broader app-identity coverage and evidence refinement remain.            |
 | Similar Photos           | Windows image indexing, similarity groups, thumbnails, and review.                                    |
 | Monitor and connectivity | GPU/fan support where available, deeper process/connection inspection, richer connection diagnostics. |
@@ -55,5 +55,7 @@ The legacy C# implementation, its tests, bundled engine, and release workflows r
 The TypeScript workflow runs on Windows with Node.js 24. It installs from the lockfile, checks types, runs unit tests, builds the renderer and desktop bundles, installs Chromium, runs browser UI tests, and packages unsigned x64 artifacts. It is separate from the WinUI workflow and does not publish a GitHub release.
 
 Development and UI verification on a Mac can validate shared TypeScript behavior and browser rendering. They do not establish successful native Windows execution. Native Windows smoke testing remains required for tray behavior, device readings, registry-backed app inventory, folder selection, cancellation, Recycle Bin confirmation and failure handling, and install/uninstall behavior. No completed native Windows smoke test is claimed by this migration document.
+
+Application-management tests use fixture registry records and mocked process launch. They cover consent/persistence ordering, stale reviews, changed executable identity, replay prevention, cancellation, uncertain launch results, and browser interaction. They do not uninstall real applications. Before release, use a disposable Windows VM to verify an interactive MSI and a registered EXE uninstaller, UAC accept/cancel, unsupported-entry handoff, and a manual inventory refresh after removal.
 
 Before replacing the legacy Windows release, review the remaining service gaps, run those native checks against the packaged build, decide how existing user data will migrate, and establish the signing and release process for the new application.

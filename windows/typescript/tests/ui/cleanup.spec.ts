@@ -131,6 +131,11 @@ async function desktop(
         },
         reveal: async () => {},
         getApps: async () => [],
+        getAppDetails: async () => {
+          throw new Error('No app selected');
+        },
+        revealApp: async () => {},
+        uninstallApp: async () => ({ status: 'cancelled', message: 'Cancelled' }),
         openAppsSettings: async () => {},
         getPorts: async () => [],
         diagnose: async () => [],

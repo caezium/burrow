@@ -98,3 +98,109 @@ describe('registry inventory used for leftover evidence', () => {
     },
   );
 });
+
+describe('strict registered uninstaller inventory', () => {
+  const registration = {
+    ...app,
+    scope: 'user',
+    keyName: 'Example',
+    installLocation: 'C:\\Program Files\\Example',
+    uninstallString: '"C:\\Program Files\\Example\\uninstall.exe" /uninstall',
+    windowsInstaller: false,
+    noRemove: false,
+    systemComponent: false,
+  };
+  it('reads commands as registry data with strict bounded discovery and respects NoRemove', async () => {
+    execution.run.mockResolvedValue({
+      stdout: JSON.stringify({ ...registration, noRemove: true }),
+    });
+    expect(await new SystemService().getAppRegistrations()).toEqual([
+      { ...registration, noRemove: true },
+    ]);
+    const script = execution.run.mock.calls[0][1].at(-1) as string;
+    expect(script).toContain('Get-ItemProperty -LiteralPath $_.PSPath -ErrorAction Stop');
+    expect(script).toContain('Select-Object -First 3001');
+    expect(script).toContain("@{n='noRemove'");
+    expect(script).not.toContain('SilentlyContinue');
+    expect(script).not.toContain('QuietUninstallString');
+  });
+  it('preserves bounded registry identities, commands and locations without display-text truncation', async () => {
+    const long = {
+      ...registration,
+      id: 'key:' + 'x'.repeat(1500),
+      installLocation: 'C:\\' + 'a'.repeat(1500),
+      uninstallString: '"C:\\Example\\uninstall.exe" "' + 'x'.repeat(1500) + '"',
+    };
+    execution.run.mockResolvedValue({ stdout: JSON.stringify(long) });
+    expect(await new SystemService().getAppRegistrations()).toEqual([long]);
+  });
+  it('disables oversized or malformed executable metadata instead of truncating it into a valid command', async () => {
+    for (const change of [
+      { uninstallString: 'x'.repeat(32769) },
+      { installLocation: 'x'.repeat(32001) },
+      { keyName: 'x'.repeat(256) },
+      { uninstallString: ['unexpected array'] },
+      { noRemove: 'false' },
+    ]) {
+      execution.run.mockResolvedValue({ stdout: JSON.stringify({ ...registration, ...change }) });
+      expect((await new SystemService().getAppRegistrations())[0]).toMatchObject({
+        noRemove: true,
+        uninstallString: '',
+      });
+    }
+  });
+  it('rejects invalid identities, unreadable sources and capped registration snapshots', async () => {
+    execution.run.mockResolvedValue({
+      stdout: JSON.stringify({ ...registration, id: 'x'.repeat(4097) }),
+    });
+    await expect(new SystemService().getAppRegistrations()).rejects.toThrow('identity');
+    execution.run.mockRejectedValue(new Error('Registry denied'));
+    await expect(new SystemService().getAppRegistrations()).rejects.toThrow('Registry denied');
+    execution.run.mockResolvedValue({
+      stdout: JSON.stringify(
+        Array.from({ length: 3001 }, (_, index) => ({ ...registration, id: String(index) })),
+      ),
+    });
+    await expect(new SystemService().getAppRegistrations()).rejects.toThrow('completeness limit');
+  });
+  it('shares only an in-flight registration request and re-reads after it settles', async () => {
+    let complete!: (result: { stdout: string }) => void;
+    execution.run.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          complete = resolve;
+        }),
+    );
+    const service = new SystemService();
+    const first = service.getAppRegistrations();
+    expect(service.getAppRegistrations()).toBe(first);
+    complete({ stdout: JSON.stringify(registration) });
+    await first;
+    execution.run.mockResolvedValue({ stdout: JSON.stringify(registration) });
+    await service.getAppRegistrations();
+    expect(execution.run).toHaveBeenCalledTimes(2);
+  });
+  it.runIf(hostPlatform === 'win32')(
+    'parses the registration provider in Windows PowerShell without reading registry data',
+    async () => {
+      execution.run.mockResolvedValue({ stdout: JSON.stringify(registration) });
+      await new SystemService().getAppRegistrations();
+      const script = execution.run.mock.calls[0][1].at(-1) as string;
+      const encoded = Buffer.from(script).toString('base64');
+      const parse = `$tokens=$null; $errors=$null; [System.Management.Automation.Language.Parser]::ParseInput([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${encoded}')), [ref]$tokens, [ref]$errors) | Out-Null; if ($errors.Count) { throw ($errors | Out-String) }`;
+      expect(() =>
+        execFileSync(
+          path.join(
+            process.env.SystemRoot || 'C:\\Windows',
+            'System32',
+            'WindowsPowerShell',
+            'v1.0',
+            'powershell.exe',
+          ),
+          ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', parse],
+          { timeout: 10_000, windowsHide: true },
+        ),
+      ).not.toThrow();
+    },
+  );
+});

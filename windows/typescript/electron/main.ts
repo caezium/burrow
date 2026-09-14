@@ -20,6 +20,8 @@ import { LocalStore, ScanService, SystemService, TelemetryService } from './serv
 import { drainWithin } from './services/lifecycle';
 import { recycleReviewed } from './services/recycle';
 import { LeftoversService } from './services/leftovers';
+import { ApplicationsService } from './services/applications';
+import { runAppUninstall } from './services/uninstall-operation';
 import type { LeftoverScope, ScanKind, Settings, Snapshot } from '../src/shared/contracts';
 
 protocol.registerSchemesAsPrivileged([
@@ -39,12 +41,13 @@ let store: LocalStore;
 const telemetry = new TelemetryService();
 const scanner = new ScanService();
 const system = new SystemService();
+const applications = new ApplicationsService(() => system.getAppRegistrations());
 const leftovers = new LeftoversService(() => system.getApps(true));
 let latest: Snapshot | null = null;
 const recentSamples: Snapshot[] = [];
 let sampling: Promise<Snapshot> | null = null;
 let timer: ReturnType<typeof setTimeout>;
-let operation: 'scan' | 'recycle' | 'optimize' | null = null;
+let operation: 'scan' | 'recycle' | 'optimize' | 'uninstall' | null = null;
 let operationCompletion: Promise<void> | null = null;
 let stopRequested = false;
 let choosingFolder = false;
@@ -348,7 +351,32 @@ function registerIPC() {
       throw new Error('The file path changed after the scan. Scan again.');
     shell.showItemInFolder(checked);
   });
-  handle('apps', () => system.getApps());
+  handle('apps', () => applications.list());
+  handle('app-details', (appId: unknown) => applications.details(textArg(appId, 4096)));
+  handle('app-reveal', async (appId: unknown) => {
+    const folder = await applications.installFolder(textArg(appId, 4096));
+    shell.showItemInFolder(folder);
+  });
+  handle('app-uninstall', (reviewId: unknown) => {
+    if (process.platform !== 'win32')
+      throw new Error('Registered uninstallers are available on Windows.');
+    const checkedId = textArg(reviewId, 128);
+    return runOperation('uninstall', () =>
+      runAppUninstall(checkedId, {
+        applications,
+        confirm: (details) =>
+          confirm(
+            'Uninstall app',
+            `Start the uninstaller for ${details.app.name}?`,
+            `${details.app.version ? `Version: ${details.app.version}\n` : ''}${details.app.publisher ? `Publisher: ${details.app.publisher}\n` : ''}Uninstaller: ${details.uninstall.target}\n\nFollow any Windows or vendor prompts; Windows may request administrator permission. Burrow records only that the program started. Refresh the app list after it finishes.`,
+            'Start uninstaller',
+          ),
+        record: (entry) => store.addActivity(entry),
+        flush: () => store.flush(),
+        shouldStop: () => stopRequested || quitting,
+      }),
+    );
+  });
   handle('apps-settings', async () => {
     if (process.platform !== 'win32')
       throw new Error('Installed Apps settings are available on Windows.');

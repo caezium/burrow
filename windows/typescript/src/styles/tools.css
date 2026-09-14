@@ -806,6 +806,134 @@
   flex: none;
   font-size: 13px;
 }
+.tool-app-select {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+.tool-app-select:hover strong {
+  color: var(--tool-accent);
+}
+.tool-apps-list {
+  max-height: 380px;
+  overflow: auto;
+}
+.tool-apps-list th {
+  position: sticky;
+  top: 0;
+  background: var(--soft);
+  z-index: 1;
+}
+.tool-app-details {
+  padding: 25px;
+  scroll-margin-top: 64px;
+  scroll-margin-bottom: 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.tool-app-details > header,
+.tool-app-detail-actions,
+.tool-app-location,
+.tool-app-details > footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.tool-app-details > header,
+.tool-app-location,
+.tool-app-details > footer {
+  justify-content: space-between;
+}
+.tool-app-details > header .eyebrow {
+  margin: 0 0 7px;
+}
+.tool-app-details > header > div:first-child {
+  min-width: 0;
+}
+.tool-app-details h2 {
+  overflow-wrap: anywhere;
+}
+.tool-app-details:focus-visible {
+  outline: 2px solid var(--tool-accent);
+  outline-offset: 3px;
+}
+.tool-app-detail-actions {
+  flex: none;
+  gap: 9px;
+}
+.tool-app-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin: 0;
+}
+.tool-app-facts dt {
+  color: var(--secondary);
+  font-size: 10px;
+  margin-bottom: 7px;
+}
+.tool-app-facts dd {
+  margin: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.tool-app-location {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 16px 0;
+}
+.tool-app-location > div {
+  min-width: 0;
+  flex: 1;
+}
+.tool-app-location p,
+.tool-app-target p {
+  font-size: 11px;
+  margin: 7px 0 0;
+}
+.tool-app-uninstall {
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--tool-accent) 4%, transparent);
+}
+.tool-app-uninstall-heading {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+}
+.tool-app-uninstall-heading > svg {
+  color: var(--tool-accent);
+  flex: none;
+}
+.tool-app-uninstall-heading p {
+  font-size: 11px;
+  margin: 7px 0 0;
+}
+.tool-app-target {
+  padding: 15px 0 0;
+}
+.tool-app-uninstall > p:last-child {
+  margin-bottom: 0;
+}
+.tool-app-outcome-message {
+  margin: 5px 0 0;
+}
+@media (max-width: 1000px) {
+  .tool-app-details > header,
+  .tool-app-location,
+  .tool-app-details > footer,
+  .tool-apps-summary {
+    flex-wrap: wrap;
+  }
+  .tool-app-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .tool-select {
   display: flex;
   align-items: center;
