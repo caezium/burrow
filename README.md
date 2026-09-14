@@ -123,7 +123,7 @@ Windows: download from [releases](https://github.com/caezium/Burrow/releases)
   </tr>
 </table>
 
-> **Windows TypeScript rewrite:** An initial Electron + React implementation that follows the current macOS UI is available in [`windows/typescript/`](windows/typescript/README.md). It includes live telemetry, local history, reviewed artifact/installer recycling, disk analysis, and read-only duplicate detection. The existing WinUI preview remains alongside it. See the [migration status](windows/typescript/MIGRATION.md) for capability gaps and Windows validation requirements.
+> **Windows TypeScript rewrite:** An initial Electron + React implementation that follows the current macOS UI is available in [`windows/typescript/`](windows/typescript/README.md). It includes live telemetry, local history, reviewed artifact/installer recycling, disk analysis, and reviewed recycling of selected exact duplicates. The existing WinUI preview remains alongside it. See the [migration status](windows/typescript/MIGRATION.md) for capability gaps and Windows validation requirements.
 
 ## The tools
 

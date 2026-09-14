@@ -70,7 +70,7 @@ describe('real telemetry with partial provider failures', () => {
       const first = service.sample();
       await vi.advanceTimersByTimeAsync(8_000);
       expect((await first).warnings).toContain(
-        'Memory counters is unavailable; this sample is partial.',
+        'Memory counters are unavailable; this sample is partial.',
       );
 
       const waiting = service.sample();

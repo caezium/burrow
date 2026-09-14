@@ -30,7 +30,7 @@ export class TelemetryService {
   }
   private async collect(): Promise<Snapshot> {
     const warnings: string[] = [];
-    const safely = async <T>(name: string, request: Promise<T>, fallback: T): Promise<T> => {
+    const safely = async <T>(subject: string, request: Promise<T>, fallback: T): Promise<T> => {
       let timeout: ReturnType<typeof setTimeout> | undefined;
       try {
         return await Promise.race([
@@ -40,20 +40,20 @@ export class TelemetryService {
           }),
         ]);
       } catch {
-        warnings.push(`${name} is unavailable; this sample is partial.`);
+        warnings.push(`${subject} unavailable; this sample is partial.`);
         return fallback;
       } finally {
         if (timeout) clearTimeout(timeout);
       }
     };
     const [load, memory, disks, interfaces, stats, battery, processes] = await Promise.all([
-      safely('CPU counters', this.providers.load(), null),
-      safely('Memory counters', this.providers.memory(), null),
-      safely('Disk counters', this.providers.disks(), []),
-      safely('Network interfaces', this.providers.interfaces(), []),
-      safely('Network traffic', this.providers.stats(), []),
-      safely('Battery information', this.providers.battery(), null),
-      safely('Process information', this.providers.processes(), null),
+      safely('CPU counters are', this.providers.load(), null),
+      safely('Memory counters are', this.providers.memory(), null),
+      safely('Disk counters are', this.providers.disks(), []),
+      safely('Network interfaces are', this.providers.interfaces(), []),
+      safely('Network traffic is', this.providers.stats(), []),
+      safely('Battery information is', this.providers.battery(), null),
+      safely('Process information is', this.providers.processes(), null),
     ]);
     const currentCpu = cpuTimes();
     const elapsed = currentCpu.total - this.previousCpu.total;

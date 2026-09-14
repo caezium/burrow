@@ -47,6 +47,8 @@ $keys = @('HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall', 'HKLM:\So
 export class SystemService {
   private readonly appRequests = new Map<boolean, Promise<InstalledApp[]>>();
   private registrationRequest: Promise<RegisteredApp[]> | undefined;
+  private portRequest: Promise<PortInfo[]> | undefined;
+  private portResponse: Promise<PortInfo[]> | undefined;
 
   /** Strict, fresh registry registrations; never returns QuietUninstallString or shell-expanded paths. */
   getAppRegistrations(): Promise<RegisteredApp[]> {
@@ -176,7 +178,48 @@ export class SystemService {
       .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, 3_000);
   }
-  async getPorts(): Promise<PortInfo[]> {
+  /** Bound the caller's wait while keeping one uncancellable native lookup until it settles. */
+  getPorts(): Promise<PortInfo[]> {
+    if (!this.portResponse) {
+      this.portResponse = this.waitForPorts().finally(() => {
+        this.portResponse = undefined;
+      });
+    }
+    return this.portResponse;
+  }
+
+  private async waitForPorts(): Promise<PortInfo[]> {
+    if (!this.portRequest) {
+      // systeminformation exposes no cancellation handle for its netstat child process.
+      // A UI deadline must not release this request and spawn another on every retry.
+      this.portRequest = Promise.resolve()
+        .then(() => this.readPorts())
+        .finally(() => {
+          this.portRequest = undefined;
+        });
+    }
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        this.portRequest,
+        new Promise<PortInfo[]>((_, reject) => {
+          timeout = setTimeout(
+            () =>
+              reject(
+                new Error(
+                  'Port lookup timed out. The system lookup may still be running; try again shortly.',
+                ),
+              ),
+            8_000,
+          );
+        }),
+      ]);
+    } finally {
+      if (timeout !== undefined) clearTimeout(timeout);
+    }
+  }
+
+  private async readPorts(): Promise<PortInfo[]> {
     const connections = await si.networkConnections();
     return connections
       .filter(

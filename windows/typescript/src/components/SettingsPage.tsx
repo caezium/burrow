@@ -123,12 +123,13 @@ export function SettingsPage({
           <div className="panel settings-group">
             <h2>Review, then recycle.</h2>
             <p>
-              Developer artifacts and old installers require a completed scan, selection, and native
-              confirmation. Files move to the Windows Recycle Bin.
+              Old temporary files, developer artifacts, old installers, and selected exact
+              duplicates require a completed scan, your selection, and Windows confirmation before
+              moving to the Recycle Bin.
             </p>
             <p className="muted">
-              System cache cleanup and duplicate removal remain read-only in this version. Moving a
-              file to the Recycle Bin does not free disk space until it is emptied.
+              Other app and system caches are outside this preview's cleanup scope. Disk space is
+              freed only after the Recycle Bin is emptied.
             </p>
           </div>
         )}

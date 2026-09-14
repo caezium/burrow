@@ -1267,20 +1267,28 @@ function PortsPage({ api }: ToolProps) {
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [updated, setUpdated] = useState<number | null>(null);
+  const requestId = useRef(0);
   async function refresh() {
+    const request = ++requestId.current;
     setLoading(true);
     setError('');
     try {
-      setPorts(await api.getPorts());
-      setUpdated(Date.now());
+      const next = await api.getPorts();
+      if (request === requestId.current) {
+        setPorts(next);
+        setUpdated(Date.now());
+      }
     } catch (failure) {
-      setError(errorMessage(failure));
+      if (request === requestId.current) setError(errorMessage(failure));
     } finally {
-      setLoading(false);
+      if (request === requestId.current) setLoading(false);
     }
   }
   useEffect(() => {
     void refresh();
+    return () => {
+      requestId.current++;
+    };
   }, [api]);
   const visible = ports
     .filter((port) =>
@@ -1305,7 +1313,13 @@ function PortsPage({ api }: ToolProps) {
       <section className="panel tool-scan-panel">
         <div className="tool-results-toolbar">
           <div>
-            <strong>{ports.length} listening endpoints</strong>
+            <strong>
+              {loading
+                ? 'Checking listening endpoints…'
+                : updated === null
+                  ? 'Endpoint list unavailable'
+                  : `${ports.length} listening endpoints`}
+            </strong>
             <p className="tool-caption muted">Local TCP listeners and UDP bindings.</p>
           </div>
           <SearchField
@@ -1314,7 +1328,7 @@ function PortsPage({ api }: ToolProps) {
             placeholder="Search port, process, or PID"
           />
         </div>
-        {error && <Notice error>{error}</Notice>}
+        {error && <Notice error>{error} Refresh to try again.</Notice>}
         {loading ? (
           <Busy text="Checking local listening ports…" />
         ) : visible.length ? (
@@ -1352,19 +1366,25 @@ function PortsPage({ api }: ToolProps) {
             </table>
           </div>
         ) : (
-          <div className="empty-state tool-empty">
-            <Network size={31} aria-hidden="true" />
-            <h3>{query ? 'No matching listeners.' : 'No listening endpoints reported.'}</h3>
-            <p className="muted">
-              {query
-                ? 'Try a port number or process name.'
-                : 'Refresh after starting a local service.'}
-            </p>
-          </div>
+          !error && (
+            <div className="empty-state tool-empty">
+              <Network size={31} aria-hidden="true" />
+              <h3>{query ? 'No matching listeners.' : 'No listening endpoints reported.'}</h3>
+              <p className="muted">
+                {query
+                  ? 'Try a port number or process name.'
+                  : 'Refresh after starting a local service.'}
+              </p>
+            </div>
+          )
         )}
         <p className="tool-caption muted">
-          {updated ? `Updated ${new Date(updated).toLocaleTimeString()}. ` : ''}Read-only
-          inspection. Burrow does not stop processes or close ports.
+          {updated
+            ? `${error ? 'Showing the last successful result from' : 'Updated'} ${new Date(updated).toLocaleTimeString()}. `
+            : error
+              ? 'No current port list is available. '
+              : ''}
+          Read-only inspection. Burrow does not stop processes or close ports.
         </p>
       </section>
     </div>
