@@ -8,6 +8,8 @@ public sealed class JsonSystemTelemetryHistoryServiceTests : IDisposable
 {
     private readonly string _tempRoot = Path.Combine(Path.GetTempPath(), "BurrowWinTests", Guid.NewGuid().ToString("N"));
     private readonly string _historyPath;
+    // Keep every fixture recent, including the 100-minute concurrency sequence.
+    private readonly DateTimeOffset _snapshotBase = DateTimeOffset.UtcNow.AddHours(-2);
 
     public JsonSystemTelemetryHistoryServiceTests()
     {
@@ -44,8 +46,8 @@ public sealed class JsonSystemTelemetryHistoryServiceTests : IDisposable
 
         Assert.Collection(
             snapshots,
-            snapshot => Assert.Equal(DateTimeOffset.Parse("2026-06-15T00:03:00Z"), snapshot.CapturedAt),
-            snapshot => Assert.Equal(DateTimeOffset.Parse("2026-06-15T00:02:00Z"), snapshot.CapturedAt));
+            snapshot => Assert.Equal(_snapshotBase.AddMinutes(3), snapshot.CapturedAt),
+            snapshot => Assert.Equal(_snapshotBase.AddMinutes(2), snapshot.CapturedAt));
     }
 
     [Fact]
@@ -75,6 +77,22 @@ public sealed class JsonSystemTelemetryHistoryServiceTests : IDisposable
         Assert.Equal(101, snapshots.Count);
     }
 
+    [Fact]
+    public async Task RecordAsync_PrunesExpiredSnapshots_AndKeepsRecentSnapshots()
+    {
+        var service = new JsonSystemTelemetryHistoryService(_historyPath, () => 1);
+        var recent = CreateSnapshot(0);
+        var expired = recent with { CapturedAt = _snapshotBase.AddDays(-2) };
+
+        await service.RecordAsync(recent);
+        await service.RecordAsync(expired);
+
+        var snapshots = await service.ReadRecentAsync(10);
+        var snapshot = Assert.Single(snapshots);
+        Assert.Equal(recent.CapturedAt, snapshot.CapturedAt);
+        Assert.Single(await File.ReadAllLinesAsync(_historyPath));
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_tempRoot))
@@ -83,10 +101,10 @@ public sealed class JsonSystemTelemetryHistoryServiceTests : IDisposable
         }
     }
 
-    private static SystemTelemetrySnapshot CreateSnapshot(int offset)
+    private SystemTelemetrySnapshot CreateSnapshot(int offset)
     {
         return new SystemTelemetrySnapshot(
-            DateTimeOffset.Parse("2026-06-15T00:00:00Z").AddMinutes(offset),
+            _snapshotBase.AddMinutes(offset),
             12.5,
             50,
             4,
