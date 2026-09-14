@@ -96,6 +96,8 @@ describe('registry inventory used for leftover evidence', () => {
         ),
       ).not.toThrow();
     },
+    // Keep the test budget above the child process's 10-second deadline.
+    15_000,
   );
 });
 
@@ -202,5 +204,7 @@ describe('strict registered uninstaller inventory', () => {
         ),
       ).not.toThrow();
     },
+    // Keep the test budget above the child process's 10-second deadline.
+    15_000,
   );
 });

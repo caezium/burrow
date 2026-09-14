@@ -281,5 +281,7 @@ describe('Windows graphical launcher receipts', () => {
         ),
       ).not.toThrow();
     },
+    // Keep the test budget above the child process's 10-second deadline.
+    15_000,
   );
 });
