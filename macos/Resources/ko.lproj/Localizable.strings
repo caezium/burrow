@@ -838,7 +838,7 @@
 "Ejecting external volumes" = "외장 볼륨을 추출하는 중";
 "%d ejected · %d busy" = "추출 %1$d개 · 사용 중 %2$d개";
 "%@ cleaned · %d uninstalled · %d optimized" = "정리 %1$@ · 삭제 %2$d개 · 최적화 %3$d개";
-"Clean Watch" = "누적 정리 현황";
+"Clean Watch" = "정리 지켜보기";
 
 /* Analyze progress */
 "Mapping your folders" = "폴더 구조를 파악하는 중";

@@ -86,13 +86,6 @@ class SiteLocalizationTests(unittest.TestCase):
             self.assertIn("<code>46,190</code>", page)
             self.assertIn('href="https://example.org/46,190"', page)
 
-    def test_escaped_title_and_meta_attribute_use_complete_translation(self):
-        src = ('<title>Desktop utility for Mac &amp; Windows</title>'
-               '<meta property="og:title" content="Mac &amp; Windows">')
-        page = I18N.render(src, {"Mac & Windows": "Mac과 Windows"}, "ko")
-        self.assertIn('<title>Mac과 Windows</title>', page)
-        self.assertIn('content="Mac과 Windows"', page)
-
     def test_css_rebasing_preserves_absolute_embedded_and_fragment_urls(self):
         src = '''<style>a{src:url("assets/font.woff2")}b{src:url('https://example.org/f')}c{src:url(data:font/woff2;base64,AAAA)}d{src:url(/assets/f)}e{filter:url(#mask)}</style>'''
         page = I18N.render(src, {}, "de")

@@ -26,7 +26,6 @@ import argparse
 import json
 import re
 import sys
-from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -164,11 +163,6 @@ def strings_in(src):
     return order
 
 
-def escape_attribute(value, quote):
-    escaped = escape(value, quote=False)
-    return escaped.replace(quote, "&quot;" if quote == '"' else "&#x27;")
-
-
 def render(src, table, lang, page_name="index.html"):
     """The English page with every known string swapped for its translation.
 
@@ -197,35 +191,16 @@ def render(src, table, lang, page_name="index.html"):
                 if not translated:
                     continue
                 for quote in ('"', "'"):
-                    # HTMLParser decodes entities in attribute values. Match
-                    # both the decoded spelling and the escaped source.
-                    for original in (value, escape_attribute(value, quote)):
-                        needle = f'{name}={quote}{original}{quote}'
-                        if needle not in chunk:
-                            continue
+                    needle = f'{name}={quote}{value}{quote}'
+                    if needle in chunk:
                         chunk = chunk.replace(
-                            needle, f'{name}={quote}{escape_attribute(translated, quote)}{quote}', 1)
+                            needle, f'{name}={quote}{translated}{quote}', 1)
                         break
             out.append(src[cursor:start])
             out.append(chunk)
             cursor = tag_end
     out.append(src[cursor:])
     page = "".join(out)
-
-    # An entity can split title text into multiple HTMLParser events. Use its
-    # complete translation, or the translated Open Graph title when the full
-    # title is not a catalog key.
-    title = re.search(r'<title>(.*?)</title>', src, flags=re.S)
-    if title and unescape(title.group(1)) != title.group(1):
-        translated = table.get(unescape(title.group(1)))
-        if not translated:
-            og_title = re.search(r'<meta property="og:title" content="([^"]*)">', src)
-            if og_title:
-                translated = table.get(unescape(og_title.group(1)))
-        if translated:
-            page = re.sub(r'<title>.*?</title>',
-                          lambda _: f'<title>{escape(translated, quote=False)}</title>',
-                          page, count=1, flags=re.S)
 
     if lang != "en":
         # The copy lives one directory deeper, so relative links need care in
