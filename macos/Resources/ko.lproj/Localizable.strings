@@ -326,8 +326,8 @@
 "A new startup item appeared" = "새로운 시동 항목이 생겼습니다";
 "“%@” now launches automatically. If you didn't add it, review it." = "이제 「%@」이(가) 자동으로 실행됩니다. 직접 추가한 것이 아니라면 확인해 보세요.";
 "CPU usage is high" = "CPU 사용률이 높습니다";
-"CPU has been pegged at %.0f%%." = "CPU가 %.0f%%에 머물러 있습니다.";
-"Memory pressure is high" = "메모리 사용 압박이 큽니다";
+"CPU has been pegged at %.0f%%." = "CPU 사용률이 계속 %.0f%%에 머물렀습니다.";
+"Memory pressure is high" = "메모리 압박이 높습니다";
 "Memory is at %.0f%%." = "메모리 사용률이 %.0f%%입니다.";
 "Explain" = "설명";
 
@@ -343,7 +343,7 @@
 
 /* Analyze — move to Trash */
 "Move “%@” to Trash?" = "「%@」을(를) 휴지통으로 옮길까요?";
-"This moves %@ (%@) to the Trash, where you can restore it." = "%@(%@)을(를) 휴지통으로 옮깁니다. 나중에 되돌릴 수 있습니다.";
+"This moves %@ (%@) to the Trash, where you can restore it." = "%@ (%@)을(를) 휴지통으로 옮깁니다. 나중에 되돌릴 수 있습니다.";
 "this folder" = "이 폴더";
 "this file" = "이 파일";
 "Couldn't move to Trash" = "휴지통으로 옮길 수 없습니다";
@@ -471,7 +471,7 @@
 /* ===== Agent (MCP) gates ===== */
 "OFF by default. Agents can always read metrics and run dry-run previews. With this on, an agent can run a real `mo clean` / `optimize` — but ONLY when it also passes an explicit confirm flag, so a deletion is never one stray sentence away. Turn it off and agents are read-only again. Data stays on this Mac." = "기본값은 꺼짐입니다. 에이전트는 언제든지 지표를 읽고 모의 실행 미리보기를 할 수 있습니다. 이 설정을 켜면 실제 `mo clean` / `optimize`를 실행할 수 있지만, 명시적인 확인 플래그를 함께 전달한 경우에만 가능합니다. 말 한마디가 잘못되어 삭제가 일어나는 일은 없습니다. 끄면 에이전트는 다시 읽기 전용이 됩니다. 데이터는 이 Mac을 벗어나지 않습니다.";
 "Also allow uninstalls & permanent deletes" = "앱 삭제와 영구 삭제도 허용";
-"A second key for what the Trash can't undo: real `mo uninstall`, and `permanent:true` deletes. Needs the cleanup switch above too; an uninstall also aborts unless mo matches exactly the requested apps." = "휴지통으로 되돌릴 수 없는 작업을 위한 두 번째 열쇠입니다. 실제 `mo uninstall`과 `permanent:true` 삭제가 여기에 해당합니다. 위의 정리 스위치도 함께 켜져 있어야 하며, mo가 요청한 앱과 정확히 일치하지 않으면 삭제는 중단됩니다.";
+"A second key for what the Trash can't undo: real `mo uninstall`, and `permanent:true` deletes. Needs the cleanup switch above too; an uninstall also aborts unless mo matches exactly the requested apps." = "휴지통으로 되돌릴 수 없는 작업은 별도로 허용해야 합니다. 실제 `mo uninstall`과 `permanent:true` 삭제가 여기에 해당합니다. 위의 정리 스위치도 함께 켜야 하며, mo가 요청한 앱과 정확히 일치하지 않으면 삭제를 중단합니다.";
 
 /* ===== Uninstall pre-flight verification ===== */
 "Uninstall aborted" = "삭제를 중단했습니다";
@@ -548,7 +548,7 @@
 "Relaunch to apply" = "다시 실행하여 적용";
 "Continue" = "계속";
 "Burrow is free." = "Burrow는 무료입니다.";
-"Open source, local-first. No license, no trial, no upsell." = "오픈 소스이며 로컬 우선입니다. 라이선스도, 체험 기간도, 추가 판매도 없습니다.";
+"Open source, local-first. No license, no trial, no upsell." = "로컬 우선으로 동작하는 오픈 소스입니다. 유료 라이선스나 체험 기간, 추가 구매 유도가 없습니다.";
 "forever" = "언제까지나";
 "Every tool unlocked — Clean, Purge, Installers, Software, Optimize, Analyze" = "모든 도구 사용 가능 — 정리, 심층 정리, 설치 파일, 소프트웨어, 최적화, 분석";
 "Watches your Mac over weeks, not seconds — 30–90 day history" = "몇 초가 아니라 몇 주에 걸쳐 Mac을 지켜봅니다 — 30~90일 기록";
@@ -715,7 +715,7 @@
 "Sources detected locally — checking versions contacts Apple and vendor servers." = "출처는 로컬에서 확인했습니다. 버전을 확인하면 Apple과 각 제작사의 서버에 연결합니다.";
 "Check for updates" = "업데이트 확인";
 "Check again" = "다시 확인";
-"Update all brews" = "Homebrew 전체 업데이트";
+"Update all brews" = "Homebrew 패키지 모두 업데이트";
 "Updates available" = "업데이트가 있습니다";
 "Up to date" = "최신";
 "Not checkable" = "확인 불가";
@@ -742,7 +742,7 @@
 "Skip Intro Screens" = "소개 화면 건너뛰기";
 "Jumps past the tools' idle screens where a read-only preview can start right away (Clean starts its scan when you open the tab)." = "읽기 전용 미리보기를 바로 시작할 수 있는 도구에서는 대기 화면을 건너뜁니다(정리는 탭을 열면 곧바로 검사를 시작합니다).";
 "About" = "정보";
-"Source on GitHub" = "GitHub 소스";
+"Source on GitHub" = "GitHub에서 소스 보기";
 
 /* Settings — maintenance */
 "Protected Items" = "보호할 항목";
@@ -809,7 +809,7 @@
 "Mac" = "Mac";
 "%d percent" = "%d 퍼센트";
 "PWR" = "전력";
-"Energy billed since launch (mWh)" = "실행 후 누적 소비 전력(mWh)";
+"Energy billed since launch (mWh)" = "실행 후 누적 에너지 사용량(mWh)";
 "Actions for %@" = "%@ 관련 작업";
 "Pin" = "고정";
 "Unpin" = "고정 해제";
@@ -838,7 +838,7 @@
 "Ejecting external volumes" = "외장 볼륨을 추출하는 중";
 "%d ejected · %d busy" = "추출 %1$d개 · 사용 중 %2$d개";
 "%@ cleaned · %d uninstalled · %d optimized" = "정리 %1$@ · 삭제 %2$d개 · 최적화 %3$d개";
-"Clean Watch" = "정리 지켜보기";
+"Clean Watch" = "누적 정리 현황";
 
 /* Analyze progress */
 "Mapping your folders" = "폴더 구조를 파악하는 중";
@@ -849,7 +849,7 @@
 /* ===== Uninstall pre-flight: identity of the resolved app ===== */
 "“%@” isn't an identifier that names one app — it resolves to whichever app the engine happens to match first, so nothing was removed. Use the app's bundle id or its exact name." = "「%@」은(는) 앱 하나를 특정하는 식별자가 아닙니다. 엔진이 먼저 찾은 앱이 대상이 되어 버리므로 아무것도 삭제하지 않았습니다. 앱의 번들 ID나 정확한 이름을 사용하세요.";
 "The engine didn't say which application “%@” resolves to, so Burrow can't confirm it's the right one and nothing was removed." = "엔진이 「%@」이(가) 어떤 응용 프로그램에 해당하는지 알려 주지 않아, Burrow가 올바른 대상인지 확인할 수 없어 아무것도 삭제하지 않았습니다.";
-"The engine resolved %@ twice, so the run wouldn't act on the set it reported." = "엔진이 %@을(를) 두 번 해석해, 이번 실행은 보고된 대상과 다르게 동작하게 됩니다.";
+"The engine resolved %@ twice, so the run wouldn't act on the set it reported." = "엔진이 %@을(를) 두 번 식별해 보고한 대상 목록대로 작업을 실행할 수 없습니다.";
 "“%1$@” isn't %2$@'s name or bundle id — the engine matched it by substring, so it may not be the app you meant. Nothing was removed; ask for it by name: %3$@." = "「%1$@」은(는) %2$@의 이름도 번들 ID도 아닙니다. 엔진이 부분 일치로 찾았으므로 의도한 앱이 아닐 수 있습니다. 아무것도 삭제하지 않았습니다. 이름으로 지정하세요: %3$@.";
 "The engine resolved an argument Burrow didn't send (“%@”), so nothing was removed." = "엔진이 Burrow가 보내지 않은 인자(「%@」)를 해석해 아무것도 삭제하지 않았습니다.";
 "“%1$@” resolves to %2$@ (%3$@), not the %4$@ you picked (%5$@), so nothing was removed." = "「%1$@」은(는) 선택한 %4$@(%5$@)이(가) 아니라 %2$@(%3$@)에 해당하므로 아무것도 삭제하지 않았습니다.";
@@ -885,9 +885,9 @@
 "Checking app versions contacts Apple and vendor servers." = "앱 버전을 확인하면 Apple 및 개발사 서버에 접속합니다.";
 "Listed from Homebrew's local index — Refresh contacts Homebrew's update feeds." = "Homebrew의 로컬 인덱스에서 가져온 목록입니다. ‘새로 고침’은 Homebrew 업데이트 피드에 접속합니다.";
 "Homebrew is no longer available." = "Homebrew를 더 이상 사용할 수 없습니다.";
-"Homebrew exited with status %d. Retry after resolving its message." = "Homebrew가 상태 %d(으)로 종료되었습니다. 메시지를 해결한 뒤 다시 시도하세요.";
+"Homebrew exited with status %d. Retry after resolving its message." = "Homebrew가 종료 코드 %d로 끝났습니다. 오류 메시지를 확인한 뒤 다시 시도하세요.";
 "Homebrew didn't respond in time." = "Homebrew가 제시간에 응답하지 않았습니다.";
-"Homebrew exited with status %d." = "Homebrew가 상태 %d(으)로 종료되었습니다.";
+"Homebrew exited with status %d." = "Homebrew가 종료 코드 %d로 끝났습니다.";
 "Homebrew couldn't refresh: %@" = "Homebrew를 새로 고칠 수 없습니다: %@";
 "Homebrew couldn't list outdated packages: %@" = "Homebrew가 오래된 패키지를 나열하지 못했습니다: %@";
 "Stop after current" = "현재 항목 후 중지";

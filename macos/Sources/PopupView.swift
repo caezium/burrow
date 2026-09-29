@@ -605,7 +605,8 @@ struct PopupView: View {
             // read as "you never cleaned".
             if let totals = model.cleanWatch, !totals.isEmpty {
                 HStack(spacing: 10) {
-                    Eyebrow(text: "Clean Watch", glyph: "sparkles", color: Tool.clean.accent)
+                    Eyebrow(text: NSLocalizedString("Clean Watch", comment: ""),
+                            glyph: "sparkles", color: Tool.clean.accent)
                     Spacer()
                     Text(String(format: NSLocalizedString("%@ cleaned · %d uninstalled · %d optimized", comment: ""),
                                 Fmt.bytes(totals.cleanedBytes), totals.uninstalledApps, totals.optimizeRuns))

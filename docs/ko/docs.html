@@ -171,7 +171,7 @@
       <p>열 가지가 넘는 분류를 검사합니다. 응용 프로그램 캐시, 시스템 캐시, 로그, 개발 도구 캐시, AI 도구 캐시, 브라우저 데이터, 클라우드 저장소 클라이언트, 디자인 도구, 커뮤니케이션 앱, 그 밖의 임시 파일입니다.</p>
       <p>확인 목록은 각 항목을 지워도 안전한 정도에 따라 정렬됩니다. 다시 만들어지는 캐시가 먼저 오고, 사용자에게 보이는 상태가 마지막입니다. 크기 계산은 하드링크를 인식하므로, 여러 도구가 공유하는 파일은 경로마다가 아니라 한 번만 셉니다.</p>
       <h3 id="purge">심층 정리</h3>
-      <p>개발 작업이 남긴 부스러기입니다. 판단 기준이 다르기에 일반 캐시와 나누어 두었습니다. <code>dist</code>, <code>build</code>, <code>target</code>, <code>.next</code>, <code>.build</code>, <code>DerivedData</code>, <code>__pycache__</code>,  <code>coverage</code> 같은 빌드 산출물은 네트워크 없이 로컬에서 다시 만들어집니다. 반면 <code>node_modules</code>, <code>Pods</code>,  <code>venv</code> 같은 의존성 디렉터리는 다시 받아야 하므로, 그 비용을 함께 표시하고 확인하기 전까지는 선택되지 않은 채로 둡니다.</p>
+      <p>개발 작업이 남긴 부스러기입니다. 판단 기준이 다르기에 일반 캐시와 나누어 두었습니다. <code>dist</code>, <code>build</code>, <code>target</code>, <code>.next</code>, <code>.build</code>, <code>DerivedData</code>, <code>__pycache__</code>와 <code>coverage</code> 같은 빌드 산출물은 네트워크 없이 로컬에서 다시 만들어집니다. 반면 <code>node_modules</code>, <code>Pods</code>와 <code>venv</code> 같은 의존성 디렉터리는 다시 받아야 하므로, 그 비용을 함께 표시하고 확인하기 전까지는 선택되지 않은 채로 둡니다.</p>
       <h3 id="installers">설치 파일</h3>
       <p>찾는 대상: <code>.dmg</code> 및 <code>.pkg</code> 파일 가운데, 응용 프로그램을 설치한 지 한참 지나도 다운로드 폴더에 남아 있는 것들입니다. 하나씩은 작지만 몇 해 써 온 기기에서는 합쳐서 수십 기가바이트가 되는 일이 흔합니다.</p>
       <h3 id="duplicates">중복 파일</h3>
@@ -230,9 +230,9 @@
   }
 }</code></pre>
       <h3 id="read-only-tools">읽기 전용 도구</h3>
-      <p><code>burrow_snapshot</code>, <code>burrow_history</code>, <code>burrow_top_processes</code>, <code>burrow_process_usage</code>, <code>burrow_info</code>, <code>burrow_analyze</code>, <code>burrow_dupes</code>, <code>burrow_orphans</code>, <code>burrow_photos</code>, <code>burrow_ports</code>, <code>burrow_net</code>, <code>burrow_doctor</code>, <code>burrow_disk_forecast</code>,  <code>burrow_list_apps</code>.</p>
+      <p><code>burrow_snapshot</code>, <code>burrow_history</code>, <code>burrow_top_processes</code>, <code>burrow_process_usage</code>, <code>burrow_info</code>, <code>burrow_analyze</code>, <code>burrow_dupes</code>, <code>burrow_orphans</code>, <code>burrow_photos</code>, <code>burrow_ports</code>, <code>burrow_net</code>, <code>burrow_doctor</code>, <code>burrow_disk_forecast</code>와 <code>burrow_list_apps</code>.</p>
       <h3 id="gated-tools">허용이 필요한 도구</h3>
-      <p><code>burrow_clean</code>, <code>burrow_purge</code>, <code>burrow_uninstall</code>, <code>burrow_optimize</code>,  <code>burrow_installer</code> 는 기기를 바꾸므로, 켜기 전까지는 쓸 수 없습니다.</p>
+      <p><code>burrow_clean</code>, <code>burrow_purge</code>, <code>burrow_uninstall</code>, <code>burrow_optimize</code>와 <code>burrow_installer</code> 는 기기를 바꾸므로, 켜기 전까지는 쓸 수 없습니다.</p>
       <h3 id="http-api">HTTP API</h3>
       <p>루프백 HTTP API를 <code>127.0.0.1:9277</code> 에서 제공합니다. MCP 대신 HTTP를 쓰는 도구에 같은 읽기 전용 데이터를 돌려줍니다. 기본은 켜짐이며 설정에서 끌 수 있습니다. 루프백에만 연결하므로 다른 기기에서는 결코 닿을 수 없습니다.</p>
     </section>
