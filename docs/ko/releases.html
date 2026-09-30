@@ -369,8 +369,8 @@
         <div class="sblock">
           <div class="slabel mono">개선</div>
           <ul class="slist">
-            <li><b>분석 호출 한 번, <code>burrow_analyze</code> 만으로 디스크에서 용량이 몰린 곳을 파악합니다.</b> 엔진은 한 번 실행할 때 디렉터리 한 단계만 알려 주므로, 에이전트는 디렉터리마다 호출해야 했습니다(실제 세션에서 15번을 연달아 부른 적이 있습니다). <code>analyze</code> 에 <code>depth</code> (가장 큰 하위 디렉터리로 내려가기)이 더해지고, <code>limit</code>,  <code>min_size</code>35~60KB짜리 보기 좋게 정렬된 덩어리 대신 간결한 JSON을 내보내며, 무엇을 쳐냈는지 항상 알려 줍니다(<code>entries_omitted</code> / <code>omitted_bytes</code>, <code>partial: true</code> 은 내려가기가 시간 예산에 닿았을 때입니다). (<a href="https://github.com/caezium/Burrow/pull/303" target="_blank" rel="noopener">#303</a>)</li>
-            <li><b>느린 도구가 스스로 느리다고 말합니다.</b> <code>analyze</code>, <code>clean</code>, <code>purge</code>,  <code>installer</code> 의 설명에 큰 검사는 몇 분이 걸린다고 적었습니다. 그래야 에이전트가 클라이언트의 인내를 넘겨 멈춰 있다가 셸 명령으로 도망가는 대신, 특정 폴더로 범위를 좁힙니다. 에이전트 문서와 <code>burrow-system-tools</code> 스킬은 이제 디스크 부족 시의 응급 절차부터 안내합니다. 실제로 자주 벌어지는 상황이기 때문입니다. (<a href="https://github.com/caezium/Burrow/pull/303" target="_blank" rel="noopener">#303</a>)</li>
+            <li><b>분석 호출 한 번, <code>burrow_analyze</code> 만으로 디스크에서 용량이 몰린 곳을 파악합니다.</b> 엔진은 한 번 실행할 때 디렉터리 한 단계만 알려 주므로, 에이전트는 디렉터리마다 호출해야 했습니다(실제 세션에서 15번을 연달아 부른 적이 있습니다). <code>analyze</code> 에 <code>depth</code> (가장 큰 하위 디렉터리로 내려가기)이 더해지고, <code>limit</code>와 <code>min_size</code>를 추가했습니다. 35~60KB 크기의 들여쓰기된 출력 대신 간결한 JSON을 내보내며, 제외한 항목도 항상 표시합니다(<code>entries_omitted</code> / <code>omitted_bytes</code>, <code>partial: true</code> 이면 탐색이 시간 제한에 걸렸다는 뜻입니다). (<a href="https://github.com/caezium/Burrow/pull/303" target="_blank" rel="noopener">#303</a>)</li>
+            <li><b>느린 도구가 스스로 느리다고 말합니다.</b> <code>analyze</code>, <code>clean</code>, <code>purge</code>와 <code>installer</code> 등의 설명에는 큰 검사에 몇 분이 걸릴 수 있다고 적었습니다. 에이전트가 무작정 기다리다 셸 명령으로 전환하지 않고 특정 폴더로 검사 범위를 좁히도록 하기 위해서입니다. 에이전트 문서와 <code>burrow-system-tools</code> 스킬은 이제 디스크 부족 시의 응급 절차부터 안내합니다. 실제로 자주 벌어지는 상황이기 때문입니다. (<a href="https://github.com/caezium/Burrow/pull/303" target="_blank" rel="noopener">#303</a>)</li>
           </ul>
         </div>
         <div class="sblock">
@@ -755,7 +755,7 @@
             <li><b>하나로 합친 정리</b>: 심층 정리와 설치 파일이 정리 안의 분류 카드로 들어왔습니다. 각각 제대로 된 결과 화면이 있고, 원본 기록은 「기록 보기」 뒤에 넣어 두었습니다.</li>
             <li><b>자체 업데이트</b>: Burrow가 스스로 새 버전을 확인하고(선택 사항, 기본은 켜짐) 배너와 메뉴 막대의 점으로 알립니다. 혼자서 설치하는 일은 결코 없습니다.</li>
             <li><b>Homebrew 업데이트</b> 가 앱 탭을 여는 순간 나타나고, 사용자의 로그인 항목에는 켜고 끄는 스위치가 생겼습니다.</li>
-            <li>선택 사항인 <b>카메라 &amp; ·마이크 사용 표시</b> 를 메뉴 막대 팝오버에 넣었습니다(기본은 꺼짐). 제어 센터와 같은 신호를 읽습니다.</li>
+            <li>선택 사항인 <b>카메라 &amp; 마이크 사용 표시</b> 를 메뉴 막대 팝오버에 넣었습니다(기본은 꺼짐). 제어 센터와 같은 신호를 읽습니다.</li>
             <li><b>정보</b> 및 <b>업데이트 확인</b> 이 설정에도 들어왔습니다.</li>
           </ul>
         </div>
@@ -925,7 +925,7 @@
         <div class="sblock">
           <div class="slabel mono">수정</div>
           <ul class="slist">
-            <li><b>설치 파일 &amp; 삭제 완료</b>: 확인 화면의 시간 초과와, 조용히 멈추던 <code>[y/N]</code> 현상이 사라졌습니다. 두 흐름 모두 이제 끝까지 갑니다.</li>
+            <li><b>설치 파일 정리 &amp; 앱 삭제 완료</b>: 확인 화면의 시간 초과와, 조용히 멈추던 <code>[y/N]</code> 현상이 사라졌습니다. 두 흐름 모두 이제 끝까지 갑니다.</li>
             <li>설정이 곧바로 기록됩니다.</li>
           </ul>
         </div>
