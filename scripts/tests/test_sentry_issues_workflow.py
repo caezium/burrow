@@ -82,6 +82,27 @@ class SentryIssuesWorkflowTests(unittest.TestCase):
         self.assertIn('digest_title="${digest_base_title} — part ${digest_part}"', workflow)
         self.assertIn("existing_bytes + section_bytes", workflow)
 
+    def test_unreadable_dedup_list_stops_the_run_instead_of_refiling(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+
+        # The 2026-10-03 duplicates: stderr hidden and `|| true` turned a
+        # failed read into an empty seen-list.
+        self.assertNotIn("--json body --jq '.[].body' 2>/dev/null", workflow)
+        self.assertNotIn('sort -u > "$seen" || true', workflow)
+        self.assertIn("filing nothing this run", workflow)
+        self.assertIn('if [ ! -s "$seen" ]; then', workflow)
+
+    def test_state_sync_is_guarded_and_confirms_each_issue(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("scripts/sentry_issue_sync.py candidates", workflow)
+        self.assertIn("scripts/sentry_issue_sync.py actions", workflow)
+        self.assertIn('if [ "$SENTRY_QUERY" != "is:unresolved" ]; then', workflow)
+        self.assertIn("/shortids/${sid}/", workflow)
+        self.assertIn('complete_projects="${complete_projects} ${project}"', workflow)
+        self.assertEqual(workflow.count("fetch_complete=0"), 3)
+        self.assertIn('MAX_SYNC_ACTIONS_PER_RUN: "50"', workflow)
+
     def test_sentry_issue_poll_follows_cursor_pagination(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
 
