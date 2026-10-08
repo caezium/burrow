@@ -25,6 +25,13 @@ name: sentry-issues
 # already filed — so a given Sentry issue is filed exactly once, even after
 # its GitHub issue is closed.
 #
+# State follows Sentry (scripts/sentry_issue_sync.py). An issue or digest
+# closes once Sentry confirms every short-id it carries is resolved or
+# ignored, and reopens when Sentry reports one regressed after the close.
+# Issues closed as not planned (duplicates, won't-fix) stay closed. The sync
+# only acts on a project whose unresolved list arrived whole, only under the
+# default `is:unresolved` query, and only on an explicit per-issue status.
+#
 # One-time setup:
 #   1. Sentry → Settings → Auth Tokens → Create New Token with scopes
 #      `project:read`, `event:read`, `org:read` (read-only).
@@ -78,6 +85,8 @@ jobs:
       # Defensive ceiling against a malformed cursor loop. Normal runs exhaust
       # the Sentry result set long before this (100 pages × 50 groups).
       MAX_SENTRY_PAGES_PER_PROJECT: "100"
+      # Bound closes + reopens per run, so a logic error can't sweep the tracker.
+      MAX_SYNC_ACTIONS_PER_RUN: "50"
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -98,14 +107,47 @@ jobs:
           echo "Filing issues first seen on/after $(date -u -d "@${cutoff}" '+%Y-%m-%d %H:%M UTC')"
 
           # Short-ids we've already filed (open + closed), so we never duplicate.
+          #
+          # Fail closed: an unreadable list must stop the run, never pass as
+          # "nothing filed yet". On 2026-10-03 a silently failed read did
+          # exactly that and re-filed every Sentry issue inside the lookback.
           seen="$(mktemp)"
-          gh issue list --repo "$GH_REPO" --label sentry --state all --limit 1000 \
-            --json body --jq '.[].body' 2>/dev/null \
-            | grep -oE 'sentry-id: [^ <]+' | awk '{print $2}' | sort -u > "$seen" || true
+          filed_bodies="$(mktemp)"
+          read_ok=0
+          for attempt in 1 2 3; do
+            if gh issue list --repo "$GH_REPO" --label sentry --state all --limit 1000 \
+                 --json body --jq '.[].body' > "$filed_bodies"; then
+              read_ok=1
+              break
+            fi
+            echo "::warning::Reading already-filed sentry issues failed (attempt ${attempt}/3)."
+            if [ "$attempt" -lt 3 ]; then sleep $((attempt * 15)); fi
+          done
+          if [ "$read_ok" -ne 1 ]; then
+            echo "::error::Could not read already-filed sentry issues; filing nothing this run."
+            exit 1
+          fi
+          { grep -oE 'sentry-id: [^ <]+' "$filed_bodies" || true; } \
+            | awk '{print $2}' | sort -u > "$seen"
+          # A read that succeeds yet finds no markers while sentry issues exist
+          # is the same failure in disguise. Only a truly empty tracker (the
+          # very first run) may proceed with an empty list.
+          if [ ! -s "$seen" ]; then
+            existing=$(gh issue list --repo "$GH_REPO" --label sentry --state all --limit 1 \
+              --json number --jq 'length') || existing="unknown"
+            if [ "$existing" != "0" ]; then
+              echo "::error::Read back no sentry-id markers, but sentry issues exist (${existing}); filing nothing this run."
+              exit 1
+            fi
+          fi
           echo "Already filed: $(wc -l < "$seen" | tr -d ' ') Sentry issue(s)."
           hang_rows="$(mktemp)"
           hang_markers="$(mktemp)"
           hang_count=0
+          # For the state sync after filing: what Sentry listed as unresolved,
+          # and which projects' lists arrived whole (every page, no cap hit).
+          unresolved="$(mktemp)"
+          complete_projects=""
 
           filed=0
           for project in $SENTRY_PROJECTS; do
@@ -117,6 +159,7 @@ jobs:
             page_url="$url"
             page_count=0
             fetched=0
+            fetch_complete=1
 
             # Sentry's issue endpoint is cursor-paginated through its Link
             # response header. Collect every page so unresolved groups that
@@ -128,12 +171,14 @@ jobs:
               if ! curl -fsS -D "$headers" -o "$page" \
                    -H "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" "$page_url"; then
                 echo "::warning::Sentry API request failed for project '${project}' page $((page_count + 1)); processing pages already fetched."
+                fetch_complete=0
                 break
               fi
 
               page_fetched=$(jq 'if type=="array" then length else -1 end' "$page" 2>/dev/null || echo -1)
               if [ "$page_fetched" = "-1" ]; then
                 echo "::warning::Sentry returned a non-array response for '${project}' page $((page_count + 1)); processing pages already fetched without logging the payload."
+                fetch_complete=0
                 break
               fi
               jq -c '.[]' "$page" >> "$response_rows"
@@ -152,6 +197,7 @@ jobs:
 
               if [ "$page_count" -ge "$MAX_SENTRY_PAGES_PER_PROJECT" ] && [ -n "$page_url" ]; then
                 echo "::warning::Stopped Sentry pagination for '${project}' at ${page_count} pages to avoid a malformed cursor loop."
+                fetch_complete=0
                 page_url=""
               fi
             done
@@ -161,6 +207,12 @@ jobs:
               continue
             fi
             echo "project ${project}: fetched ${fetched} unresolved issue(s) across ${page_count} page(s)."
+            # Recorded before filing: MAX_PER_RUN's `break 2` below must not
+            # drop a project whose list did arrive whole.
+            jq -c '{shortId: .shortId, lastSeen: .lastSeen}' "$response_rows" >> "$unresolved"
+            if [ "$fetch_complete" -eq 1 ]; then
+              complete_projects="${complete_projects} ${project}"
+            fi
             skipped_seen=0
             skipped_old=0
 
@@ -347,4 +399,63 @@ jobs:
             fi
           fi
 
-          echo "Done. Filed ${filed} regular issue(s); recorded ${hang_count} App-Hang group(s)."
+          # Mirror Sentry's state onto what we filed. Read the tracker fresh:
+          # a digest appended to above now carries unresolved groups and must
+          # not be closed on its older markers alone.
+          closed=0
+          reopened=0
+          if [ "$SENTRY_QUERY" != "is:unresolved" ]; then
+            echo "Custom query '${SENTRY_QUERY}': not syncing issue state this run."
+          else
+            tracked="$(mktemp)"
+            if ! gh issue list --repo "$GH_REPO" --label sentry --state all --limit 1000 \
+                   --json number,state,stateReason,closedAt,body > "$tracked"; then
+              echo "::warning::Could not read sentry issues for the state sync; skipping it this run."
+            else
+              lookups="$(mktemp)"
+              statuses="$(mktemp)"
+              sync_actions="$(mktemp)"
+              python3 scripts/sentry_issue_sync.py candidates --issues "$tracked" \
+                --unresolved "$unresolved" --complete "$complete_projects" > "$lookups"
+              # Only an explicit status from Sentry closes or reopens an issue;
+              # absence from the unresolved list proves nothing on its own.
+              while IFS= read -r sid; do
+                lookup="$(mktemp)"
+                if curl -fsS -o "$lookup" -H "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" \
+                     "${SENTRY_HOST}/api/0/organizations/${SENTRY_ORG}/shortids/${sid}/"; then
+                  jq -c --arg sid "$sid" \
+                    '{shortId: $sid, status: (.group.status // ""), substatus: (.group.substatus // "")}' \
+                    "$lookup" >> "$statuses" || true
+                else
+                  echo "Could not confirm ${sid} with Sentry; leaving its issue as is."
+                fi
+                rm -f "$lookup"
+              done < "$lookups"
+              python3 scripts/sentry_issue_sync.py actions --issues "$tracked" \
+                --unresolved "$unresolved" --complete "$complete_projects" \
+                --statuses "$statuses" --limit "$MAX_SYNC_ACTIONS_PER_RUN" > "$sync_actions"
+
+              while IFS=$'\t' read -r action number reason ids; do
+                ids_list="${ids//,/, }"
+                case "$action:$reason" in
+                  close:completed)
+                    gh issue close "$number" --repo "$GH_REPO" --reason completed \
+                      --comment "Sentry no longer lists ${ids_list} as unresolved (resolved or ignored there). This issue reopens automatically if Sentry reports a regression." >/dev/null \
+                      && closed=$((closed + 1)) && echo "Closed #${number}: no longer unresolved in Sentry (${ids_list})."
+                    ;;
+                  close:not_planned)
+                    gh issue close "$number" --repo "$GH_REPO" --reason "not planned" \
+                      --comment "Ignored in Sentry (${ids_list})." >/dev/null \
+                      && closed=$((closed + 1)) && echo "Closed #${number}: ignored in Sentry (${ids_list})."
+                    ;;
+                  reopen:regressed)
+                    gh issue reopen "$number" --repo "$GH_REPO" \
+                      --comment "Sentry reports a regression (${ids_list}): new events after this issue was closed." >/dev/null \
+                      && reopened=$((reopened + 1)) && echo "Reopened #${number}: regressed in Sentry (${ids_list})."
+                    ;;
+                esac || echo "::warning::Failed to ${action} #${number}."
+              done < "$sync_actions"
+            fi
+          fi
+
+          echo "Done. Filed ${filed} regular issue(s); recorded ${hang_count} App-Hang group(s); closed ${closed}, reopened ${reopened}."
