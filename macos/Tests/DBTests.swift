@@ -9,6 +9,7 @@
 //  Support, which we don't want test runs touching).
 //
 
+import SQLite3
 import XCTest
 @testable import Burrow
 
@@ -245,5 +246,42 @@ final class DBTests: XCTestCase {
         // Without a busy handler this throws SQLITE_BUSY the instant the
         // lock collides; with one, the 300 ms lock is simply waited out.
         XCTAssertNoThrow(try b.insert(prefix: "p", ts: 1, json: "{}"))
+    }
+
+    // MARK: - Launch open waits out contention instead of quitting
+
+    func testRetryingLockContention_waitsOutBusyThenSucceeds() throws {
+        var calls = 0
+        var sleeps: [TimeInterval] = []
+        let value = try DB.retryingLockContention(attempts: 5, delay: 0.5, sleep: { sleeps.append($0) }) {
+            calls += 1
+            // Extended codes (SQLITE_BUSY_SNAPSHOT) are contention too.
+            if calls == 1 { throw DBError.open(SQLITE_BUSY, "database is locked") }
+            if calls == 2 { throw DBError.step(SQLITE_BUSY | (2 << 8), "database is locked") }
+            return 7
+        }
+        XCTAssertEqual(value, 7)
+        XCTAssertEqual(calls, 3)
+        XCTAssertEqual(sleeps, [0.5, 0.5])
+    }
+
+    func testRetryingLockContention_givesUpAfterLastAttempt() {
+        var calls = 0
+        XCTAssertThrowsError(try DB.retryingLockContention(attempts: 3, delay: 0, sleep: { _ in }) { () -> Int in
+            calls += 1
+            throw DBError.open(SQLITE_LOCKED, "database table is locked")
+        })
+        XCTAssertEqual(calls, 3)
+    }
+
+    /// Damage is not contention: it goes straight to the caller (the
+    /// recovery ladder inside `init(at:)` has already had its turn).
+    func testRetryingLockContention_neverRetriesOtherFailures() {
+        var calls = 0
+        XCTAssertThrowsError(try DB.retryingLockContention(attempts: 5, delay: 0, sleep: { _ in }) { () -> Int in
+            calls += 1
+            throw DBError.open(SQLITE_READONLY, "attempt to write a readonly database")
+        })
+        XCTAssertEqual(calls, 1)
     }
 }
