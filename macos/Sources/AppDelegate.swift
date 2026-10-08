@@ -71,6 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusItemStabilitySpan: DiagnosticSpan?
     private var automaticUpdaterStartTask: Task<Void, Never>?
     private var automaticUpdaterSchedulingArmed = false
+    private var databaseOpenInFlight = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppDelegate.shared = self
@@ -173,29 +174,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     /// maintenance, and install the status item. Called either directly at
     /// launch or after the guided install finds `mo`.
     private func startServices() {
+        // A second call while an open is in flight (a double Recheck) would
+        // run two opens, and two recovery ladders, against one file.
+        guard !databaseOpenInFlight else { return }
+        databaseOpenInFlight = true
         markLaunch(.databaseOpening)
         let databaseSpan = CrashReporter.startLaunchSpan("database_open")
-        let db: DB
-        do {
-            db = try DB.openDefault()
-        } catch {
-            databaseSpan?.finish()
-            CrashReporter.logError("database_open_failed", data: [
-                "error_domain": (error as NSError).domain,
-                "error_code": (error as NSError).code,
-            ])
-            CrashReporter.captureDiagnostic("database_open_failed", error: error)
-            let alert = NSAlert()
-            alert.messageText = NSLocalizedString("Couldn't open Burrow's history database", comment: "")
-            alert.informativeText = String(format: NSLocalizedString("%@\n\nThe app will quit.", comment: ""),
-                                           error.localizedDescription)
-            alert.alertStyle = .critical
-            alert.runModalQuiet()
-            CrashReporter.finishLaunchTrace()
-            NSApp.terminate(nil)
-            return
+        // Off the main thread: opening can replay a WAL left by an unclean
+        // quit, wait on another Burrow process's lock (up to 2 s a
+        // statement), or run the repair ladder. On the main thread that is a
+        // frozen app (Sentry BURROW-AP, an App-Hang in `database_opening`).
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let result = Result { try DB.openDefaultWaitingOutContention() }
+            DispatchQueue.main.async {
+                databaseSpan?.finish()
+                guard let self else { return }
+                self.databaseOpenInFlight = false
+                switch result {
+                case .success(let db):
+                    self.startServices(with: db)
+                case .failure(let error):
+                    self.databaseOpenFailed(error)
+                }
+            }
         }
-        databaseSpan?.finish()
+    }
+
+    private func databaseOpenFailed(_ error: Error) {
+        CrashReporter.logError("database_open_failed", data: [
+            "error_domain": (error as NSError).domain,
+            "error_code": (error as NSError).code,
+        ])
+        CrashReporter.captureDiagnostic("database_open_failed", error: error)
+        let alert = NSAlert()
+        alert.messageText = NSLocalizedString("Couldn't open Burrow's history database", comment: "")
+        alert.informativeText = String(format: NSLocalizedString("%@\n\nThe app will quit.", comment: ""),
+                                       error.localizedDescription)
+        alert.alertStyle = .critical
+        alert.runModalQuiet()
+        CrashReporter.finishLaunchTrace()
+        NSApp.terminate(nil)
+    }
+
+    /// The rest of startup, once the history DB is open.
+    private func startServices(with db: DB) {
         markLaunch(.databaseReady)
         self.db = db
 

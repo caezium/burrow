@@ -62,6 +62,34 @@ final class DB {
         return try DB(at: support.appendingPathComponent("burrow.db"))
     }
 
+    /// The launch-time open. Lock contention is not damage (see `init(at:)`),
+    /// and surfacing the first SQLITE_BUSY quits the app over a lock another
+    /// Burrow process releases moments later, so wait it out a few times
+    /// first. Can block for seconds: call it off the main thread.
+    static func openDefaultWaitingOutContention() throws -> DB {
+        try retryingLockContention(attempts: 5, delay: 0.5) { try openDefault() }
+    }
+
+    /// Runs `body`, retrying only SQLITE_BUSY / SQLITE_LOCKED failures, up to
+    /// `attempts` tries in all. Any other error, and the last contention
+    /// error, propagate.
+    static func retryingLockContention<T>(
+        attempts: Int,
+        delay: TimeInterval,
+        sleep: (TimeInterval) -> Void = Thread.sleep(forTimeInterval:),
+        _ body: () throws -> T
+    ) throws -> T {
+        var attempt = 1
+        while true {
+            do {
+                return try body()
+            } catch where attempt < attempts && isLockContention(error) {
+                attempt += 1
+                sleep(delay)
+            }
+        }
+    }
+
     /// Reader-process open of the default DB — what `burrow --mcp` uses.
     /// Same file, same WAL connection, but NO recovery ladder (see
     /// `init(readerAt:)`).
