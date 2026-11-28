@@ -748,9 +748,18 @@ def compact(n):
     return f"{round(n / 1000)}k"
 
 
+# Match the Mac ZIP, the current Windows ZIP, and the first Windows preview.
+# Sparkle appcasts are fetched for update checks, not for app downloads.
+APP_ARCHIVE = re.compile(
+    r"(?:Burrow-[0-9]+(?:\.[0-9]+){2}(?:-windows-[a-z0-9-]+)?|"
+    r"BurrowWin-[0-9]+(?:\.[0-9]+){2}-win-[a-z0-9-]+)\.zip"
+)
+
+
 def fetch_download_total():
-    """Sum every release asset's download count. None when GitHub isn't
-    reachable, the caller then leaves the existing number alone."""
+    """Count published app ZIP downloads, not update checks or unique installs.
+    Return None when GitHub isn't reachable so the caller retains its cache.
+    """
     total, page = 0, 1
     try:
         while True:
@@ -758,8 +767,11 @@ def fetch_download_total():
             if not batch:
                 break
             for release in batch:
+                if release.get("draft"):
+                    continue
                 for asset in release.get("assets", []):
-                    total += asset.get("download_count", 0)
+                    if APP_ARCHIVE.fullmatch(asset.get("name", "")):
+                        total += asset.get("download_count", 0)
             if len(batch) < 100:
                 break
             page += 1
